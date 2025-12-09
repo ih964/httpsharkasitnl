@@ -1,4 +1,5 @@
 import { Linkedin, Facebook, Instagram, Twitter } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Footer = () => {
   return (
@@ -7,13 +8,8 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo & copyright */}
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-              <span className="text-xl font-bold text-primary-foreground">H</span>
-            </div>
-            <div>
-              <p className="font-semibold">HARKAS IT</p>
-              <p className="text-sm text-muted-foreground">© 2024 Alle rechten voorbehouden</p>
-            </div>
+            <img src={logo} alt="HARKAS IT" className="h-10" />
+            <p className="text-sm text-muted-foreground">© 2024 Alle rechten voorbehouden</p>
           </div>
 
           {/* Social links */}

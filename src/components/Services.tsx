@@ -35,9 +35,9 @@ const services = [
   },
   {
     icon: BarChart3,
-    title: "Analytics & Strategie",
-    description: "Data-gedreven beslissingen voor meetbare groei en succes.",
-    link: "#analytics",
+    title: "Support & Consultancy",
+    description: "Professionele ondersteuning en advies voor al uw IT-vraagstukken.",
+    link: "#support",
   },
 ];
 

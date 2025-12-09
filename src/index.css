@@ -15,7 +15,7 @@
     --popover: 220 18% 10%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 24 95% 53%;
+    --primary: 205 65% 40%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 15% 15%;
@@ -24,7 +24,7 @@
     --muted: 220 15% 18%;
     --muted-foreground: 220 10% 60%;
 
-    --accent: 24 100% 60%;
+    --accent: 205 70% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -32,31 +32,31 @@
 
     --border: 220 15% 20%;
     --input: 220 15% 20%;
-    --ring: 24 95% 53%;
+    --ring: 205 65% 40%;
 
     --radius: 0.75rem;
 
     /* Custom design tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(24 95% 53%) 0%, hsl(35 100% 55%) 100%);
-    --gradient-glow: linear-gradient(180deg, hsl(24 95% 53% / 0.2) 0%, transparent 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(205 65% 40%) 0%, hsl(205 70% 50%) 100%);
+    --gradient-glow: linear-gradient(180deg, hsl(205 65% 40% / 0.2) 0%, transparent 100%);
     --gradient-card: linear-gradient(145deg, hsl(220 18% 12%) 0%, hsl(220 20% 8%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(220 20% 5%) 0%, hsl(220 20% 9%) 100%);
     
-    --shadow-glow: 0 0 60px hsl(24 95% 53% / 0.15);
+    --shadow-glow: 0 0 60px hsl(205 65% 40% / 0.15);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.3);
-    --shadow-button: 0 4px 20px hsl(24 95% 53% / 0.4);
+    --shadow-button: 0 4px 20px hsl(205 65% 40% / 0.4);
 
     --font-heading: 'Outfit', sans-serif;
     --font-body: 'Outfit', sans-serif;
 
     --sidebar-background: 220 18% 10%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 24 95% 53%;
+    --sidebar-primary: 205 65% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 15% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 24 95% 53%;
+    --sidebar-ring: 205 65% 40%;
   }
 
   .dark {
@@ -115,7 +115,7 @@
 
   .text-gradient {
     @apply bg-clip-text text-transparent inline-block;
-    background-image: linear-gradient(135deg, hsl(24 95% 53%) 0%, hsl(35 100% 60%) 100%);
+    background-image: linear-gradient(135deg, hsl(205 65% 40%) 0%, hsl(205 70% 55%) 100%);
   }
 
   .glass {
@@ -187,9 +187,9 @@
 
 @keyframes glowPulse {
   0%, 100% {
-    box-shadow: 0 0 40px hsl(24 95% 53% / 0.2);
+    box-shadow: 0 0 40px hsl(205 65% 40% / 0.2);
   }
   50% {
-    box-shadow: 0 0 60px hsl(24 95% 53% / 0.4);
+    box-shadow: 0 0 60px hsl(205 65% 40% / 0.4);
   }
 }
