@@ -1,43 +1,44 @@
 import { Palette, Globe, Megaphone, TrendingUp, Smartphone, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const services = [
   {
     icon: Palette,
     title: "Designs & Branding",
     description: "De eerste indruk telt. Maak het onvergetelijk en bouw aan een merk dat vertrouwen wekt.",
-    link: "#branding",
+    link: "/diensten/branding",
   },
   {
     icon: Globe,
     title: "Websites & Apps",
     description: "Efficiënte systemen die meer leads aantrekken, je winst vergroten en je bedrijf laten bloeien.",
-    link: "#websites",
+    link: "/diensten/websites",
   },
   {
     icon: Megaphone,
     title: "Advertentie Marketing",
     description: "Complete groei-combinatie met website, webshop of app + advertentie marketing.",
-    link: "#marketing",
+    link: "/diensten/marketing",
   },
   {
     icon: TrendingUp,
     title: "SEO Optimalisatie",
     description: "Verbeter je online zichtbaarheid en bereik meer potentiële klanten organisch.",
-    link: "#seo",
+    link: "/diensten/seo",
   },
   {
     icon: Smartphone,
     title: "Social Media",
     description: "Strategisch beheer van je social media kanalen voor maximale betrokkenheid.",
-    link: "#social",
+    link: "/diensten/social-media",
   },
   {
     icon: BarChart3,
     title: "Support & Consultancy",
     description: "Professionele ondersteuning en advies voor al uw IT-vraagstukken.",
-    link: "#support",
+    link: "/diensten/support",
   },
 ];
 
@@ -84,13 +85,13 @@ const Services = () => {
               </p>
 
               {/* Link */}
-              <a
-                href={service.link}
+              <Link
+                to={service.link}
                 className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:gap-3 transition-all duration-300"
               >
                 Meer informatie
                 <ArrowRight className="w-4 h-4" />
-              </a>
+              </Link>
 
               {/* Hover glow effect */}
               <div className="absolute inset-0 rounded-2xl bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
