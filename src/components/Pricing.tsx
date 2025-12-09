@@ -91,10 +91,12 @@ const Pricing = () => {
               <div className="text-center mb-8">
                 <h3 className="text-xl font-semibold mb-2">{pkg.name}</h3>
                 <p className="text-muted-foreground text-sm mb-4">{pkg.description}</p>
-                <div className="flex items-baseline justify-center gap-1">
-                  {pkg.price !== "Op maat" && <span className="text-muted-foreground">€</span>}
-                  <span className="text-4xl font-bold">{pkg.price}</span>
-                  {pkg.price !== "Op maat" && <span className="text-muted-foreground">/project</span>}
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-baseline justify-center gap-1">
+                    {pkg.price !== "Op maat" && <span className="text-muted-foreground text-sm">vanaf €</span>}
+                    <span className="text-4xl font-bold">{pkg.price}</span>
+                  </div>
+                  {pkg.price !== "Op maat" && <span className="text-xs text-muted-foreground">ex btw</span>}
                 </div>
               </div>
 

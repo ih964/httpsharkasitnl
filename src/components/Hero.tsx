@@ -22,7 +22,7 @@ const Hero = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-sm text-muted-foreground">E-Marketing Bureau</span>
+            <span className="text-sm text-muted-foreground">Innovatie die verbindt</span>
           </div>
 
           {/* Main heading */}
