@@ -11,6 +11,8 @@ import Marketing from "./pages/services/Marketing";
 import SEO from "./pages/services/SEO";
 import SocialMedia from "./pages/services/SocialMedia";
 import Support from "./pages/services/Support";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/diensten/seo" element={<SEO />} />
           <Route path="/diensten/social-media" element={<SocialMedia />} />
           <Route path="/diensten/support" element={<Support />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/voorwaarden" element={<Terms />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

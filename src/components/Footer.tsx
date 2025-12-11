@@ -1,4 +1,5 @@
 import { Linkedin, Facebook, Instagram, Twitter } from "lucide-react";
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
 const Footer = () => {
@@ -9,7 +10,17 @@ const Footer = () => {
           {/* Logo & copyright */}
           <div className="flex items-center gap-4">
             <img src={logo} alt="HARKAS IT" className="h-10" />
-            <p className="text-sm text-muted-foreground">© 2024 Alle rechten voorbehouden</p>
+            <p className="text-sm text-muted-foreground">© 2025 Alle rechten voorbehouden</p>
+          </div>
+
+          {/* Legal links */}
+          <div className="flex items-center gap-6">
+            <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/voorwaarden" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Algemene Voorwaarden
+            </Link>
           </div>
 
           {/* Social links */}
