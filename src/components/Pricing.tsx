@@ -1,5 +1,6 @@
 import { Check, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 const packages = [
   {
@@ -53,7 +54,13 @@ const Pricing = () => {
 
       <div className="container px-6 relative z-10">
         {/* Section header */}
-        <div className="text-center mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
           <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
             Pakketten
           </span>
@@ -63,19 +70,22 @@ const Pricing = () => {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Kies het pakket dat bij jouw bedrijf past. Geen verborgen kosten.
           </p>
-        </div>
+        </motion.div>
 
         {/* Pricing cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {packages.map((pkg, index) => (
-            <div
+            <motion.div
               key={pkg.name}
-              className={`relative p-8 rounded-2xl border transition-all duration-500 animate-fade-up ${
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className={`relative p-8 rounded-2xl border transition-all duration-500 ${
                 pkg.popular
                   ? "gradient-card border-primary/50 shadow-glow scale-105"
                   : "bg-card border-border/50 hover:border-primary/30"
               }`}
-              style={{ animationDelay: `${0.1 * index}s` }}
             >
               {/* Popular badge */}
               {pkg.popular && (
@@ -120,7 +130,7 @@ const Pricing = () => {
               >
                 <a href="#contact">Neem contact op</a>
               </Button>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

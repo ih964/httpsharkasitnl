@@ -1,4 +1,5 @@
 import { Star, Quote } from "lucide-react";
+import { motion } from "framer-motion";
 
 const testimonials = [
   {
@@ -29,7 +30,13 @@ const Testimonials = () => {
 
       <div className="container px-6 relative z-10">
         {/* Section header */}
-        <div className="text-center mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
           <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
             Testimonials
           </span>
@@ -39,15 +46,18 @@ const Testimonials = () => {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Ontdek waarom bedrijven kiezen voor Harkas IT
           </p>
-        </div>
+        </motion.div>
 
         {/* Testimonials grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {testimonials.map((testimonial, index) => (
-            <div
+            <motion.div
               key={index}
-              className="relative p-8 rounded-2xl gradient-card border border-border/50 hover:border-primary/30 transition-all duration-500 group animate-fade-up"
-              style={{ animationDelay: `${0.1 * index}s` }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="relative p-8 rounded-2xl gradient-card border border-border/50 hover:border-primary/30 transition-all duration-500 group"
             >
               {/* Quote icon */}
               <div className="absolute top-6 right-6 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -81,7 +91,7 @@ const Testimonials = () => {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

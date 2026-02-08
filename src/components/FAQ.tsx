@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { motion } from "framer-motion";
 
 const faqs = [
   {
@@ -51,7 +52,13 @@ const FAQ = () => {
 
       <div className="container px-6 relative z-10">
         {/* Section header */}
-        <div className="text-center mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
           <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
             FAQ
           </span>
@@ -61,10 +68,16 @@ const FAQ = () => {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Antwoorden op de meest gestelde vragen over onze diensten
           </p>
-        </div>
+        </motion.div>
 
         {/* FAQ Accordion */}
-        <div className="max-w-3xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="max-w-3xl mx-auto"
+        >
           <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((faq, index) => (
               <AccordionItem
@@ -81,7 +94,7 @@ const FAQ = () => {
               </AccordionItem>
             ))}
           </Accordion>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

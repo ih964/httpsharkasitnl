@@ -2,6 +2,7 @@ import { Palette, Globe, Megaphone, TrendingUp, Smartphone, BarChart3 } from "lu
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const services = [
   {
@@ -50,7 +51,13 @@ const Services = () => {
       
       <div className="container px-6">
         {/* Section header */}
-        <div className="text-center mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
           <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
             Onze Diensten
           </span>
@@ -61,15 +68,18 @@ const Services = () => {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Van branding tot marketing, wij hebben alles in huis om jouw bedrijf te laten groeien.
           </p>
-        </div>
+        </motion.div>
 
         {/* Services grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service, index) => (
-            <div
+            <motion.div
               key={service.title}
-              className="group relative p-8 rounded-2xl gradient-card border border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-glow animate-fade-up"
-              style={{ animationDelay: `${0.1 * index}s` }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="group relative p-8 rounded-2xl gradient-card border border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-glow"
             >
               {/* Icon */}
               <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -95,19 +105,25 @@ const Services = () => {
 
               {/* Hover glow effect */}
               <div className="absolute inset-0 rounded-2xl bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* CTA */}
-        <div className="text-center mt-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="text-center mt-16"
+        >
           <Button variant="hero" size="lg" asChild>
             <a href="#contact" className="gap-3">
               Wat heb je nodig?
               <ArrowRight className="w-5 h-5" />
             </a>
           </Button>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
