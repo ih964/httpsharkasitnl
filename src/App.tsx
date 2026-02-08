@@ -13,6 +13,7 @@ import SocialMedia from "./pages/services/SocialMedia";
 import Support from "./pages/services/Support";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/over-ons" element={<About />} />
           <Route path="/diensten/branding" element={<Branding />} />
           <Route path="/diensten/websites" element={<Websites />} />
           <Route path="/diensten/marketing" element={<Marketing />} />

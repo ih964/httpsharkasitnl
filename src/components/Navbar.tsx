@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 
 const navLinks = [
-  { name: "Home", href: "#" },
-  { name: "Diensten", href: "#diensten" },
-  { name: "Prijzen", href: "#prijzen" },
-  { name: "Contact", href: "#contact" },
+  { name: "Home", href: "/" },
+  { name: "Diensten", href: "/#diensten" },
+  { name: "Over Ons", href: "/over-ons" },
+  { name: "Prijzen", href: "/#prijzen" },
+  { name: "Contact", href: "/#contact" },
 ];
 
 const Navbar = () => {
