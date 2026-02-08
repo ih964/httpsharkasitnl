@@ -1,6 +1,7 @@
 import { Phone, Mail, MapPin, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -23,7 +24,13 @@ const Contact = () => {
 
       <div className="container px-6 relative z-10">
         {/* Section header */}
-        <div className="text-center mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
           <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
             Contact
           </span>
@@ -33,11 +40,17 @@ const Contact = () => {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Klaar om je bedrijf naar het volgende niveau te tillen? Neem vandaag nog contact met ons op.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
           {/* Contact info */}
-          <div className="space-y-8">
+          <motion.div 
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="space-y-8"
+          >
             <div className="p-8 rounded-2xl gradient-card border border-border/50">
               <h3 className="text-xl font-semibold mb-6">Neem direct contact op</h3>
               
@@ -91,10 +104,17 @@ const Contact = () => {
                 <p className="text-sm text-muted-foreground">Tevreden klanten</p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Contact form */}
-          <form onSubmit={handleSubmit} className="p-8 rounded-2xl gradient-card border border-border/50">
+          <motion.form 
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            onSubmit={handleSubmit} 
+            className="p-8 rounded-2xl gradient-card border border-border/50"
+          >
             <h3 className="text-xl font-semibold mb-6">Stuur een bericht</h3>
             
             <div className="space-y-5">
@@ -159,7 +179,7 @@ const Contact = () => {
                 Verstuur bericht
               </Button>
             </div>
-          </form>
+          </motion.form>
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { motion } from "framer-motion";
 
 const portfolioItems = [
   {
@@ -30,16 +31,28 @@ const Portfolio = () => {
         <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
 
         <div className="container px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center max-w-3xl mx-auto mb-16"
+          >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
               Ons <span className="text-gradient">Portfolio</span>
             </h2>
             <p className="text-lg text-muted-foreground">
               Bekijk enkele voorbeelden van websites die wij hebben gemaakt voor onze klanten.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="max-w-4xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="max-w-4xl mx-auto"
+          >
             <Carousel
               opts={{
                 align: "start",
@@ -74,7 +87,7 @@ const Portfolio = () => {
               <CarouselPrevious className="hidden md:flex -left-12" />
               <CarouselNext className="hidden md:flex -right-12" />
             </Carousel>
-          </div>
+          </motion.div>
         </div>
       </section>
 
