@@ -39,7 +39,7 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
           >
-            Wij bieden een scala aan hoogwaardige diensten. Met gespecialiseerde teams op de Afrikaanse, Golf- en Europese markten.
+            Websites, apps & marketing die écht werken. Niet binnen 24 uur opgeleverd? Dan is het gratis.
           </motion.p>
 
           {/* USP */}
