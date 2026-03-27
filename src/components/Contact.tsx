@@ -87,7 +87,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Locatie</p>
-                    <p className="font-medium">Nederland</p>
+                    <p className="font-medium">Burgemeester de Manstraat 45, Tiel</p>
                   </div>
                 </div>
               </div>
