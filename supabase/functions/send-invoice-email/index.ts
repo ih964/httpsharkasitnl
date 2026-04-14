@@ -1,13 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Phase 1: Email met signed URL download link
-// Later uitbreidbaar naar echte bijlagen wanneer ondersteund
+const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
 function addDays(dateStr: string, days: number): Date {
   const d = new Date(dateStr);
@@ -26,6 +24,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // --- Auth check ---
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -45,6 +44,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    // --- Admin check ---
     const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
     if (!roleData) {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -57,35 +57,35 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "invoice_id and recipient_email required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Fetch invoice
+    // --- Fetch invoice ---
     const { data: invoice, error: invError } = await supabase.from("invoices").select("*").eq("id", invoice_id).single();
     if (invError || !invoice) {
       return new Response(JSON.stringify({ error: "Invoice not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Fetch customer
+    // --- Fetch customer ---
     let customerName = "Klant";
     if (invoice.customer_id) {
       const { data: cust } = await supabase.from("customers").select("name").eq("id", invoice.customer_id).single();
       if (cust) customerName = cust.name;
     }
 
-    // Fetch settings
+    // --- Fetch settings ---
     const { data: settings } = await supabase.from("settings").select("*").limit(1).maybeSingle();
 
-    // Ensure PDF exists
-    let pdfPath = invoice.pdf_storage_path;
+    // --- Ensure PDF exists ---
+    const pdfPath = invoice.pdf_storage_path;
     if (!pdfPath) {
       return new Response(JSON.stringify({ error: "PDF moet eerst gegenereerd worden. Genereer de PDF en probeer opnieuw." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create signed URL (7 days)
+    // --- Create signed URL (7 days) ---
     const { data: signedData, error: signError } = await supabase.storage.from("invoices").createSignedUrl(pdfPath, 7 * 24 * 60 * 60);
     if (signError || !signedData?.signedUrl) {
       return new Response(JSON.stringify({ error: "Could not create download link" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Calculate final total
+    // --- Calculate final total ---
     const total = Number(invoice.total);
     const damageAmount = Number(invoice.damage_amount);
     const finalTotal = invoice.has_damage && damageAmount > 0
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
 
     const fmt = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
-    // Calculate effective due date
+    // --- Calculate effective due date ---
     let effectiveDueDate: Date;
     if (invoice.due_date) {
       effectiveDueDate = new Date(invoice.due_date);
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     const iban = settings?.iban || "NL22KNAB0413717895";
     const companyName = settings?.company_name || "Harkas Dienstverlening";
 
-    // Build email HTML
+    // --- Build email HTML ---
     const emailHtml = `
 <!DOCTYPE html>
 <html lang="nl">
@@ -157,45 +157,71 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    // Send email via SMTP (Cloud86 / Plesk)
-    const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD");
-    if (!SMTP_PASSWORD) {
-      return new Response(JSON.stringify({ error: "E-mail service niet geconfigureerd (SMTP_PASSWORD ontbreekt)" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // --- Send email via Resend gateway ---
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY is niet geconfigureerd" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const smtpClient = new SMTPClient({
-      connection: {
-        hostname: "harkasit.nl",
-        port: 465,
-        tls: true,
-        auth: {
-          username: "administratie@harkasit.nl",
-          password: SMTP_PASSWORD,
-        },
-      },
-    });
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      return new Response(JSON.stringify({ error: "RESEND_API_KEY is niet geconfigureerd" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
-    const toAddresses = [recipient_email];
-    const ccAddresses = cc_email ? [cc_email] : undefined;
-
-    await smtpClient.send({
-      from: `"${companyName}" <administratie@harkasit.nl>`,
-      to: toAddresses,
-      cc: ccAddresses,
+    const emailPayload: Record<string, unknown> = {
+      from: `${companyName} <administratie@harkasit.nl>`,
+      to: [recipient_email],
       subject: `Factuur ${invoice.invoice_number} – ${companyName}`,
       html: emailHtml,
-    });
+    };
+    if (cc_email) {
+      emailPayload.cc = [cc_email];
+    }
 
-    await smtpClient.close();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    // Update invoice
+    let resendResponse: Response;
+    try {
+      resendResponse = await fetch(`${GATEWAY_URL}/emails`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "X-Connection-Api-Key": RESEND_API_KEY,
+        },
+        body: JSON.stringify(emailPayload),
+        signal: controller.signal,
+      });
+    } catch (fetchErr: unknown) {
+      clearTimeout(timeoutId);
+      const msg = fetchErr instanceof Error ? fetchErr.message : "Unknown fetch error";
+      console.error("Resend fetch error:", msg);
+      return new Response(JSON.stringify({ error: `E-mail verzenden mislukt: ${msg}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    clearTimeout(timeoutId);
+
+    const resendBody = await resendResponse.text();
+    console.log("Resend response status:", resendResponse.status, "body:", resendBody);
+
+    if (!resendResponse.ok) {
+      let errorMessage = `Resend error (${resendResponse.status})`;
+      try {
+        const parsed = JSON.parse(resendBody);
+        if (parsed.message) errorMessage = parsed.message;
+        else if (parsed.error) errorMessage = typeof parsed.error === "string" ? parsed.error : JSON.stringify(parsed.error);
+      } catch { /* use default */ }
+      console.error("Resend error detail:", errorMessage);
+      return new Response(JSON.stringify({ error: errorMessage }), { status: resendResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // --- Only update DB after confirmed success ---
     await supabase.from("invoices").update({
       emailed_at: new Date().toISOString(),
       emailed_to: recipient_email,
       emailed_cc: cc_email || null,
     }).eq("id", invoice_id);
 
-    // Activity log
     await supabase.from("activity_logs").insert({
       type: "invoice_emailed",
       reference_id: invoice_id,
@@ -205,8 +231,10 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("send-invoice-email error:", msg);
+    return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
