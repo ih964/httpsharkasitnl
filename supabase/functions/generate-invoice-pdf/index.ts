@@ -249,9 +249,9 @@ Deno.serve(async (req) => {
     y += 4;
     if (y > 250) { doc.addPage(); y = 20; }
 
-    const iban = settings?.iban || "NL22KNAB0413717895";
-    const companyName = settings?.company_name || "Harkas Dienstverlening";
     const dueDateFormatted = formatDateNL(effectiveDueDate);
+
+    const paymentText = `Wij verzoeken u het bedrag van ${fmt(finalTotal)} uiterlijk ${dueDateFormatted} over te maken naar rekeningnummer ${companyIban} ten name van ${companyName} onder vermelding van factuurnummer ${invoice.invoice_number}.`;
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
