@@ -356,6 +356,88 @@ const AdminInvoices = () => {
     window.open(data.signedUrl, "_blank");
   };
 
+  const openEmailDialog = (inv: Invoice) => {
+    setEmailInvoice(inv);
+    const cust = customers.find(c => c.id === inv.customer_id);
+    setEmailTo(cust?.email || "");
+    setEmailCc(true);
+    setEmailDialogOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailInvoice || !emailTo) return;
+    setSendingEmail(true);
+    try {
+      // Ensure PDF exists first
+      if (!emailInvoice.pdf_storage_path) {
+        await generatePdf(emailInvoice.id);
+      }
+      const { error } = await supabase.functions.invoke("send-invoice-email", {
+        body: {
+          invoice_id: emailInvoice.id,
+          recipient_email: emailTo,
+          cc_email: emailCc ? "administratie@harkasit.nl" : undefined,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Factuur verzonden", description: `E-mail verstuurd naar ${emailTo}` });
+      setEmailDialogOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Fout bij verzenden", description: err.message, variant: "destructive" });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const exportCsv = () => {
+    const exportFiltered = invoices.filter(i => {
+      if (exportYear !== "all" && i.invoice_year !== parseInt(exportYear)) return false;
+      if (exportMonth !== "all" && i.invoice_month !== parseInt(exportMonth)) return false;
+      if (exportStatus !== "all" && i.status !== exportStatus) return false;
+      return true;
+    });
+
+    const headers = ["invoice_number","invoice_date","due_date","customer_name","company_name","email","vat_number","kvk_number","status","source_type","subtotal","vat_total","total","final_total","damage_amount","emailed_at","notes"];
+    const rows = exportFiltered.map(inv => {
+      const cust = customers.find(c => c.id === inv.customer_id);
+      const finalTotal = inv.has_damage && inv.damage_amount > 0
+        ? Math.round((inv.total - inv.damage_amount) * 100) / 100
+        : inv.total;
+      return [
+        inv.invoice_number,
+        inv.invoice_date,
+        inv.due_date || "",
+        cust?.name || "",
+        cust?.company_name || "",
+        cust?.email || "",
+        cust?.vat_number || "",
+        cust?.kvk_number || "",
+        inv.status,
+        inv.source_type,
+        inv.subtotal.toFixed(2),
+        inv.vat_total.toFixed(2),
+        inv.total.toFixed(2),
+        finalTotal.toFixed(2),
+        inv.damage_amount.toFixed(2),
+        inv.emailed_at || "",
+        inv.notes || "",
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+    });
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ym = exportYear !== "all" ? exportYear : new Date().getFullYear();
+    const mm = exportMonth !== "all" ? exportMonth.padStart(2, "0") : "alle";
+    a.href = url;
+    a.download = `invoices-${ym}-${mm}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV geëxporteerd" });
+  };
+
   const resetForm = () => {
     setEditingId(null);
     setFormCustomerId("");
