@@ -841,7 +841,7 @@ const AdminInvoices = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Bron</TableHead>
                   <TableHead className="text-right">Bedrag</TableHead>
-                  <TableHead className="w-36"></TableHead>
+                  <TableHead className="w-44"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
