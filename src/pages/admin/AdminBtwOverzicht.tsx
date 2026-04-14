@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 interface MonthData {
   month: number;
@@ -81,20 +83,49 @@ const AdminBtwOverzicht = () => {
     { subtotal: 0, vat_total: 0, total: 0, count: 0 }
   );
 
+  const exportCSV = () => {
+    const rows = [["jaar", "maand", "omzet_excl_btw", "btw_bedrag", "omzet_incl_btw", "aantal_facturen"]];
+    for (const m of data) {
+      rows.push([
+        year,
+        String(m.month),
+        m.subtotal.toFixed(2),
+        m.vat_total.toFixed(2),
+        m.total.toFixed(2),
+        String(m.count),
+      ]);
+    }
+    rows.push([year, "Totaal", yearTotals.subtotal.toFixed(2), yearTotals.vat_total.toFixed(2), yearTotals.total.toFixed(2), String(yearTotals.count)]);
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `btw-overzicht-${year}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-3xl font-heading font-bold">BTW Overzicht</h1>
-        <Select value={year} onValueChange={setYear}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Jaar" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableYears.map(y => (
-              <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={exportCSV} disabled={loading}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Jaar" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.map(y => (
+                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
