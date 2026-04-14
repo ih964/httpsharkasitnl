@@ -67,6 +67,9 @@ const AdminInvoices = () => {
   const [formStatus, setFormStatus] = useState("concept");
   const [formNotes, setFormNotes] = useState("");
   const [formItems, setFormItems] = useState<InvoiceItem[]>([{ ...emptyItem }]);
+  const [formHasDamage, setFormHasDamage] = useState(false);
+  const [formDamageAmount, setFormDamageAmount] = useState(0);
+  const [formDamageDescription, setFormDamageDescription] = useState("");
 
   // Upload form state
   const [uploadFile, setUploadFile] = useState<File | null>(null);
