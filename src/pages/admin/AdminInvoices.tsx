@@ -31,6 +31,9 @@ interface Invoice {
   has_damage: boolean;
   damage_amount: number;
   damage_description: string | null;
+  emailed_at: string | null;
+  emailed_to: string | null;
+  emailed_cc: string | null;
 }
 
 interface Customer {
