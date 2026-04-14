@@ -146,8 +146,11 @@ export type Database = {
         Row: {
           created_at: string
           customer_id: string | null
+          damage_amount: number
+          damage_description: string | null
           deleted_at: string | null
           due_date: string | null
+          has_damage: boolean
           id: string
           invoice_date: string
           invoice_month: number
@@ -169,8 +172,11 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_id?: string | null
+          damage_amount?: number
+          damage_description?: string | null
           deleted_at?: string | null
           due_date?: string | null
+          has_damage?: boolean
           id?: string
           invoice_date?: string
           invoice_month: number
@@ -192,8 +198,11 @@ export type Database = {
         Update: {
           created_at?: string
           customer_id?: string | null
+          damage_amount?: number
+          damage_description?: string | null
           deleted_at?: string | null
           due_date?: string | null
+          has_damage?: boolean
           id?: string
           invoice_date?: string
           invoice_month?: number
