@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,6 +28,9 @@ interface Invoice {
   pdf_storage_path: string | null;
   original_filename: string | null;
   notes: string | null;
+  has_damage: boolean;
+  damage_amount: number;
+  damage_description: string | null;
 }
 
 interface Customer {
@@ -63,6 +67,9 @@ const AdminInvoices = () => {
   const [formStatus, setFormStatus] = useState("concept");
   const [formNotes, setFormNotes] = useState("");
   const [formItems, setFormItems] = useState<InvoiceItem[]>([{ ...emptyItem }]);
+  const [formHasDamage, setFormHasDamage] = useState(false);
+  const [formDamageAmount, setFormDamageAmount] = useState(0);
+  const [formDamageDescription, setFormDamageDescription] = useState("");
 
   // Upload form state
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -82,7 +89,7 @@ const AdminInvoices = () => {
       supabase.from("invoices").select("*").is("deleted_at", null).order("created_at", { ascending: false }),
       supabase.from("customers").select("id, name, company_name").order("name"),
     ]);
-    setInvoices(invRes.data?.map(i => ({ ...i, total: Number(i.total), subtotal: Number(i.subtotal), vat_total: Number(i.vat_total) })) ?? []);
+    setInvoices(invRes.data?.map(i => ({ ...i, total: Number(i.total), subtotal: Number(i.subtotal), vat_total: Number(i.vat_total), damage_amount: Number(i.damage_amount) })) ?? []);
     setCustomers(custRes.data ?? []);
     setLoading(false);
   };
@@ -100,9 +107,15 @@ const AdminInvoices = () => {
     const date = new Date(formDate);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
+    const damageAmount = formHasDamage ? Math.round(Math.max(0, formDamageAmount) * 100) / 100 : 0;
+
+    const damageFields = {
+      has_damage: formHasDamage,
+      damage_amount: damageAmount,
+      damage_description: formHasDamage ? (formDamageDescription || null) : null,
+    };
 
     if (editingId) {
-      // Update invoice
       const { error } = await supabase.from("invoices").update({
         customer_id: formCustomerId || null,
         invoice_date: formDate,
@@ -112,11 +125,11 @@ const AdminInvoices = () => {
         invoice_month: month,
         notes: formNotes || null,
         ...totals,
+        ...damageFields,
       }).eq("id", editingId);
 
       if (error) { toast({ title: "Fout", description: error.message, variant: "destructive" }); return; }
 
-      // Delete old items and insert new
       await supabase.from("invoice_items").delete().eq("invoice_id", editingId);
       const itemsPayload = formItems.filter(i => i.description).map(i => ({
         invoice_id: editingId,
@@ -128,11 +141,9 @@ const AdminInvoices = () => {
       }));
       if (itemsPayload.length > 0) await supabase.from("invoice_items").insert(itemsPayload);
 
-      // Log activity
       await supabase.from("activity_logs").insert({ type: "invoice_updated", reference_id: editingId, description: `Factuur bijgewerkt` });
       toast({ title: "Factuur bijgewerkt" });
     } else {
-      // Generate invoice number
       const { data: numData, error: numError } = await supabase.rpc("generate_invoice_number", { p_year: year });
       if (numError) { toast({ title: "Fout", description: numError.message, variant: "destructive" }); return; }
 
@@ -147,6 +158,7 @@ const AdminInvoices = () => {
         invoice_month: month,
         notes: formNotes || null,
         ...totals,
+        ...damageFields,
       }).select("id").single();
 
       if (error) { toast({ title: "Fout", description: error.message, variant: "destructive" }); return; }
@@ -177,6 +189,9 @@ const AdminInvoices = () => {
     setFormDueDate(inv.due_date ?? "");
     setFormStatus(inv.status);
     setFormNotes(inv.notes ?? "");
+    setFormHasDamage(inv.has_damage);
+    setFormDamageAmount(inv.damage_amount);
+    setFormDamageDescription(inv.damage_description ?? "");
 
     const { data: items } = await supabase.from("invoice_items").select("*").eq("invoice_id", inv.id);
     if (items && items.length > 0) {
@@ -254,6 +269,9 @@ const AdminInvoices = () => {
     setFormStatus("concept");
     setFormNotes("");
     setFormItems([{ ...emptyItem }]);
+    setFormHasDamage(false);
+    setFormDamageAmount(0);
+    setFormDamageDescription("");
   };
 
   const resetUploadForm = () => {
@@ -416,10 +434,58 @@ const AdminInvoices = () => {
                   </div>
                 </div>
 
+                {/* Schade correctie */}
+                <div className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="has-damage"
+                      checked={formHasDamage}
+                      onCheckedChange={(checked) => setFormHasDamage(checked === true)}
+                    />
+                    <Label htmlFor="has-damage" className="cursor-pointer font-medium">Schade verrekenen</Label>
+                  </div>
+                  {formHasDamage && (
+                    <div className="grid grid-cols-2 gap-4 pl-6">
+                      <div className="space-y-2">
+                        <Label>Schadebedrag (€)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formDamageAmount}
+                          onChange={e => setFormDamageAmount(Math.max(0, parseFloat(e.target.value) || 0))}
+                        />
+                        {formDamageAmount > totals.total && (
+                          <p className="text-xs text-destructive">Schadebedrag is hoger dan het totaalbedrag</p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Omschrijving schade</Label>
+                        <Input
+                          value={formDamageDescription}
+                          onChange={e => setFormDamageDescription(e.target.value)}
+                          placeholder="Beschrijf de schade..."
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="bg-muted/50 rounded-lg p-4 space-y-1 text-right">
                   <p className="text-sm text-muted-foreground">Subtotaal: {formatCurrency(totals.subtotal)}</p>
                   <p className="text-sm text-muted-foreground">BTW: {formatCurrency(totals.vat_total)}</p>
-                  <p className="text-lg font-bold">Totaal: {formatCurrency(totals.total)}</p>
+                  <p className="text-sm text-muted-foreground">Totaal: {formatCurrency(totals.total)}</p>
+                  {formHasDamage && formDamageAmount > 0 && (
+                    <>
+                      <p className="text-sm text-destructive font-medium">Schade correctie: - {formatCurrency(Math.round(formDamageAmount * 100) / 100)}</p>
+                      <div className="border-t border-border pt-1 mt-1">
+                        <p className="text-lg font-bold">Eindtotaal: {formatCurrency(Math.round((totals.total - formDamageAmount) * 100) / 100)}</p>
+                      </div>
+                    </>
+                  )}
+                  {(!formHasDamage || formDamageAmount === 0) && (
+                    <p className="text-lg font-bold">Eindtotaal: {formatCurrency(totals.total)}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2"><Label>Notities</Label><Input value={formNotes} onChange={e => setFormNotes(e.target.value)} /></div>
