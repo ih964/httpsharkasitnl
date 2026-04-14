@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
     doc.line(margin, y, pw - margin, y);
     y += 5;
 
-    const paymentText = `Wij verzoeken u het bedrag van ${fmt(finalTotal)} uiterlijk ${dueDateFormatted} over te maken naar rekeningnummer ${iban} ten name van ${companyName} onder vermelding van factuurnummer ${invoice.invoice_number}.`;
+    const paymentText = `Wij verzoeken u het bedrag van ${fmt(finalTotal)} uiterlijk ${dueDateFormatted} over te maken naar rekeningnummer ${companyIban} ten name van ${companyName} onder vermelding van factuurnummer ${invoice.invoice_number}.`;
     const splitLines = doc.splitTextToSize(paymentText, cw);
     doc.text(splitLines, margin, y);
     y += splitLines.length * 4 + 4;
