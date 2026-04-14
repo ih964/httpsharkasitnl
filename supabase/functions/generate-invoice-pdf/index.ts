@@ -85,7 +85,25 @@ Deno.serve(async (req) => {
     const companyEmail = settings?.email || "info@harkasit.nl";
     const companyIban = settings?.iban || "NL22KNAB0413717895";
 
-    // Company header
+    // Logo + Company header
+    let logoAdded = false;
+    if (settings?.logo_url) {
+      try {
+        const logoRes = await fetch(settings.logo_url);
+        if (logoRes.ok) {
+          const logoBuffer = await logoRes.arrayBuffer();
+          const logoBase64 = btoa(String.fromCharCode(...new Uint8Array(logoBuffer)));
+          const ext = settings.logo_url.toLowerCase().includes(".png") ? "PNG" : "JPEG";
+          const logoDataUri = `data:image/${ext.toLowerCase()};base64,${logoBase64}`;
+          // Place logo top-right, max 40mm wide x 20mm tall
+          doc.addImage(logoDataUri, ext, pw - margin - 40, y - 5, 40, 20);
+          logoAdded = true;
+        }
+      } catch (_) {
+        // Logo fetch failed, continue without
+      }
+    }
+
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
     doc.text(companyName, margin, y);
