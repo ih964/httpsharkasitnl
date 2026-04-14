@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Trash2, Pencil, Upload, Download, Eye, Loader2 } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, Upload, Download, Eye, Loader2, Mail, FileDown } from "lucide-react";
 
 interface Invoice {
   id: string;
@@ -31,6 +31,9 @@ interface Invoice {
   has_damage: boolean;
   damage_amount: number;
   damage_description: string | null;
+  emailed_at: string | null;
+  emailed_to: string | null;
+  emailed_cc: string | null;
 }
 
 interface Customer {
@@ -105,7 +108,14 @@ const AdminInvoices = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
-
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailInvoice, setEmailInvoice] = useState<Invoice | null>(null);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailCc, setEmailCc] = useState(true);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [exportYear, setExportYear] = useState<string>("all");
+  const [exportMonth, setExportMonth] = useState<string>("all");
+  const [exportStatus, setExportStatus] = useState<string>("all");
   // Form state
   const [formCustomerId, setFormCustomerId] = useState("");
   const [formDate, setFormDate] = useState(new Date().toISOString().split("T")[0]);
@@ -344,6 +354,88 @@ const AdminInvoices = () => {
     const { data, error } = await supabase.storage.from("invoices").createSignedUrl(path, 60);
     if (error || !data?.signedUrl) { toast({ title: "Fout bij openen PDF", variant: "destructive" }); return; }
     window.open(data.signedUrl, "_blank");
+  };
+
+  const openEmailDialog = (inv: Invoice) => {
+    setEmailInvoice(inv);
+    const cust = customers.find(c => c.id === inv.customer_id);
+    setEmailTo(cust?.email || "");
+    setEmailCc(true);
+    setEmailDialogOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailInvoice || !emailTo) return;
+    setSendingEmail(true);
+    try {
+      // Ensure PDF exists first
+      if (!emailInvoice.pdf_storage_path) {
+        await generatePdf(emailInvoice.id);
+      }
+      const { error } = await supabase.functions.invoke("send-invoice-email", {
+        body: {
+          invoice_id: emailInvoice.id,
+          recipient_email: emailTo,
+          cc_email: emailCc ? "administratie@harkasit.nl" : undefined,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Factuur verzonden", description: `E-mail verstuurd naar ${emailTo}` });
+      setEmailDialogOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Fout bij verzenden", description: err.message, variant: "destructive" });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const exportCsv = () => {
+    const exportFiltered = invoices.filter(i => {
+      if (exportYear !== "all" && i.invoice_year !== parseInt(exportYear)) return false;
+      if (exportMonth !== "all" && i.invoice_month !== parseInt(exportMonth)) return false;
+      if (exportStatus !== "all" && i.status !== exportStatus) return false;
+      return true;
+    });
+
+    const headers = ["invoice_number","invoice_date","due_date","customer_name","company_name","email","vat_number","kvk_number","status","source_type","subtotal","vat_total","total","final_total","damage_amount","emailed_at","notes"];
+    const rows = exportFiltered.map(inv => {
+      const cust = customers.find(c => c.id === inv.customer_id);
+      const finalTotal = inv.has_damage && inv.damage_amount > 0
+        ? Math.round((inv.total - inv.damage_amount) * 100) / 100
+        : inv.total;
+      return [
+        inv.invoice_number,
+        inv.invoice_date,
+        inv.due_date || "",
+        cust?.name || "",
+        cust?.company_name || "",
+        cust?.email || "",
+        cust?.vat_number || "",
+        cust?.kvk_number || "",
+        inv.status,
+        inv.source_type,
+        inv.subtotal.toFixed(2),
+        inv.vat_total.toFixed(2),
+        inv.total.toFixed(2),
+        finalTotal.toFixed(2),
+        inv.damage_amount.toFixed(2),
+        inv.emailed_at || "",
+        inv.notes || "",
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+    });
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ym = exportYear !== "all" ? exportYear : new Date().getFullYear();
+    const mm = exportMonth !== "all" ? exportMonth.padStart(2, "0") : "alle";
+    a.href = url;
+    a.download = `invoices-${ym}-${mm}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV geëxporteerd" });
   };
 
   const resetForm = () => {
@@ -692,6 +784,46 @@ const AdminInvoices = () => {
         </Select>
       </div>
 
+      {/* CSV Export */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-medium">SnelStart Export:</span>
+            <Select value={exportYear} onValueChange={setExportYear}>
+              <SelectTrigger className="w-28"><SelectValue placeholder="Jaar" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle jaren</SelectItem>
+                {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={exportMonth} onValueChange={setExportMonth}>
+              <SelectTrigger className="w-32"><SelectValue placeholder="Maand" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle maanden</SelectItem>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <SelectItem key={i + 1} value={(i + 1).toString()}>
+                    {new Date(2000, i).toLocaleString("nl-NL", { month: "long" })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={exportStatus} onValueChange={setExportStatus}>
+              <SelectTrigger className="w-32"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="concept">Concept</SelectItem>
+                <SelectItem value="verzonden">Verzonden</SelectItem>
+                <SelectItem value="betaald">Betaald</SelectItem>
+                <SelectItem value="vervallen">Vervallen</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={exportCsv}>
+              <FileDown className="h-4 w-4 mr-1" /> CSV Export
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Table */}
       <Card>
         <CardContent className="p-0">
@@ -709,7 +841,7 @@ const AdminInvoices = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Bron</TableHead>
                   <TableHead className="text-right">Bedrag</TableHead>
-                  <TableHead className="w-36"></TableHead>
+                  <TableHead className="w-44"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -719,7 +851,14 @@ const AdminInvoices = () => {
                     <TableCell>{inv.customer_id ? customerMap[inv.customer_id] ?? "—" : "—"}</TableCell>
                     <TableCell>{new Date(inv.invoice_date).toLocaleDateString("nl-NL")}</TableCell>
                     <TableCell>
-                      <span className={`text-xs px-2 py-1 rounded-full ${statusColor[inv.status]}`}>{statusLabel[inv.status]}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-xs px-2 py-1 rounded-full ${statusColor[inv.status]}`}>{statusLabel[inv.status]}</span>
+                        {inv.emailed_at && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                            <Mail className="h-3 w-3 mr-0.5" /> Gemaild
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={inv.source_type === "uploaded" ? "secondary" : "outline"}>
@@ -747,6 +886,14 @@ const AdminInvoices = () => {
                         >
                           <Download className="h-4 w-4" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEmailDialog(inv)}
+                          title="Factuur mailen"
+                        >
+                          <Mail className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(inv)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
@@ -758,6 +905,43 @@ const AdminInvoices = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Email Dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Factuur mailen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>E-mailadres ontvanger</Label>
+              <Input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder="klant@voorbeeld.nl" type="email" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="email-cc"
+                checked={emailCc}
+                onCheckedChange={c => setEmailCc(c === true)}
+              />
+              <Label htmlFor="email-cc" className="cursor-pointer text-sm">
+                CC naar administratie@harkasit.nl
+              </Label>
+            </div>
+            {emailInvoice && (
+              <div className="text-sm text-muted-foreground bg-muted/50 rounded p-3">
+                <p>Factuur: <strong>{emailInvoice.invoice_number}</strong></p>
+                <p>Bedrag: <strong>{formatCurrency(emailInvoice.total)}</strong></p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Annuleren</Button>
+            <Button onClick={handleSendEmail} disabled={sendingEmail || !emailTo}>
+              {sendingEmail ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Verzenden...</> : <><Mail className="h-4 w-4 mr-1" /> Versturen</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

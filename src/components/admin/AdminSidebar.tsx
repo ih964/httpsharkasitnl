@@ -12,13 +12,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, FileText, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Calculator, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const items = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Facturen", url: "/admin/invoices", icon: FileText },
   { title: "Klanten", url: "/admin/customers", icon: Users },
+  { title: "BTW overzicht", url: "/admin/btw-overzicht", icon: Calculator },
 ];
 
 const AdminSidebar = () => {
