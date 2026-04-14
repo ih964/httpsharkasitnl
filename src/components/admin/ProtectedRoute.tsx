@@ -12,16 +12,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!session) {
+  if (!session || !isAdmin) {
     return <Navigate to="/admin/login" replace />;
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-destructive text-lg">Geen toegang. Alleen admins.</p>
-      </div>
-    );
   }
 
   return <>{children}</>;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,28 +12,46 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, isAdmin, session } = useAuth();
+  const { signIn, signOut, isAdmin, isLoading, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // If already logged in as admin, redirect
-  if (session && isAdmin) {
-    navigate("/admin", { replace: true });
-    return null;
-  }
+  // Redirect via useEffect, not in render body
+  useEffect(() => {
+    if (!isLoading && session && isAdmin) {
+      console.log("[Login] Redirecting to /admin (session + admin confirmed)");
+      navigate("/admin", { replace: true });
+    }
+  }, [session, isAdmin, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await signIn(email, password);
-    if (error) {
-      toast({ title: "Login mislukt", description: error.message, variant: "destructive" });
-    } else {
-      // Small delay to let auth state update
-      setTimeout(() => navigate("/admin", { replace: true }), 500);
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        console.error("[Login] submit error:", error);
+        toast({ title: "Login mislukt", description: error.message, variant: "destructive" });
+      } else {
+        console.log("[Login] submit success, waiting for auth state...");
+        // Don't navigate here — the useEffect above handles it once isAdmin is set
+      }
+    } catch (err: any) {
+      console.error("[Login] submit exception:", err);
+      toast({ title: "Login mislukt", description: "Er is een onverwachte fout opgetreden.", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
+
+  // Show loading while auth context initializes
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
