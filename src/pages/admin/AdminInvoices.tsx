@@ -27,6 +27,9 @@ interface Invoice {
   pdf_storage_path: string | null;
   original_filename: string | null;
   notes: string | null;
+  has_damage: boolean;
+  damage_amount: number;
+  damage_description: string | null;
 }
 
 interface Customer {
