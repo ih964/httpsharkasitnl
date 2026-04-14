@@ -89,7 +89,7 @@ const AdminInvoices = () => {
       supabase.from("invoices").select("*").is("deleted_at", null).order("created_at", { ascending: false }),
       supabase.from("customers").select("id, name, company_name").order("name"),
     ]);
-    setInvoices(invRes.data?.map(i => ({ ...i, total: Number(i.total), subtotal: Number(i.subtotal), vat_total: Number(i.vat_total) })) ?? []);
+    setInvoices(invRes.data?.map(i => ({ ...i, total: Number(i.total), subtotal: Number(i.subtotal), vat_total: Number(i.vat_total), damage_amount: Number(i.damage_amount) })) ?? []);
     setCustomers(custRes.data ?? []);
     setLoading(false);
   };
