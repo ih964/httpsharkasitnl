@@ -1,84 +1,43 @@
 
 
-# Professionele Factuurmodule Uitbreiding
+## Plan: Replace SMTP with Resend for Invoice Emails
 
-## Wat is er al aanwezig
-- Factuurregels UX met desktop kolommen + mobiele cards
-- BTW dropdown (21% + custom)
-- Correcte berekeningen
-- Schade correctie
-- PDF generatie edge function
-- Preview/download
-- Storage bucket `invoices`
+### Step 1: Connect Resend connector
+Use the `standard_connectors--connect` tool with connector_id `resend` to link Resend to the project. This provides `RESEND_API_KEY` and `LOVABLE_API_KEY` as environment variables.
 
-## Wat moet gebouwd worden
+### Step 2: Rewrite `supabase/functions/send-invoice-email/index.ts`
 
-### 1. Database migratie
-Voeg kolommen toe aan `invoices`:
-- `emailed_at` (timestamptz, nullable)
-- `emailed_to` (text, nullable)
-- `emailed_cc` (text, nullable)
+**Remove entirely:**
+- `SMTPClient` import from denomailer
+- `SMTP_PASSWORD` check and usage
+- All SMTP client config, `.send()`, and `.close()` calls
 
-### 2. PDF: betalingsinstructies toevoegen
-Update `generate-invoice-pdf/index.ts`:
-- Voeg onder de totalen een betalingsinstructie-blok toe
-- Gebruik settings voor IBAN en bedrijfsnaam, met fallback (NL22KNAB0413717895 / Harkas Dienstverlening)
-- Format vervaldatum in NL formaat
-- Gebruik `finalTotal` (total - damage_amount) als bedrag
-- Vervaldatum logica:
-  - Gebruik `due_date` als die bestaat
-  - Anders: `invoice_date + payment_terms` (uit settings)
-  - Als `payment_terms` ook leeg: fallback naar 14 dagen
+**Add:**
+- Gateway-based Resend call via `fetch` to `https://connector-gateway.lovable.dev/resend/emails`
+- Headers: `Authorization: Bearer ${LOVABLE_API_KEY}`, `X-Connection-Api-Key: ${RESEND_API_KEY}`
+- 10-second timeout using `AbortController` + `Promise.race`
+- `from: "Harkas IT <administratie@harkasit.nl>"`
 
-### 3. Edge function: send-invoice-email
-Nieuwe edge function die:
-- Factuur + klant + settings ophaalt
-- PDF signed URL genereert (7 dagen geldig)
-- E-mail verstuurt met professionele tekst + betalingsinstructies + download-link
-- `emailed_at`, `emailed_to` en `emailed_cc` updatet op de factuur
-- CC optie naar administratie@harkasit.nl
+**Error handling (per your requirements):**
+- Log full Resend response body with `console.error`
+- Parse and return the actual Resend error message to frontend (not generic)
+- Only update `emailed_at`, `emailed_to`, `emailed_cc` and insert activity log AFTER confirmed successful Resend response (`response.ok === true`)
 
-Dit is een professionele basisoplossing (fase 1). De functie wordt zo opgezet dat deze later uitbreidbaar is naar echte bijlagen wanneer dat ondersteund wordt. De e-mail bevat een beveiligde download-link naar de factuur-PDF.
+**Keep unchanged:**
+- Auth + admin role check
+- Invoice/customer/settings fetch
+- Signed URL creation (7 days)
+- finalTotal calculation
+- Due date logic
+- Email HTML template
+- CORS handling
 
-### 4. UI: Factuur mailen knop
-In `AdminInvoices.tsx`:
-- "Factuur mailen" knop per factuur
-- Dialog met: klant e-mail (editable), CC checkbox (administratie@harkasit.nl)
-- Na verzending: badge "Gemaild" in de factuurlijst
+### Step 3: Deploy and test
+Deploy the updated edge function and test with a real invoice.
 
-### 5. BTW Overzicht pagina
-Nieuwe pagina `src/pages/admin/AdminBtwOverzicht.tsx`:
-- Route: `/admin/btw-overzicht`
-- Per maand: omzet excl. BTW, BTW bedrag, omzet incl. BTW, aantal facturen
-- Filter op jaar
-- Alleen facturen waar `deleted_at IS NULL`
-- Jaartotaal onderaan
+### Files changed
 
-### 6. SnelStart CSV Export
-In `AdminInvoices.tsx`:
-- Export knop met filters (jaar, maand, status)
-- CSV met kolommen: invoice_number, invoice_date, due_date, customer_name, company_name, email, vat_number, kvk_number, status, source_type, subtotal, vat_total, total, **final_total**, damage_amount, emailed_at, notes
-- `final_total` = total - damage_amount (berekend tijdens export)
-- Bestandsnaam: `invoices-YYYY-MM.csv`
-- Client-side CSV generatie
-
-### 7. Sidebar uitbreiden
-Update `AdminSidebar.tsx`:
-- Voeg "BTW overzicht" toe met Calculator icon
-
-### 8. Routing
-Update `App.tsx`:
-- Voeg route `/admin/btw-overzicht` toe
-
-## Bestanden die worden aangemaakt/gewijzigd
-
-| Bestand | Actie |
-|---------|-------|
-| Migratie | emailed_at, emailed_to, emailed_cc kolommen |
-| `supabase/functions/generate-invoice-pdf/index.ts` | Betalingsinstructies + vervaldatum fallback |
-| `supabase/functions/send-invoice-email/index.ts` | Nieuw: e-mail met signed URL (fase 1, uitbreidbaar) |
-| `src/pages/admin/AdminInvoices.tsx` | Mail knop, badge, CSV export met final_total |
-| `src/pages/admin/AdminBtwOverzicht.tsx` | Nieuw: BTW overzicht |
-| `src/components/admin/AdminSidebar.tsx` | BTW overzicht menu-item |
-| `src/App.tsx` | Nieuwe route |
+| File | Action |
+|------|--------|
+| `supabase/functions/send-invoice-email/index.ts` | Rewrite SMTP → Resend gateway |
 
