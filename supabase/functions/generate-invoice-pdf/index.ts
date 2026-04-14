@@ -6,6 +6,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function addDays(dateStr: string, days: number): Date {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function formatDateNL(dateStr: string | Date): string {
+  const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+  return d.toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -21,7 +32,6 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify user with anon client
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -30,10 +40,8 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Use service role for data access
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Check admin role
     const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
     if (!roleData) {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -44,23 +52,19 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "invoice_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Fetch invoice
     const { data: invoice, error: invError } = await supabase.from("invoices").select("*").eq("id", invoice_id).single();
     if (invError || !invoice) {
       return new Response(JSON.stringify({ error: "Invoice not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Fetch items
     const { data: items } = await supabase.from("invoice_items").select("*").eq("invoice_id", invoice_id).order("created_at");
 
-    // Fetch customer
     let customer = null;
     if (invoice.customer_id) {
       const { data } = await supabase.from("customers").select("*").eq("id", invoice.customer_id).single();
       customer = data;
     }
 
-    // Fetch settings
     const { data: settings } = await supabase.from("settings").select("*").limit(1).maybeSingle();
 
     // Generate PDF
@@ -103,10 +107,17 @@ Deno.serve(async (req) => {
     metaY += 5;
     doc.text(`Datum: ${new Date(invoice.invoice_date).toLocaleDateString("nl-NL")}`, metaX, metaY, { align: "right" });
     metaY += 5;
+
+    // Calculate effective due date
+    let effectiveDueDate: Date;
     if (invoice.due_date) {
-      doc.text(`Vervaldatum: ${new Date(invoice.due_date).toLocaleDateString("nl-NL")}`, metaX, metaY, { align: "right" });
-      metaY += 5;
+      effectiveDueDate = new Date(invoice.due_date);
+    } else {
+      const paymentTerms = settings?.payment_terms ?? 14;
+      effectiveDueDate = addDays(invoice.invoice_date, paymentTerms);
     }
+    doc.text(`Vervaldatum: ${formatDateNL(effectiveDueDate)}`, metaX, metaY, { align: "right" });
+    metaY += 5;
 
     // Customer
     if (customer) {
@@ -147,7 +158,7 @@ Deno.serve(async (req) => {
     for (const item of lineItems) {
       const lineSub = Math.round(Number(item.quantity) * Number(item.price) * 100) / 100;
 
-      if (y > 260) {
+      if (y > 250) {
         doc.addPage();
         y = 20;
       }
@@ -225,6 +236,25 @@ Deno.serve(async (req) => {
       y += 6;
     }
 
+    // Payment instructions
+    y += 4;
+    if (y > 250) { doc.addPage(); y = 20; }
+
+    const iban = settings?.iban || "NL22KNAB0413717895";
+    const companyName = settings?.company_name || "Harkas Dienstverlening";
+    const dueDateFormatted = formatDateNL(effectiveDueDate);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setDrawColor(200);
+    doc.line(margin, y, pw - margin, y);
+    y += 5;
+
+    const paymentText = `Wij verzoeken u het bedrag van ${fmt(finalTotal)} uiterlijk ${dueDateFormatted} over te maken naar rekeningnummer ${iban} ten name van ${companyName} onder vermelding van factuurnummer ${invoice.invoice_number}.`;
+    const splitLines = doc.splitTextToSize(paymentText, cw);
+    doc.text(splitLines, margin, y);
+    y += splitLines.length * 4 + 4;
+
     // Footer
     if (settings?.invoice_footer_text) {
       doc.setFontSize(7);
@@ -236,7 +266,6 @@ Deno.serve(async (req) => {
     const pdfBytes = doc.output("arraybuffer");
     const pdfPath = `invoices/${invoice_id}.pdf`;
 
-    // Remove old file if exists
     await supabase.storage.from("invoices").remove([pdfPath]);
 
     const { error: uploadError } = await supabase.storage
@@ -250,7 +279,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update invoice record
     await supabase.from("invoices").update({ pdf_storage_path: pdfPath }).eq("id", invoice_id);
 
     return new Response(JSON.stringify({ success: true, pdf_path: pdfPath }), {
