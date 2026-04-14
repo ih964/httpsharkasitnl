@@ -189,6 +189,9 @@ const AdminInvoices = () => {
     setFormDueDate(inv.due_date ?? "");
     setFormStatus(inv.status);
     setFormNotes(inv.notes ?? "");
+    setFormHasDamage(inv.has_damage);
+    setFormDamageAmount(inv.damage_amount);
+    setFormDamageDescription(inv.damage_description ?? "");
 
     const { data: items } = await supabase.from("invoice_items").select("*").eq("invoice_id", inv.id);
     if (items && items.length > 0) {
