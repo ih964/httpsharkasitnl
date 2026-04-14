@@ -20,6 +20,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminBtwOverzicht from "./pages/admin/AdminBtwOverzicht";
+import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="invoices" element={<AdminInvoices />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="btw-overzicht" element={<AdminBtwOverzicht />} />
+              <Route path="settings" element={<AdminSettings />} />
             </Route>
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
