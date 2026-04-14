@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -75,7 +76,6 @@ Deno.serve(async (req) => {
     // Ensure PDF exists
     let pdfPath = invoice.pdf_storage_path;
     if (!pdfPath) {
-      // Generate PDF first via the other function (call internally)
       return new Response(JSON.stringify({ error: "PDF moet eerst gegenereerd worden. Genereer de PDF en probeer opnieuw." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -157,37 +157,36 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    // Send email via Resend
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) {
-      return new Response(JSON.stringify({ error: "E-mail service niet geconfigureerd (RESEND_API_KEY ontbreekt)" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Send email via SMTP (Cloud86 / Plesk)
+    const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD");
+    if (!SMTP_PASSWORD) {
+      return new Response(JSON.stringify({ error: "E-mail service niet geconfigureerd (SMTP_PASSWORD ontbreekt)" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const fromEmail = settings?.email || "administratie@harkasit.nl";
-    const emailPayload: any = {
-      from: `${companyName} <${fromEmail}>`,
-      to: [recipient_email],
-      subject: `Factuur ${invoice.invoice_number} – ${companyName}`,
-      html: emailHtml,
-    };
-
-    if (cc_email) {
-      emailPayload.cc = [cc_email];
-    }
-
-    const resendRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
+    const smtpClient = new SMTPClient({
+      connection: {
+        hostname: "harkasit.nl",
+        port: 465,
+        tls: true,
+        auth: {
+          username: "administratie@harkasit.nl",
+          password: SMTP_PASSWORD,
+        },
       },
-      body: JSON.stringify(emailPayload),
     });
 
-    if (!resendRes.ok) {
-      const errBody = await resendRes.text();
-      return new Response(JSON.stringify({ error: `E-mail verzenden mislukt: ${errBody}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    const toAddresses = [recipient_email];
+    const ccAddresses = cc_email ? [cc_email] : undefined;
+
+    await smtpClient.send({
+      from: `${companyName} <administratie@harkasit.nl>`,
+      to: toAddresses,
+      cc: ccAddresses,
+      subject: `Factuur ${invoice.invoice_number} – ${companyName}`,
+      html: emailHtml,
+    });
+
+    await smtpClient.close();
 
     // Update invoice
     await supabase.from("invoices").update({
