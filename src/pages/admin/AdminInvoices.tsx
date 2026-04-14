@@ -107,9 +107,15 @@ const AdminInvoices = () => {
     const date = new Date(formDate);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
+    const damageAmount = formHasDamage ? Math.round(Math.max(0, formDamageAmount) * 100) / 100 : 0;
+
+    const damageFields = {
+      has_damage: formHasDamage,
+      damage_amount: damageAmount,
+      damage_description: formHasDamage ? (formDamageDescription || null) : null,
+    };
 
     if (editingId) {
-      // Update invoice
       const { error } = await supabase.from("invoices").update({
         customer_id: formCustomerId || null,
         invoice_date: formDate,
@@ -119,11 +125,11 @@ const AdminInvoices = () => {
         invoice_month: month,
         notes: formNotes || null,
         ...totals,
+        ...damageFields,
       }).eq("id", editingId);
 
       if (error) { toast({ title: "Fout", description: error.message, variant: "destructive" }); return; }
 
-      // Delete old items and insert new
       await supabase.from("invoice_items").delete().eq("invoice_id", editingId);
       const itemsPayload = formItems.filter(i => i.description).map(i => ({
         invoice_id: editingId,
@@ -135,11 +141,9 @@ const AdminInvoices = () => {
       }));
       if (itemsPayload.length > 0) await supabase.from("invoice_items").insert(itemsPayload);
 
-      // Log activity
       await supabase.from("activity_logs").insert({ type: "invoice_updated", reference_id: editingId, description: `Factuur bijgewerkt` });
       toast({ title: "Factuur bijgewerkt" });
     } else {
-      // Generate invoice number
       const { data: numData, error: numError } = await supabase.rpc("generate_invoice_number", { p_year: year });
       if (numError) { toast({ title: "Fout", description: numError.message, variant: "destructive" }); return; }
 
@@ -154,6 +158,7 @@ const AdminInvoices = () => {
         invoice_month: month,
         notes: formNotes || null,
         ...totals,
+        ...damageFields,
       }).select("id").single();
 
       if (error) { toast({ title: "Fout", description: error.message, variant: "destructive" }); return; }
