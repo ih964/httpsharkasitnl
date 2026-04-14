@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
     const ccAddresses = cc_email ? [cc_email] : undefined;
 
     await smtpClient.send({
-      from: `${companyName} <administratie@harkasit.nl>`,
+      from: `"${companyName}" <administratie@harkasit.nl>`,
       to: toAddresses,
       cc: ccAddresses,
       subject: `Factuur ${invoice.invoice_number} – ${companyName}`,
