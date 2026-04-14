@@ -150,6 +150,9 @@ export type Database = {
           damage_description: string | null
           deleted_at: string | null
           due_date: string | null
+          emailed_at: string | null
+          emailed_cc: string | null
+          emailed_to: string | null
           has_damage: boolean
           id: string
           invoice_date: string
@@ -176,6 +179,9 @@ export type Database = {
           damage_description?: string | null
           deleted_at?: string | null
           due_date?: string | null
+          emailed_at?: string | null
+          emailed_cc?: string | null
+          emailed_to?: string | null
           has_damage?: boolean
           id?: string
           invoice_date?: string
@@ -202,6 +208,9 @@ export type Database = {
           damage_description?: string | null
           deleted_at?: string | null
           due_date?: string | null
+          emailed_at?: string | null
+          emailed_cc?: string | null
+          emailed_to?: string | null
           has_damage?: boolean
           id?: string
           invoice_date?: string
