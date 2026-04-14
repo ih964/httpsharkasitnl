@@ -784,6 +784,46 @@ const AdminInvoices = () => {
         </Select>
       </div>
 
+      {/* CSV Export */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-medium">SnelStart Export:</span>
+            <Select value={exportYear} onValueChange={setExportYear}>
+              <SelectTrigger className="w-28"><SelectValue placeholder="Jaar" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle jaren</SelectItem>
+                {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={exportMonth} onValueChange={setExportMonth}>
+              <SelectTrigger className="w-32"><SelectValue placeholder="Maand" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle maanden</SelectItem>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <SelectItem key={i + 1} value={(i + 1).toString()}>
+                    {new Date(2000, i).toLocaleString("nl-NL", { month: "long" })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={exportStatus} onValueChange={setExportStatus}>
+              <SelectTrigger className="w-32"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="concept">Concept</SelectItem>
+                <SelectItem value="verzonden">Verzonden</SelectItem>
+                <SelectItem value="betaald">Betaald</SelectItem>
+                <SelectItem value="vervallen">Vervallen</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={exportCsv}>
+              <FileDown className="h-4 w-4 mr-1" /> CSV Export
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Table */}
       <Card>
         <CardContent className="p-0">
@@ -811,7 +851,14 @@ const AdminInvoices = () => {
                     <TableCell>{inv.customer_id ? customerMap[inv.customer_id] ?? "—" : "—"}</TableCell>
                     <TableCell>{new Date(inv.invoice_date).toLocaleDateString("nl-NL")}</TableCell>
                     <TableCell>
-                      <span className={`text-xs px-2 py-1 rounded-full ${statusColor[inv.status]}`}>{statusLabel[inv.status]}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-xs px-2 py-1 rounded-full ${statusColor[inv.status]}`}>{statusLabel[inv.status]}</span>
+                        {inv.emailed_at && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                            <Mail className="h-3 w-3 mr-0.5" /> Gemaild
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={inv.source_type === "uploaded" ? "secondary" : "outline"}>
@@ -838,6 +885,14 @@ const AdminInvoices = () => {
                           disabled={generatingPdf === inv.id}
                         >
                           <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEmailDialog(inv)}
+                          title="Factuur mailen"
+                        >
+                          <Mail className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(inv)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
