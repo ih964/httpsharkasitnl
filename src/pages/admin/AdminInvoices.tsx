@@ -108,7 +108,14 @@ const AdminInvoices = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
-
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailInvoice, setEmailInvoice] = useState<Invoice | null>(null);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailCc, setEmailCc] = useState(true);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [exportYear, setExportYear] = useState<string>("all");
+  const [exportMonth, setExportMonth] = useState<string>("all");
+  const [exportStatus, setExportStatus] = useState<string>("all");
   // Form state
   const [formCustomerId, setFormCustomerId] = useState("");
   const [formDate, setFormDate] = useState(new Date().toISOString().split("T")[0]);
