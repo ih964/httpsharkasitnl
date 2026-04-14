@@ -905,6 +905,43 @@ const AdminInvoices = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Email Dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Factuur mailen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>E-mailadres ontvanger</Label>
+              <Input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder="klant@voorbeeld.nl" type="email" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="email-cc"
+                checked={emailCc}
+                onCheckedChange={c => setEmailCc(c === true)}
+              />
+              <Label htmlFor="email-cc" className="cursor-pointer text-sm">
+                CC naar administratie@harkasit.nl
+              </Label>
+            </div>
+            {emailInvoice && (
+              <div className="text-sm text-muted-foreground bg-muted/50 rounded p-3">
+                <p>Factuur: <strong>{emailInvoice.invoice_number}</strong></p>
+                <p>Bedrag: <strong>{formatCurrency(emailInvoice.total)}</strong></p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Annuleren</Button>
+            <Button onClick={handleSendEmail} disabled={sendingEmail || !emailTo}>
+              {sendingEmail ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Verzenden...</> : <><Mail className="h-4 w-4 mr-1" /> Versturen</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
