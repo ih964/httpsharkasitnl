@@ -434,10 +434,58 @@ const AdminInvoices = () => {
                   </div>
                 </div>
 
+                {/* Schade correctie */}
+                <div className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="has-damage"
+                      checked={formHasDamage}
+                      onCheckedChange={(checked) => setFormHasDamage(checked === true)}
+                    />
+                    <Label htmlFor="has-damage" className="cursor-pointer font-medium">Schade verrekenen</Label>
+                  </div>
+                  {formHasDamage && (
+                    <div className="grid grid-cols-2 gap-4 pl-6">
+                      <div className="space-y-2">
+                        <Label>Schadebedrag (€)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formDamageAmount}
+                          onChange={e => setFormDamageAmount(Math.max(0, parseFloat(e.target.value) || 0))}
+                        />
+                        {formDamageAmount > totals.total && (
+                          <p className="text-xs text-destructive">Schadebedrag is hoger dan het totaalbedrag</p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Omschrijving schade</Label>
+                        <Input
+                          value={formDamageDescription}
+                          onChange={e => setFormDamageDescription(e.target.value)}
+                          placeholder="Beschrijf de schade..."
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="bg-muted/50 rounded-lg p-4 space-y-1 text-right">
                   <p className="text-sm text-muted-foreground">Subtotaal: {formatCurrency(totals.subtotal)}</p>
                   <p className="text-sm text-muted-foreground">BTW: {formatCurrency(totals.vat_total)}</p>
-                  <p className="text-lg font-bold">Totaal: {formatCurrency(totals.total)}</p>
+                  <p className="text-sm text-muted-foreground">Totaal: {formatCurrency(totals.total)}</p>
+                  {formHasDamage && formDamageAmount > 0 && (
+                    <>
+                      <p className="text-sm text-destructive font-medium">Schade correctie: - {formatCurrency(Math.round(formDamageAmount * 100) / 100)}</p>
+                      <div className="border-t border-border pt-1 mt-1">
+                        <p className="text-lg font-bold">Eindtotaal: {formatCurrency(Math.round((totals.total - formDamageAmount) * 100) / 100)}</p>
+                      </div>
+                    </>
+                  )}
+                  {(!formHasDamage || formDamageAmount === 0) && (
+                    <p className="text-lg font-bold">Eindtotaal: {formatCurrency(totals.total)}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2"><Label>Notities</Label><Input value={formNotes} onChange={e => setFormNotes(e.target.value)} /></div>
