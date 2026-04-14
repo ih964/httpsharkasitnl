@@ -413,21 +413,85 @@ const AdminInvoices = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Regels</Label>
+                  <Label>Factuurregels</Label>
+
+                  {/* Desktop header */}
+                  <div className="hidden md:grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
+                    <div className="col-span-4">Omschrijving</div>
+                    <div className="col-span-1 text-center">Aantal</div>
+                    <div className="col-span-2 text-right">Prijs p/st</div>
+                    <div className="col-span-1 text-center">BTW %</div>
+                    <div className="col-span-3 text-right">Regeltotaal</div>
+                    <div className="col-span-1 text-center">Actie</div>
+                  </div>
+
                   <div className="space-y-2">
-                    {formItems.map((item, i) => (
-                      <div key={i} className="grid grid-cols-12 gap-2 items-end">
-                        <div className="col-span-5"><Input placeholder="Omschrijving" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} /></div>
-                        <div className="col-span-2"><Input type="number" placeholder="Aantal" value={item.quantity} onChange={e => updateItem(i, "quantity", parseFloat(e.target.value) || 0)} /></div>
-                        <div className="col-span-2"><Input type="number" placeholder="Prijs" value={item.price} onChange={e => updateItem(i, "price", parseFloat(e.target.value) || 0)} /></div>
-                        <div className="col-span-2"><Input type="number" placeholder="BTW %" value={item.vat_percentage} onChange={e => updateItem(i, "vat_percentage", parseFloat(e.target.value) || 0)} /></div>
-                        <div className="col-span-1">
-                          <Button variant="ghost" size="icon" onClick={() => setFormItems(formItems.filter((_, idx) => idx !== i))} disabled={formItems.length === 1}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                    {formItems.map((item, i) => {
+                      const lineSubtotal = Math.round(item.quantity * item.price * 100) / 100;
+                      const lineVat = Math.round(lineSubtotal * item.vat_percentage) / 100;
+                      const lineTotal = Math.round((lineSubtotal + lineVat) * 100) / 100;
+
+                      return (
+                        <div key={i}>
+                          {/* Desktop row */}
+                          <div className="hidden md:grid grid-cols-12 gap-2 items-center">
+                            <div className="col-span-4">
+                              <Input placeholder="Bijv. pakketten maart" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
+                            </div>
+                            <div className="col-span-1">
+                              <Input type="number" placeholder="1" className="text-center" value={item.quantity} onChange={e => updateItem(i, "quantity", parseFloat(e.target.value) || 0)} />
+                            </div>
+                            <div className="col-span-2">
+                              <Input type="number" placeholder="1897" className="text-right" value={item.price} onChange={e => updateItem(i, "price", parseFloat(e.target.value) || 0)} />
+                            </div>
+                            <div className="col-span-1">
+                              <Input type="number" placeholder="21" className="text-center" value={item.vat_percentage} onChange={e => updateItem(i, "vat_percentage", parseFloat(e.target.value) || 0)} />
+                            </div>
+                            <div className="col-span-3 text-right pr-1">
+                              <p className="text-sm font-medium">{formatCurrency(lineSubtotal)}</p>
+                              <p className="text-xs text-muted-foreground">incl. BTW: {formatCurrency(lineTotal)}</p>
+                            </div>
+                            <div className="col-span-1 flex justify-center">
+                              <Button variant="ghost" size="icon" onClick={() => setFormItems(formItems.filter((_, idx) => idx !== i))} disabled={formItems.length === 1}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Mobile card */}
+                          <div className="md:hidden border rounded-lg p-3 space-y-3 bg-muted/30">
+                            <div className="flex justify-between items-start">
+                              <span className="text-xs font-medium text-muted-foreground">Regel {i + 1}</span>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setFormItems(formItems.filter((_, idx) => idx !== i))} disabled={formItems.length === 1}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Omschrijving</Label>
+                              <Input placeholder="Bijv. pakketten maart" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="space-y-1">
+                                <Label className="text-xs">Aantal</Label>
+                                <Input type="number" placeholder="1" value={item.quantity} onChange={e => updateItem(i, "quantity", parseFloat(e.target.value) || 0)} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs">Prijs p/st</Label>
+                                <Input type="number" placeholder="1897" value={item.price} onChange={e => updateItem(i, "price", parseFloat(e.target.value) || 0)} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs">BTW %</Label>
+                                <Input type="number" placeholder="21" value={item.vat_percentage} onChange={e => updateItem(i, "vat_percentage", parseFloat(e.target.value) || 0)} />
+                              </div>
+                            </div>
+                            <div className="text-right border-t pt-2 border-border">
+                              <p className="text-sm font-medium">Subtotaal: {formatCurrency(lineSubtotal)}</p>
+                              <p className="text-xs text-muted-foreground">incl. BTW: {formatCurrency(lineTotal)}</p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <Button variant="outline" size="sm" onClick={() => setFormItems([...formItems, { ...emptyItem }])}>
                       <Plus className="h-4 w-4 mr-1" /> Regel toevoegen
                     </Button>
