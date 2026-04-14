@@ -269,6 +269,9 @@ const AdminInvoices = () => {
     setFormStatus("concept");
     setFormNotes("");
     setFormItems([{ ...emptyItem }]);
+    setFormHasDamage(false);
+    setFormDamageAmount(0);
+    setFormDamageDescription("");
   };
 
   const resetUploadForm = () => {
