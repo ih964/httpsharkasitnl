@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Trash2, Pencil, Upload, Download, Eye } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, Upload, Download, Eye, Loader2 } from "lucide-react";
 
 interface Invoice {
   id: string;
@@ -37,6 +37,12 @@ interface Customer {
   id: string;
   name: string;
   company_name: string | null;
+  email: string | null;
+  address: string | null;
+  postal_code: string | null;
+  city: string | null;
+  vat_number: string | null;
+  kvk_number: string | null;
 }
 
 interface InvoiceItem {
@@ -47,6 +53,45 @@ interface InvoiceItem {
 }
 
 const emptyItem: InvoiceItem = { description: "", quantity: 1, price: 0, vat_percentage: 21 };
+
+const VatSelect = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => {
+  const isCustom = value !== 21;
+  const [mode, setMode] = useState<"21" | "custom">(isCustom ? "custom" : "21");
+
+  const handleModeChange = (v: string) => {
+    if (v === "21") {
+      setMode("21");
+      onChange(21);
+    } else {
+      setMode("custom");
+    }
+  };
+
+  return (
+    <div className="flex gap-1">
+      <Select value={mode} onValueChange={handleModeChange}>
+        <SelectTrigger className="h-10 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="21">21%</SelectItem>
+          <SelectItem value="custom">Anders...</SelectItem>
+        </SelectContent>
+      </Select>
+      {mode === "custom" && (
+        <Input
+          type="number"
+          min="0"
+          max="100"
+          className="w-16 text-center text-xs"
+          value={value}
+          onChange={e => onChange(Math.max(0, parseFloat(e.target.value) || 0))}
+          placeholder="%"
+        />
+      )}
+    </div>
+  );
+};
 
 const AdminInvoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -59,6 +104,7 @@ const AdminInvoices = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
 
   // Form state
   const [formCustomerId, setFormCustomerId] = useState("");
@@ -87,7 +133,7 @@ const AdminInvoices = () => {
   const fetchData = async () => {
     const [invRes, custRes] = await Promise.all([
       supabase.from("invoices").select("*").is("deleted_at", null).order("created_at", { ascending: false }),
-      supabase.from("customers").select("id, name, company_name").order("name"),
+      supabase.from("customers").select("id, name, company_name, email, address, postal_code, city, vat_number, kvk_number").order("name"),
     ]);
     setInvoices(invRes.data?.map(i => ({ ...i, total: Number(i.total), subtotal: Number(i.subtotal), vat_total: Number(i.vat_total), damage_amount: Number(i.damage_amount) })) ?? []);
     setCustomers(custRes.data ?? []);
@@ -96,10 +142,43 @@ const AdminInvoices = () => {
 
   const customerMap = Object.fromEntries(customers.map(c => [c.id, c.name + (c.company_name ? ` (${c.company_name})` : "")]));
 
+  const calcLineSubtotal = (item: InvoiceItem) => Math.round(item.quantity * item.price * 100) / 100;
+  const calcLineVat = (item: InvoiceItem) => {
+    const sub = calcLineSubtotal(item);
+    return Math.round((sub * item.vat_percentage / 100) * 100) / 100;
+  };
+  const calcLineTotal = (item: InvoiceItem) => {
+    return Math.round((calcLineSubtotal(item) + calcLineVat(item)) * 100) / 100;
+  };
+
   const calcTotals = (items: InvoiceItem[]) => {
-    const subtotal = items.reduce((s, i) => s + i.quantity * i.price, 0);
-    const vatTotal = items.reduce((s, i) => s + (i.quantity * i.price * i.vat_percentage / 100), 0);
-    return { subtotal: Math.round(subtotal * 100) / 100, vat_total: Math.round(vatTotal * 100) / 100, total: Math.round((subtotal + vatTotal) * 100) / 100 };
+    const subtotal = items.reduce((s, i) => s + calcLineSubtotal(i), 0);
+    const vatTotal = items.reduce((s, i) => s + calcLineVat(i), 0);
+    return {
+      subtotal: Math.round(subtotal * 100) / 100,
+      vat_total: Math.round(vatTotal * 100) / 100,
+      total: Math.round((subtotal + vatTotal) * 100) / 100,
+    };
+  };
+
+  const generatePdf = async (invoiceId: string) => {
+    setGeneratingPdf(invoiceId);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-invoice-pdf", {
+        body: { invoice_id: invoiceId },
+      });
+      if (error) throw error;
+      if (data?.pdf_path) {
+        await supabase.from("invoices").update({ pdf_storage_path: data.pdf_path }).eq("id", invoiceId);
+        await fetchData();
+        return data.pdf_path;
+      }
+    } catch (err: any) {
+      toast({ title: "PDF generatie mislukt", description: err.message, variant: "destructive" });
+    } finally {
+      setGeneratingPdf(null);
+    }
+    return null;
   };
 
   const handleSave = async () => {
@@ -114,6 +193,8 @@ const AdminInvoices = () => {
       damage_amount: damageAmount,
       damage_description: formHasDamage ? (formDamageDescription || null) : null,
     };
+
+    let invoiceId = editingId;
 
     if (editingId) {
       const { error } = await supabase.from("invoices").update({
@@ -137,7 +218,7 @@ const AdminInvoices = () => {
         quantity: i.quantity,
         price: i.price,
         vat_percentage: i.vat_percentage,
-        subtotal: Math.round(i.quantity * i.price * 100) / 100,
+        subtotal: calcLineSubtotal(i),
       }));
       if (itemsPayload.length > 0) await supabase.from("invoice_items").insert(itemsPayload);
 
@@ -162,6 +243,7 @@ const AdminInvoices = () => {
       }).select("id").single();
 
       if (error) { toast({ title: "Fout", description: error.message, variant: "destructive" }); return; }
+      invoiceId = inv.id;
 
       const itemsPayload = formItems.filter(i => i.description).map(i => ({
         invoice_id: inv.id,
@@ -169,12 +251,17 @@ const AdminInvoices = () => {
         quantity: i.quantity,
         price: i.price,
         vat_percentage: i.vat_percentage,
-        subtotal: Math.round(i.quantity * i.price * 100) / 100,
+        subtotal: calcLineSubtotal(i),
       }));
       if (itemsPayload.length > 0) await supabase.from("invoice_items").insert(itemsPayload);
 
       await supabase.from("activity_logs").insert({ type: "invoice_created", reference_id: inv.id, description: `Factuur ${numData} aangemaakt` });
       toast({ title: `Factuur ${numData} aangemaakt` });
+    }
+
+    // Auto-generate PDF
+    if (invoiceId) {
+      await generatePdf(invoiceId);
     }
 
     resetForm();
@@ -247,17 +334,15 @@ const AdminInvoices = () => {
     setUploading(false);
   };
 
-  const handleDownload = async (inv: Invoice) => {
-    if (!inv.pdf_storage_path) { toast({ title: "Geen PDF beschikbaar", variant: "destructive" }); return; }
-    const { data, error } = await supabase.storage.from("invoices").createSignedUrl(inv.pdf_storage_path, 60);
-    if (error || !data?.signedUrl) { toast({ title: "Fout bij downloaden", variant: "destructive" }); return; }
-    window.open(data.signedUrl, "_blank");
-  };
-
-  const handlePreview = async (inv: Invoice) => {
-    if (!inv.pdf_storage_path) { toast({ title: "Geen PDF beschikbaar", variant: "destructive" }); return; }
-    const { data, error } = await supabase.storage.from("invoices").createSignedUrl(inv.pdf_storage_path, 60);
-    if (error || !data?.signedUrl) { toast({ title: "Fout bij preview", variant: "destructive" }); return; }
+  const openPdf = async (inv: Invoice, download = false) => {
+    let path = inv.pdf_storage_path;
+    if (!path) {
+      // Auto-generate
+      path = await generatePdf(inv.id);
+      if (!path) return;
+    }
+    const { data, error } = await supabase.storage.from("invoices").createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) { toast({ title: "Fout bij openen PDF", variant: "destructive" }); return; }
     window.open(data.signedUrl, "_blank");
   };
 
@@ -321,6 +406,9 @@ const AdminInvoices = () => {
   };
 
   const totals = calcTotals(formItems);
+  const finalTotal = formHasDamage && formDamageAmount > 0
+    ? Math.round((totals.total - formDamageAmount) * 100) / 100
+    : totals.total;
 
   return (
     <div className="space-y-6">
@@ -383,7 +471,7 @@ const AdminInvoices = () => {
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Nieuwe factuur</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editingId ? "Factuur bewerken" : "Nieuwe factuur"}</DialogTitle></DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -412,44 +500,45 @@ const AdminInvoices = () => {
                   <div className="space-y-2"><Label>Vervaldatum</Label><Input type="date" value={formDueDate} onChange={e => setFormDueDate(e.target.value)} /></div>
                 </div>
 
+                {/* Invoice lines */}
                 <div className="space-y-2">
-                  <Label>Factuurregels</Label>
+                  <Label className="text-base font-semibold">Factuurregels</Label>
 
                   {/* Desktop header */}
-                  <div className="hidden md:grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
+                  <div className="hidden md:grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground border-b border-border pb-2 px-1">
                     <div className="col-span-4">Omschrijving</div>
                     <div className="col-span-1 text-center">Aantal</div>
                     <div className="col-span-2 text-right">Prijs p/st</div>
-                    <div className="col-span-1 text-center">BTW %</div>
-                    <div className="col-span-3 text-right">Regeltotaal</div>
+                    <div className="col-span-2 text-center">BTW</div>
+                    <div className="col-span-2 text-right">Regeltotaal</div>
                     <div className="col-span-1 text-center">Actie</div>
                   </div>
 
                   <div className="space-y-2">
                     {formItems.map((item, i) => {
-                      const lineSubtotal = Math.round(item.quantity * item.price * 100) / 100;
-                      const lineVat = Math.round(lineSubtotal * item.vat_percentage) / 100;
-                      const lineTotal = Math.round((lineSubtotal + lineVat) * 100) / 100;
+                      const lineSub = calcLineSubtotal(item);
+                      const lineV = calcLineVat(item);
+                      const lineT = calcLineTotal(item);
 
                       return (
                         <div key={i}>
                           {/* Desktop row */}
-                          <div className="hidden md:grid grid-cols-12 gap-2 items-center">
+                          <div className="hidden md:grid grid-cols-12 gap-2 items-center py-1">
                             <div className="col-span-4">
-                              <Input placeholder="Bijv. pakketten maart" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
+                              <Input placeholder="Bijv. Website development" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
                             </div>
                             <div className="col-span-1">
                               <Input type="number" placeholder="1" className="text-center" value={item.quantity} onChange={e => updateItem(i, "quantity", parseFloat(e.target.value) || 0)} />
                             </div>
                             <div className="col-span-2">
-                              <Input type="number" placeholder="1897" className="text-right" value={item.price} onChange={e => updateItem(i, "price", parseFloat(e.target.value) || 0)} />
+                              <Input type="number" placeholder="100.00" className="text-right" step="0.01" value={item.price} onChange={e => updateItem(i, "price", parseFloat(e.target.value) || 0)} />
                             </div>
-                            <div className="col-span-1">
-                              <Input type="number" placeholder="21" className="text-center" value={item.vat_percentage} onChange={e => updateItem(i, "vat_percentage", parseFloat(e.target.value) || 0)} />
+                            <div className="col-span-2">
+                              <VatSelect value={item.vat_percentage} onChange={v => updateItem(i, "vat_percentage", v)} />
                             </div>
-                            <div className="col-span-3 text-right pr-1">
-                              <p className="text-sm font-medium">{formatCurrency(lineSubtotal)}</p>
-                              <p className="text-xs text-muted-foreground">incl. BTW: {formatCurrency(lineTotal)}</p>
+                            <div className="col-span-2 text-right pr-1">
+                              <p className="text-sm font-medium">{formatCurrency(lineSub)}</p>
+                              <p className="text-[10px] text-muted-foreground">+BTW {formatCurrency(lineV)} = {formatCurrency(lineT)}</p>
                             </div>
                             <div className="col-span-1 flex justify-center">
                               <Button variant="ghost" size="icon" onClick={() => setFormItems(formItems.filter((_, idx) => idx !== i))} disabled={formItems.length === 1}>
@@ -468,7 +557,7 @@ const AdminInvoices = () => {
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Omschrijving</Label>
-                              <Input placeholder="Bijv. pakketten maart" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
+                              <Input placeholder="Bijv. Website development" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                               <div className="space-y-1">
@@ -477,16 +566,16 @@ const AdminInvoices = () => {
                               </div>
                               <div className="space-y-1">
                                 <Label className="text-xs">Prijs p/st</Label>
-                                <Input type="number" placeholder="1897" value={item.price} onChange={e => updateItem(i, "price", parseFloat(e.target.value) || 0)} />
+                                <Input type="number" placeholder="100.00" step="0.01" value={item.price} onChange={e => updateItem(i, "price", parseFloat(e.target.value) || 0)} />
                               </div>
                               <div className="space-y-1">
-                                <Label className="text-xs">BTW %</Label>
-                                <Input type="number" placeholder="21" value={item.vat_percentage} onChange={e => updateItem(i, "vat_percentage", parseFloat(e.target.value) || 0)} />
+                                <Label className="text-xs">BTW</Label>
+                                <VatSelect value={item.vat_percentage} onChange={v => updateItem(i, "vat_percentage", v)} />
                               </div>
                             </div>
                             <div className="text-right border-t pt-2 border-border">
-                              <p className="text-sm font-medium">Subtotaal: {formatCurrency(lineSubtotal)}</p>
-                              <p className="text-xs text-muted-foreground">incl. BTW: {formatCurrency(lineTotal)}</p>
+                              <p className="text-sm font-medium">Subtotaal: {formatCurrency(lineSub)}</p>
+                              <p className="text-xs text-muted-foreground">+BTW {formatCurrency(lineV)} = {formatCurrency(lineT)}</p>
                             </div>
                           </div>
                         </div>
@@ -535,21 +624,30 @@ const AdminInvoices = () => {
                   )}
                 </div>
 
-                <div className="bg-muted/50 rounded-lg p-4 space-y-1 text-right">
-                  <p className="text-sm text-muted-foreground">Subtotaal: {formatCurrency(totals.subtotal)}</p>
-                  <p className="text-sm text-muted-foreground">BTW: {formatCurrency(totals.vat_total)}</p>
-                  <p className="text-sm text-muted-foreground">Totaal: {formatCurrency(totals.total)}</p>
+                {/* Totals */}
+                <div className="bg-muted/50 rounded-lg p-4 space-y-1.5 text-right">
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Subtotaal</span>
+                    <span>{formatCurrency(totals.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>BTW</span>
+                    <span>{formatCurrency(totals.vat_total)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Totaal</span>
+                    <span>{formatCurrency(totals.total)}</span>
+                  </div>
                   {formHasDamage && formDamageAmount > 0 && (
-                    <>
-                      <p className="text-sm text-destructive font-medium">Schade correctie: - {formatCurrency(Math.round(formDamageAmount * 100) / 100)}</p>
-                      <div className="border-t border-border pt-1 mt-1">
-                        <p className="text-lg font-bold">Eindtotaal: {formatCurrency(Math.round((totals.total - formDamageAmount) * 100) / 100)}</p>
-                      </div>
-                    </>
+                    <div className="flex justify-between text-sm text-destructive font-medium border-t border-border pt-1.5">
+                      <span>Schade correctie</span>
+                      <span>- {formatCurrency(Math.round(formDamageAmount * 100) / 100)}</span>
+                    </div>
                   )}
-                  {(!formHasDamage || formDamageAmount === 0) && (
-                    <p className="text-lg font-bold">Eindtotaal: {formatCurrency(totals.total)}</p>
-                  )}
+                  <div className="flex justify-between text-lg font-bold border-t border-border pt-2 mt-1">
+                    <span>Eindtotaal</span>
+                    <span>{formatCurrency(finalTotal)}</span>
+                  </div>
                 </div>
 
                 <div className="space-y-2"><Label>Notities</Label><Input value={formNotes} onChange={e => setFormNotes(e.target.value)} /></div>
@@ -611,7 +709,7 @@ const AdminInvoices = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Bron</TableHead>
                   <TableHead className="text-right">Bedrag</TableHead>
-                  <TableHead className="w-32"></TableHead>
+                  <TableHead className="w-36"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -631,12 +729,24 @@ const AdminInvoices = () => {
                     <TableCell className="text-right font-medium">{formatCurrency(inv.total)}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        {inv.pdf_storage_path && (
-                          <>
-                            <Button variant="ghost" size="icon" onClick={() => handlePreview(inv)} title="Preview"><Eye className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDownload(inv)} title="Download"><Download className="h-4 w-4" /></Button>
-                          </>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openPdf(inv)}
+                          title="Preview"
+                          disabled={generatingPdf === inv.id}
+                        >
+                          {generatingPdf === inv.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openPdf(inv, true)}
+                          title="Download"
+                          disabled={generatingPdf === inv.id}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(inv)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
