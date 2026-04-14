@@ -76,19 +76,28 @@ Deno.serve(async (req) => {
 
     const fmt = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
+    // Company defaults (fallback when settings are empty)
+    const companyName = settings?.company_name || "Harkas IT";
+    const companyAddress = settings?.address || "Burgemeester de Manstraat 45";
+    const companyPostalCity = "4001VG Tiel";
+    const companyKvk = settings?.kvk || "84795085";
+    const companyVat = settings?.vat_number || "NL004014438B12";
+    const companyEmail = settings?.email || "info@harkasit.nl";
+    const companyIban = settings?.iban || "NL22KNAB0413717895";
+
     // Company header
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text(settings?.company_name || "Harkas IT", margin, y);
-    y += 8;
+    doc.text(companyName, margin, y);
+    y += 7;
 
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    if (settings?.address) { doc.text(settings.address, margin, y); y += 4; }
-    if (settings?.email) { doc.text(settings.email, margin, y); y += 4; }
-    if (settings?.kvk) { doc.text(`KVK: ${settings.kvk}`, margin, y); y += 4; }
-    if (settings?.vat_number) { doc.text(`BTW: ${settings.vat_number}`, margin, y); y += 4; }
-    if (settings?.iban) { doc.text(`IBAN: ${settings.iban}`, margin, y); y += 4; }
+    doc.text(companyAddress, margin, y); y += 4;
+    doc.text(companyPostalCity, margin, y); y += 4;
+    doc.text(companyEmail, margin, y); y += 4;
+    doc.text(`KVK: ${companyKvk}  |  BTW: ${companyVat}`, margin, y); y += 4;
+    doc.text(`IBAN: ${companyIban}`, margin, y); y += 4;
     y += 6;
 
     // Invoice title
