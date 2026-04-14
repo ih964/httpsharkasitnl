@@ -177,14 +177,22 @@ const AdminInvoices = () => {
       const { data, error } = await supabase.functions.invoke("generate-invoice-pdf", {
         body: { invoice_id: invoiceId },
       });
-      if (error) throw error;
+      if (error) {
+        console.error("PDF generation error:", error);
+        throw error;
+      }
+      if (data?.error) {
+        console.error("PDF generation server error:", data.error);
+        throw new Error(data.error);
+      }
       if (data?.pdf_path) {
         await supabase.from("invoices").update({ pdf_storage_path: data.pdf_path }).eq("id", invoiceId);
         await fetchData();
         return data.pdf_path;
       }
     } catch (err: any) {
-      toast({ title: "PDF generatie mislukt", description: err.message, variant: "destructive" });
+      console.error("PDF generation failed:", err);
+      toast({ title: "PDF generatie mislukt", description: err.message || "Onbekende fout", variant: "destructive" });
     } finally {
       setGeneratingPdf(null);
     }

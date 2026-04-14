@@ -269,8 +269,6 @@ Deno.serve(async (req) => {
 
     const dueDateFormatted = formatDateNL(effectiveDueDate);
 
-    const paymentText = `Wij verzoeken u het bedrag van ${fmt(finalTotal)} uiterlijk ${dueDateFormatted} over te maken naar rekeningnummer ${companyIban} ten name van ${companyName} onder vermelding van factuurnummer ${invoice.invoice_number}.`;
-
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setDrawColor(200);
