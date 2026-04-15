@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { encode as base64Encode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +25,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // --- Auth check ---
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -44,14 +44,13 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // --- Admin check ---
     const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
     if (!roleData) {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const body = await req.json();
-    const { invoice_id, recipient_email, cc_email } = body;
+    const { invoice_id, recipient_email, cc_email, from_name, from_email } = body;
 
     if (!invoice_id || !recipient_email) {
       return new Response(JSON.stringify({ error: "invoice_id and recipient_email required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -74,16 +73,21 @@ Deno.serve(async (req) => {
     const { data: settings } = await supabase.from("settings").select("*").limit(1).maybeSingle();
 
     // --- Ensure PDF exists ---
-    const pdfPath = invoice.pdf_storage_path;
+    let pdfPath = invoice.pdf_storage_path;
     if (!pdfPath) {
       return new Response(JSON.stringify({ error: "PDF moet eerst gegenereerd worden. Genereer de PDF en probeer opnieuw." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // --- Create signed URL (7 days) ---
-    const { data: signedData, error: signError } = await supabase.storage.from("invoices").createSignedUrl(pdfPath, 7 * 24 * 60 * 60);
-    if (signError || !signedData?.signedUrl) {
-      return new Response(JSON.stringify({ error: "Could not create download link" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // --- Download PDF from storage ---
+    const { data: pdfData, error: pdfError } = await supabase.storage.from("invoices").download(pdfPath);
+    if (pdfError || !pdfData) {
+      console.error("PDF download error:", pdfError);
+      return new Response(JSON.stringify({ error: "PDF kon niet worden opgehaald uit storage" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    const pdfBytes = new Uint8Array(await pdfData.arrayBuffer());
+    const pdfBase64 = base64Encode(pdfBytes);
+    const pdfFilename = `factuur-${invoice.invoice_number}.pdf`;
 
     // --- Calculate final total ---
     const total = Number(invoice.total);
@@ -103,8 +107,9 @@ Deno.serve(async (req) => {
       effectiveDueDate = addDays(invoice.invoice_date, paymentTerms);
     }
 
+    const senderName = from_name || settings?.company_name || "Harkas IT";
+    const senderEmail = from_email || "administratie@harkasit.nl";
     const iban = settings?.iban || "NL22KNAB0413717895";
-    const companyName = settings?.company_name || "Harkas Dienstverlening";
 
     // --- Build email HTML ---
     const emailHtml = `
@@ -116,9 +121,9 @@ Deno.serve(async (req) => {
   
   <p>Beste ${customerName},</p>
   
-  <p>Hierbij ontvangt u factuur <strong>${invoice.invoice_number}</strong>.</p>
+  <p>Hierbij ontvangt u factuur <strong>${invoice.invoice_number}</strong> in de bijlage.</p>
   
-  <p>Wij verzoeken u vriendelijk het bedrag van <strong>${fmt(finalTotal)}</strong> binnen de gestelde termijn te voldoen.</p>
+  <p>Wij verzoeken u vriendelijk het openstaande bedrag van <strong>${fmt(finalTotal)}</strong> uiterlijk ${formatDateNL(effectiveDueDate)} te voldoen.</p>
   
   <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
     <tr style="background: #f5f5f5;">
@@ -139,21 +144,17 @@ Deno.serve(async (req) => {
     </tr>
   </table>
 
-  <p style="text-align: center; margin: 25px 0;">
-    <a href="${signedData.signedUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">📄 Factuur downloaden</a>
-  </p>
-
   <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 15px; margin: 20px 0;">
     <p style="margin: 0; font-size: 14px;">
       <strong>Betalingsinstructies</strong><br>
-      Wij verzoeken u het bedrag van ${fmt(finalTotal)} uiterlijk ${formatDateNL(effectiveDueDate)} over te maken naar rekeningnummer <strong>${iban}</strong> ten name van <strong>${companyName}</strong> onder vermelding van factuurnummer <strong>${invoice.invoice_number}</strong>.
+      Wij verzoeken u het bedrag van ${fmt(finalTotal)} uiterlijk ${formatDateNL(effectiveDueDate)} over te maken naar rekeningnummer <strong>${iban}</strong> ten name van <strong>${senderName}</strong> onder vermelding van factuurnummer <strong>${invoice.invoice_number}</strong>.
     </p>
   </div>
 
-  <p>Met vriendelijke groet,<br><strong>${companyName}</strong></p>
+  <p>Met vriendelijke groet,<br><strong>${senderName}</strong></p>
   
   <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0 15px;">
-  <p style="font-size: 11px; color: #999;">De download-link is 7 dagen geldig. Neem contact op als u problemen ondervindt.</p>
+  <p style="font-size: 11px; color: #999;">De factuur is als PDF bijgevoegd bij deze e-mail.</p>
 </body>
 </html>`;
 
@@ -168,18 +169,31 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "RESEND_API_KEY is niet geconfigureerd" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const emailPayload: Record<string, unknown> = {
-      from: `${companyName} <administratie@harkasit.nl>`,
-      to: [recipient_email],
-      subject: `Factuur ${invoice.invoice_number} – ${companyName}`,
-      html: emailHtml,
-    };
+    // Build CC list
+    const ccList: string[] = [];
     if (cc_email) {
-      emailPayload.cc = [cc_email];
+      const parts = String(cc_email).split(",").map((s: string) => s.trim()).filter((s: string) => s.length > 0);
+      ccList.push(...parts);
+    }
+
+    const emailPayload: Record<string, unknown> = {
+      from: `${senderName} <${senderEmail}>`,
+      to: [recipient_email],
+      subject: `Factuur ${invoice.invoice_number} – ${senderName}`,
+      html: emailHtml,
+      attachments: [
+        {
+          filename: pdfFilename,
+          content: pdfBase64,
+        },
+      ],
+    };
+    if (ccList.length > 0) {
+      emailPayload.cc = ccList;
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     let resendResponse: Response;
     try {
@@ -225,7 +239,7 @@ Deno.serve(async (req) => {
     await supabase.from("activity_logs").insert({
       type: "invoice_emailed",
       reference_id: invoice_id,
-      description: `Factuur ${invoice.invoice_number} gemaild naar ${recipient_email}${cc_email ? ` (CC: ${cc_email})` : ""}`,
+      description: `Factuur ${invoice.invoice_number} gemaild naar ${recipient_email}${cc_email ? ` (CC: ${cc_email})` : ""} met PDF bijlage`,
     });
 
     return new Response(JSON.stringify({ success: true }), {
