@@ -111,7 +111,9 @@ const AdminInvoices = () => {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailInvoice, setEmailInvoice] = useState<Invoice | null>(null);
   const [emailTo, setEmailTo] = useState("");
-  const [emailCc, setEmailCc] = useState(true);
+  const [emailCc, setEmailCc] = useState("administratie@harkasit.nl");
+  const [emailFromName, setEmailFromName] = useState("Harkas IT");
+  const [emailFromEmail, setEmailFromEmail] = useState("administratie@harkasit.nl");
   const [sendingEmail, setSendingEmail] = useState(false);
   const [exportYear, setExportYear] = useState<string>("all");
   const [exportMonth, setExportMonth] = useState<string>("all");
