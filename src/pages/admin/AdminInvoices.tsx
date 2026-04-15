@@ -370,27 +370,51 @@ const AdminInvoices = () => {
     setEmailInvoice(inv);
     const cust = customers.find(c => c.id === inv.customer_id);
     setEmailTo(cust?.email || "");
-    setEmailCc(true);
+    setEmailCc("administratie@harkasit.nl");
+    setEmailFromName("Harkas IT");
+    setEmailFromEmail("administratie@harkasit.nl");
     setEmailDialogOpen(true);
   };
 
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const validateEmailForm = (): string | null => {
+    if (!emailTo.trim()) return "Ontvanger e-mailadres is verplicht";
+    if (!isValidEmail(emailTo.trim())) return "Ontvanger e-mailadres is ongeldig";
+    if (!emailFromEmail.trim()) return "Afzender e-mailadres is verplicht";
+    if (!isValidEmail(emailFromEmail.trim())) return "Afzender e-mailadres is ongeldig";
+    if (emailCc.trim()) {
+      const ccParts = emailCc.split(",").map(s => s.trim()).filter(s => s);
+      for (const part of ccParts) {
+        if (!isValidEmail(part)) return `Ongeldig CC e-mailadres: ${part}`;
+      }
+    }
+    return null;
+  };
+
   const handleSendEmail = async () => {
-    if (!emailInvoice || !emailTo) return;
+    if (!emailInvoice) return;
+    const validationError = validateEmailForm();
+    if (validationError) {
+      toast({ title: "Validatiefout", description: validationError, variant: "destructive" });
+      return;
+    }
     setSendingEmail(true);
     try {
-      // Ensure PDF exists first
       if (!emailInvoice.pdf_storage_path) {
         await generatePdf(emailInvoice.id);
       }
       const { error } = await supabase.functions.invoke("send-invoice-email", {
         body: {
           invoice_id: emailInvoice.id,
-          recipient_email: emailTo,
-          cc_email: emailCc ? "administratie@harkasit.nl" : undefined,
+          recipient_email: emailTo.trim(),
+          cc_email: emailCc.trim() || undefined,
+          from_name: emailFromName.trim() || undefined,
+          from_email: emailFromEmail.trim() || undefined,
         },
       });
       if (error) throw error;
-      toast({ title: "Factuur verzonden", description: `E-mail verstuurd naar ${emailTo}` });
+      toast({ title: "Factuur verzonden", description: `E-mail met PDF bijlage verstuurd naar ${emailTo}` });
       setEmailDialogOpen(false);
       fetchData();
     } catch (err: any) {
@@ -918,35 +942,40 @@ const AdminInvoices = () => {
 
       {/* Email Dialog */}
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Factuur mailen</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>E-mailadres ontvanger</Label>
-              <Input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder="klant@voorbeeld.nl" type="email" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="email-cc"
-                checked={emailCc}
-                onCheckedChange={c => setEmailCc(c === true)}
-              />
-              <Label htmlFor="email-cc" className="cursor-pointer text-sm">
-                CC naar administratie@harkasit.nl
-              </Label>
-            </div>
             {emailInvoice && (
               <div className="text-sm text-muted-foreground bg-muted/50 rounded p-3">
                 <p>Factuur: <strong>{emailInvoice.invoice_number}</strong></p>
                 <p>Bedrag: <strong>{formatCurrency(emailInvoice.total)}</strong></p>
+                <p className="text-xs mt-1">📎 PDF wordt als bijlage meegestuurd</p>
               </div>
             )}
+            <div className="space-y-2">
+              <Label>Ontvanger (aan)</Label>
+              <Input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder="klant@voorbeeld.nl" type="email" />
+            </div>
+            <div className="space-y-2">
+              <Label>CC <span className="text-muted-foreground font-normal">(meerdere adressen scheiden met komma)</span></Label>
+              <Input value={emailCc} onChange={e => setEmailCc(e.target.value)} placeholder="admin@bedrijf.nl, boekhouder@bedrijf.nl" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Afzender naam</Label>
+                <Input value={emailFromName} onChange={e => setEmailFromName(e.target.value)} placeholder="Harkas IT" />
+              </div>
+              <div className="space-y-2">
+                <Label>Afzender e-mail</Label>
+                <Input value={emailFromEmail} onChange={e => setEmailFromEmail(e.target.value)} placeholder="administratie@harkasit.nl" type="email" />
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Annuleren</Button>
-            <Button onClick={handleSendEmail} disabled={sendingEmail || !emailTo}>
+            <Button onClick={handleSendEmail} disabled={sendingEmail || !emailTo.trim()}>
               {sendingEmail ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Verzenden...</> : <><Mail className="h-4 w-4 mr-1" /> Versturen</>}
             </Button>
           </DialogFooter>
