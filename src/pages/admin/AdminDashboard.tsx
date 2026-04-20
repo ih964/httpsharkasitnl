@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Users, FileText, Euro, TrendingUp, Plus } from "lucide-react";
+import { Users, FileText, Euro, TrendingUp, Plus, Globe } from "lucide-react";
 
 interface DashboardStats {
   customerCount: number;
@@ -18,6 +18,13 @@ interface RecentInvoice {
   total: number;
   status: string;
   customer_name: string;
+}
+
+interface ExpiringDomain {
+  id: string;
+  domain_name: string;
+  expiry_date: string;
+  customer_name: string | null;
 }
 
 const AdminDashboard = () => {
