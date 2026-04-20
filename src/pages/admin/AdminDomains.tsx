@@ -253,7 +253,7 @@ const AdminDomains = () => {
       customer_email:
         form.customer_id === "manual"
           ? form.customer_email.trim() || null
-          : customer?.email ?? form.customer_email.trim() || null,
+          : (customer?.email ?? (form.customer_email.trim() || null)),
       expiry_date: form.expiry_date,
       auto_renew: form.auto_renew,
       renewal_price: round2(parseFloat(form.renewal_price) || 0),
