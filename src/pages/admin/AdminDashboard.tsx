@@ -30,6 +30,7 @@ interface ExpiringDomain {
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({ customerCount: 0, openInvoices: 0, revenueMonth: 0, revenueYear: 0 });
   const [recentInvoices, setRecentInvoices] = useState<RecentInvoice[]>([]);
+  const [expiringDomains, setExpiringDomains] = useState<ExpiringDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -41,14 +42,16 @@ const AdminDashboard = () => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
+    const todayIso = now.toISOString().slice(0, 10);
 
     // Fetch stats in parallel
-    const [customersRes, openRes, monthRes, yearRes, recentRes] = await Promise.all([
+    const [customersRes, openRes, monthRes, yearRes, recentRes, domainsRes] = await Promise.all([
       supabase.from("customers").select("id", { count: "exact", head: true }),
       supabase.from("invoices").select("id", { count: "exact", head: true }).is("deleted_at", null).in("status", ["concept", "verzonden"]),
       supabase.from("invoices").select("total").is("deleted_at", null).eq("status", "betaald").eq("invoice_year", currentYear).eq("invoice_month", currentMonth),
       supabase.from("invoices").select("total").is("deleted_at", null).eq("status", "betaald").eq("invoice_year", currentYear),
       supabase.from("invoices").select("id, invoice_number, total, status, customer_id").is("deleted_at", null).order("created_at", { ascending: false }).limit(5),
+      supabase.from("domains").select("id, domain_name, expiry_date, customer_name").gte("expiry_date", todayIso).order("expiry_date", { ascending: true }).limit(5),
     ]);
 
     const revenueMonth = (monthRes.data ?? []).reduce((sum, i) => sum + Number(i.total), 0);
@@ -60,6 +63,8 @@ const AdminDashboard = () => {
       revenueMonth,
       revenueYear,
     });
+
+    setExpiringDomains((domainsRes.data ?? []) as ExpiringDomain[]);
 
     // Get customer names for recent invoices
     if (recentRes.data && recentRes.data.length > 0) {
@@ -77,6 +82,13 @@ const AdminDashboard = () => {
     }
 
     setLoading(false);
+  };
+
+  const daysUntil = (iso: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(iso + "T00:00:00");
+    return Math.round((target.getTime() - today.getTime()) / 86400000);
   };
 
   const formatCurrency = (amount: number) =>
