@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Users, FileText, Euro, TrendingUp, Plus } from "lucide-react";
+import { Users, FileText, Euro, TrendingUp, Plus, Globe } from "lucide-react";
 
 interface DashboardStats {
   customerCount: number;
@@ -20,9 +20,17 @@ interface RecentInvoice {
   customer_name: string;
 }
 
+interface ExpiringDomain {
+  id: string;
+  domain_name: string;
+  expiry_date: string;
+  customer_name: string | null;
+}
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({ customerCount: 0, openInvoices: 0, revenueMonth: 0, revenueYear: 0 });
   const [recentInvoices, setRecentInvoices] = useState<RecentInvoice[]>([]);
+  const [expiringDomains, setExpiringDomains] = useState<ExpiringDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -34,14 +42,16 @@ const AdminDashboard = () => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
+    const todayIso = now.toISOString().slice(0, 10);
 
     // Fetch stats in parallel
-    const [customersRes, openRes, monthRes, yearRes, recentRes] = await Promise.all([
+    const [customersRes, openRes, monthRes, yearRes, recentRes, domainsRes] = await Promise.all([
       supabase.from("customers").select("id", { count: "exact", head: true }),
       supabase.from("invoices").select("id", { count: "exact", head: true }).is("deleted_at", null).in("status", ["concept", "verzonden"]),
       supabase.from("invoices").select("total").is("deleted_at", null).eq("status", "betaald").eq("invoice_year", currentYear).eq("invoice_month", currentMonth),
       supabase.from("invoices").select("total").is("deleted_at", null).eq("status", "betaald").eq("invoice_year", currentYear),
       supabase.from("invoices").select("id, invoice_number, total, status, customer_id").is("deleted_at", null).order("created_at", { ascending: false }).limit(5),
+      supabase.from("domains").select("id, domain_name, expiry_date, customer_name").gte("expiry_date", todayIso).order("expiry_date", { ascending: true }).limit(5),
     ]);
 
     const revenueMonth = (monthRes.data ?? []).reduce((sum, i) => sum + Number(i.total), 0);
@@ -53,6 +63,8 @@ const AdminDashboard = () => {
       revenueMonth,
       revenueYear,
     });
+
+    setExpiringDomains((domainsRes.data ?? []) as ExpiringDomain[]);
 
     // Get customer names for recent invoices
     if (recentRes.data && recentRes.data.length > 0) {
@@ -70,6 +82,13 @@ const AdminDashboard = () => {
     }
 
     setLoading(false);
+  };
+
+  const daysUntil = (iso: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(iso + "T00:00:00");
+    return Math.round((target.getTime() - today.getTime()) / 86400000);
   };
 
   const formatCurrency = (amount: number) =>
@@ -175,6 +194,52 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Expiring domains */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" /> Domeinen die binnenkort verlopen
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/domeinen")}>
+            Bekijk alle
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {expiringDomains.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Geen domeinen.</p>
+          ) : (
+            <div className="space-y-3">
+              {expiringDomains.map((d) => {
+                const days = daysUntil(d.expiry_date);
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => navigate("/admin/domeinen")}
+                    className="w-full flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/30 px-2 rounded transition-colors text-left"
+                  >
+                    <div>
+                      <p className="font-medium">{d.domain_name}</p>
+                      <p className="text-sm text-muted-foreground">{d.customer_name ?? "—"}</p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        days <= 7
+                          ? "bg-destructive/10 text-destructive"
+                          : days <= 30
+                          ? "bg-orange-500/10 text-orange-500"
+                          : "bg-green-500/10 text-green-500"
+                      }`}
+                    >
+                      {days}d
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </CardContent>

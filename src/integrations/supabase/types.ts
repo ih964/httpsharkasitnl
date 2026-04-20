@@ -86,6 +86,77 @@ export type Database = {
         }
         Relationships: []
       }
+      domains: {
+        Row: {
+          action_required: boolean
+          action_status: Database["public"]["Enums"]["domain_action_status"]
+          auto_renew: boolean
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          domain_name: string
+          expiry_date: string
+          id: string
+          last_invoiced_at: string | null
+          notes: string | null
+          registrar: string | null
+          reminder_1_month_sent_at: string | null
+          reminder_1_week_sent_at: string | null
+          renewal_price: number
+          status: Database["public"]["Enums"]["domain_status"]
+          updated_at: string
+        }
+        Insert: {
+          action_required?: boolean
+          action_status?: Database["public"]["Enums"]["domain_action_status"]
+          auto_renew?: boolean
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          domain_name: string
+          expiry_date: string
+          id?: string
+          last_invoiced_at?: string | null
+          notes?: string | null
+          registrar?: string | null
+          reminder_1_month_sent_at?: string | null
+          reminder_1_week_sent_at?: string | null
+          renewal_price?: number
+          status?: Database["public"]["Enums"]["domain_status"]
+          updated_at?: string
+        }
+        Update: {
+          action_required?: boolean
+          action_status?: Database["public"]["Enums"]["domain_action_status"]
+          auto_renew?: boolean
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          domain_name?: string
+          expiry_date?: string
+          id?: string
+          last_invoiced_at?: string | null
+          notes?: string | null
+          registrar?: string | null
+          reminder_1_month_sent_at?: string | null
+          reminder_1_week_sent_at?: string | null
+          renewal_price?: number
+          status?: Database["public"]["Enums"]["domain_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domains_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_counters: {
         Row: {
           invoice_year: number
@@ -322,6 +393,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin"
+      domain_action_status: "none" | "pending" | "extended" | "cancelled"
+      domain_status: "active" | "expiring" | "urgent" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -450,6 +523,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin"],
+      domain_action_status: ["none", "pending", "extended", "cancelled"],
+      domain_status: ["active", "expiring", "urgent", "expired"],
     },
   },
 } as const
