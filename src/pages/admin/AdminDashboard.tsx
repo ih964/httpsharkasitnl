@@ -198,6 +198,52 @@ const AdminDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Expiring domains */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" /> Domeinen die binnenkort verlopen
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/domeinen")}>
+            Bekijk alle
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {expiringDomains.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Geen domeinen.</p>
+          ) : (
+            <div className="space-y-3">
+              {expiringDomains.map((d) => {
+                const days = daysUntil(d.expiry_date);
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => navigate("/admin/domeinen")}
+                    className="w-full flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/30 px-2 rounded transition-colors text-left"
+                  >
+                    <div>
+                      <p className="font-medium">{d.domain_name}</p>
+                      <p className="text-sm text-muted-foreground">{d.customer_name ?? "—"}</p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        days <= 7
+                          ? "bg-destructive/10 text-destructive"
+                          : days <= 30
+                          ? "bg-orange-500/10 text-orange-500"
+                          : "bg-green-500/10 text-green-500"
+                      }`}
+                    >
+                      {days}d
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
