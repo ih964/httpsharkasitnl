@@ -22,6 +22,7 @@ import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminBtwOverzicht from "./pages/admin/AdminBtwOverzicht";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminDomains from "./pages/admin/AdminDomains";
+import AdminTimeEntries from "./pages/admin/AdminTimeEntries";
 import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="btw-overzicht" element={<AdminBtwOverzicht />} />
               <Route path="domeinen" element={<AdminDomains />} />
+              <Route path="uren" element={<AdminTimeEntries />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 

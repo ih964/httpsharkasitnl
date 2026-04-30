@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, FileText, Users, Calculator, Settings, LogOut, Globe } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Calculator, Settings, LogOut, Globe, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const items = [
@@ -20,6 +20,7 @@ const items = [
   { title: "Facturen", url: "/admin/invoices", icon: FileText },
   { title: "Klanten", url: "/admin/customers", icon: Users },
   { title: "Domeinen", url: "/admin/domeinen", icon: Globe },
+  { title: "Uren", url: "/admin/uren", icon: Clock },
   { title: "BTW overzicht", url: "/admin/btw-overzicht", icon: Calculator },
   { title: "Instellingen", url: "/admin/settings", icon: Settings },
 ];

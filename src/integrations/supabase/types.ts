@@ -359,6 +359,63 @@ export type Database = {
         }
         Relationships: []
       }
+      time_entries: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          description: string
+          hourly_rate: number
+          hours: number
+          id: string
+          invoice_id: string | null
+          status: string
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          description: string
+          hourly_rate?: number
+          hours?: number
+          id?: string
+          invoice_id?: string | null
+          status?: string
+          updated_at?: string
+          work_date?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string
+          hourly_rate?: number
+          hours?: number
+          id?: string
+          invoice_id?: string | null
+          status?: string
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
