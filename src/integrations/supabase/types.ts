@@ -361,40 +361,49 @@ export type Database = {
       }
       time_entries: {
         Row: {
+          break_minutes: number
           created_at: string
           customer_id: string | null
           customer_name: string | null
           description: string
+          end_time: string | null
           hourly_rate: number
           hours: number
           id: string
           invoice_id: string | null
+          start_time: string | null
           status: string
           updated_at: string
           work_date: string
         }
         Insert: {
+          break_minutes?: number
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
           description: string
+          end_time?: string | null
           hourly_rate?: number
           hours?: number
           id?: string
           invoice_id?: string | null
+          start_time?: string | null
           status?: string
           updated_at?: string
           work_date?: string
         }
         Update: {
+          break_minutes?: number
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
           description?: string
+          end_time?: string | null
           hourly_rate?: number
           hours?: number
           id?: string
           invoice_id?: string | null
+          start_time?: string | null
           status?: string
           updated_at?: string
           work_date?: string
