@@ -311,6 +311,42 @@ export type Database = {
           },
         ]
       }
+      password_vault: {
+        Row: {
+          category: string | null
+          created_at: string
+          encrypted_password: string
+          id: string
+          notes: string | null
+          title: string
+          updated_at: string
+          username: string | null
+          website_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          encrypted_password: string
+          id?: string
+          notes?: string | null
+          title: string
+          updated_at?: string
+          username?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          encrypted_password?: string
+          id?: string
+          notes?: string | null
+          title?: string
+          updated_at?: string
+          username?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           address: string | null
