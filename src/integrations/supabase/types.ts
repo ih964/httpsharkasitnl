@@ -311,6 +311,21 @@ export type Database = {
           },
         ]
       }
+      keep_alive: {
+        Row: {
+          id: number
+          pinged_at: string
+        }
+        Insert: {
+          id: number
+          pinged_at?: string
+        }
+        Update: {
+          id?: number
+          pinged_at?: string
+        }
+        Relationships: []
+      }
       password_vault: {
         Row: {
           category: string | null
