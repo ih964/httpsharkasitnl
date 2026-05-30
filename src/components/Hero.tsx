@@ -1,15 +1,19 @@
-import { Phone, ArrowRight } from "lucide-react";
+import { ShieldCheck, ArrowRight, Phone, MonitorCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+
+const trustBullets = [
+  "Microsoft 365 & werkplekbeheer",
+  "Remote support en security",
+  "Websites, apps en automatisering",
+];
 
 const Hero = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden gradient-hero">
-      {/* Background glow effects */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-primary/10 blur-[100px] pointer-events-none" />
       
-      {/* Grid pattern overlay */}
       <div 
         className="absolute inset-0 opacity-[0.02]"
         style={{
@@ -18,43 +22,54 @@ const Hero = () => {
         }}
       />
 
-      <div className="container relative z-10 px-6 py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Main heading */}
+      <div className="container relative z-10 px-6 py-24">
+        <div className="max-w-5xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6 text-sm font-medium text-primary"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Vaste IT-partner voor mkb-bedrijven
+          </motion.div>
+
           <motion.h1 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
           >
-            Til je verwachtingen naar een
+            Eén partner voor IT-beheer,
             <br />
-            <span className="text-gradient">hoger niveau</span>
+            <span className="text-gradient">websites en digitale groei</span>
           </motion.h1>
 
-          {/* Subheading */}
           <motion.p 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
+            className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8"
           >
-            Websites, apps & marketing die écht werken. Niet binnen 24 uur opgeleverd? Dan is het gratis.
+            Harkas IT helpt kleine bedrijven met betrouwbare IT-support, Microsoft 365 beheer,
+            veilige werkplekken, moderne websites, webapps en online zichtbaarheid. Alles overzichtelijk
+            geregeld bij één vaste IT-partner.
           </motion.p>
 
-          {/* USP */}
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="inline-block glass px-6 py-3 rounded-xl mb-10"
+            className="flex flex-wrap items-center justify-center gap-3 mb-10"
           >
-            <p className="text-sm md:text-base font-medium">
-              <span className="text-primary">Niet binnen 24 uur?</span> Dan is je website gratis!*
-            </p>
+            {trustBullets.map((item) => (
+              <span key={item} className="inline-flex items-center gap-2 glass px-4 py-2 rounded-xl text-sm text-muted-foreground">
+                <MonitorCog className="w-4 h-4 text-primary" />
+                {item}
+              </span>
+            ))}
           </motion.div>
 
-          {/* CTA Buttons */}
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -62,22 +77,21 @@ const Hero = () => {
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Button variant="hero" size="lg" asChild>
-              <a href="tel:+31851249091" className="gap-3">
-                <Phone className="w-5 h-5" />
-                085 124 9091
+              <a href="#contact" className="gap-3">
+                Plan gratis IT-check
+                <ArrowRight className="w-5 h-5" />
               </a>
             </Button>
             <Button variant="outline" size="lg" asChild>
-              <a href="#contact" className="gap-3">
-                Gratis adviesgesprek
-                <ArrowRight className="w-5 h-5" />
+              <a href="tel:+31851249091" className="gap-3">
+                <Phone className="w-5 h-5" />
+                085 124 9091
               </a>
             </Button>
           </motion.div>
         </div>
       </div>
 
-      {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
     </section>
   );
