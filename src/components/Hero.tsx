@@ -10,7 +10,7 @@ const trustBullets = [
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden gradient-hero">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden gradient-hero pt-20">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-primary/10 blur-[100px] pointer-events-none" />
       
@@ -22,13 +22,13 @@ const Hero = () => {
         }}
       />
 
-      <div className="container relative z-10 px-6 py-24">
+      <div className="container relative z-10 px-6 py-16 md:py-20">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6 text-sm font-medium text-primary"
+            className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-5 text-sm font-medium text-primary"
           >
             <ShieldCheck className="w-4 h-4" />
             Vaste IT-partner voor mkb-bedrijven
@@ -38,7 +38,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] mb-6"
           >
             Eén partner voor IT-beheer,
             <br />
@@ -49,7 +49,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8"
+            className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-7"
           >
             Harkas IT helpt kleine bedrijven met betrouwbare IT-support, Microsoft 365 beheer,
             veilige werkplekken, moderne websites, webapps en online zichtbaarheid. Alles overzichtelijk
@@ -60,7 +60,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-wrap items-center justify-center gap-3 mb-10"
+            className="flex flex-wrap items-center justify-center gap-3 mb-8"
           >
             {trustBullets.map((item) => (
               <span key={item} className="inline-flex items-center gap-2 glass px-4 py-2 rounded-xl text-sm text-muted-foreground">
