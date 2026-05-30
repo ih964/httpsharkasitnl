@@ -13,17 +13,14 @@ const Contact = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
     console.log(formData);
   };
 
   return (
     <section id="contact" className="py-24 relative">
-      {/* Background elements */}
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[150px] pointer-events-none" />
 
       <div className="container px-6 relative z-10">
-        {/* Section header */}
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -35,15 +32,15 @@ const Contact = () => {
             Contact
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Laten we <span className="text-gradient">samenwerken</span>
+            Klaar om je IT <span className="text-gradient">professioneel te regelen?</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Klaar om je bedrijf naar het volgende niveau te tillen? Neem vandaag nog contact met ons op.
+            Plan een gratis kennismaking of start met een Microsoft 365 & Werkplek Check.
+            Dan weet je direct waar je IT goed staat en waar verbetering nodig is.
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
-          {/* Contact info */}
           <motion.div 
             initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -93,20 +90,18 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* Quick stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="p-6 rounded-xl gradient-card border border-border/50 text-center">
-                <p className="text-3xl font-bold text-gradient mb-1">24u</p>
-                <p className="text-sm text-muted-foreground">Snelle levering</p>
+                <p className="text-3xl font-bold text-gradient mb-1">€349</p>
+                <p className="text-sm text-muted-foreground">IT-check vanaf</p>
               </div>
               <div className="p-6 rounded-xl gradient-card border border-border/50 text-center">
-                <p className="text-3xl font-bold text-gradient mb-1">100+</p>
-                <p className="text-sm text-muted-foreground">Tevreden klanten</p>
+                <p className="text-3xl font-bold text-gradient mb-1">€499</p>
+                <p className="text-sm text-muted-foreground">Beheer vanaf p/m</p>
               </div>
             </div>
           </motion.div>
 
-          {/* Contact form */}
           <motion.form 
             initial={{ opacity: 0, x: 40 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -115,7 +110,7 @@ const Contact = () => {
             onSubmit={handleSubmit} 
             className="p-8 rounded-2xl gradient-card border border-border/50"
           >
-            <h3 className="text-xl font-semibold mb-6">Stuur een bericht</h3>
+            <h3 className="text-xl font-semibold mb-6">Vraag een IT-check of pakket aan</h3>
             
             <div className="space-y-5">
               <div>
@@ -170,13 +165,13 @@ const Contact = () => {
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors resize-none"
-                  placeholder="Vertel ons over je project..."
+                  placeholder="Bijvoorbeeld: ik wil een Microsoft 365 check, IT-beheer of websitebeheer bespreken..."
                 />
               </div>
 
               <Button type="submit" variant="hero" className="w-full" size="lg">
                 <Send className="w-4 h-4" />
-                Verstuur bericht
+                Verstuur aanvraag
               </Button>
             </div>
           </motion.form>
