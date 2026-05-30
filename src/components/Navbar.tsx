@@ -5,9 +5,10 @@ import logo from "@/assets/logo.png";
 
 const navLinks = [
   { name: "Home", href: "/" },
-  { name: "Diensten", href: "/#diensten" },
-  { name: "Over Ons", href: "/over-ons" },
-  { name: "Prijzen", href: "/#prijzen" },
+  { name: "IT Beheer", href: "/#diensten" },
+  { name: "Websites & Apps", href: "/diensten/websites" },
+  { name: "Marketing", href: "/diensten/marketing" },
+  { name: "Pakketten", href: "/#prijzen" },
   { name: "Contact", href: "/#contact" },
 ];
 
@@ -19,13 +20,11 @@ const Navbar = () => {
       <div className="glass border-b border-border/30">
         <div className="container px-6">
           <div className="flex items-center justify-between h-20">
-            {/* Logo */}
-            <a href="#" className="flex items-center">
+            <a href="/" className="flex items-center">
               <img src={logo} alt="HARKAS IT" className="h-12" />
             </a>
 
-            {/* Desktop nav */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-7">
               {navLinks.map((link) => (
                 <a
                   key={link.name}
@@ -37,16 +36,14 @@ const Navbar = () => {
               ))}
             </div>
 
-            {/* Desktop CTA */}
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               <Button variant="hero" asChild>
-                <a href="tel:+31851249091">Bel nu</a>
+                <a href="/#contact">Plan gratis IT-check</a>
               </Button>
             </div>
 
-            {/* Mobile menu button */}
             <button
-              className="md:hidden p-2"
+              className="lg:hidden p-2"
               onClick={() => setIsOpen(!isOpen)}
               aria-label="Toggle menu"
             >
@@ -56,9 +53,8 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isOpen && (
-        <div className="md:hidden glass border-b border-border/30">
+        <div className="lg:hidden glass border-b border-border/30">
           <div className="container px-6 py-6 space-y-4">
             {navLinks.map((link) => (
               <a
@@ -71,7 +67,7 @@ const Navbar = () => {
               </a>
             ))}
             <Button variant="hero" className="w-full mt-4" asChild>
-              <a href="tel:+31851249091">Bel nu</a>
+              <a href="/#contact">Plan gratis IT-check</a>
             </Button>
           </div>
         </div>
