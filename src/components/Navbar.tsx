@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo.png";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -21,11 +20,12 @@ const Navbar = () => {
         <div className="container px-4 sm:px-6">
           <div className="flex items-center justify-between h-20">
             <a href="/" className="flex items-center gap-3 group">
-              <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/70 border border-border/50 p-2 shadow-sm group-hover:border-primary/40 transition-colors">
-                <img src={logo} alt="HARKAS IT" className="h-full w-full object-contain" />
+              <span className="relative inline-flex h-12 w-12 items-center justify-center rounded-2xl gradient-primary shadow-glow group-hover:scale-105 transition-transform duration-300">
+                <span className="text-xl font-black tracking-tight text-primary-foreground">H</span>
+                <span className="absolute inset-0 rounded-2xl border border-white/20" />
               </span>
               <span className="hidden sm:block leading-tight">
-                <span className="block text-sm font-semibold tracking-wide">Harkas IT</span>
+                <span className="block text-base font-bold tracking-tight">Harkas IT</span>
                 <span className="block text-xs text-muted-foreground">IT-beheer & digitale groei</span>
               </span>
             </a>
