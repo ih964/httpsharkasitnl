@@ -6,15 +6,25 @@ const Footer = () => {
   return (
     <footer className="py-12 border-t border-border/50">
       <div className="container px-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo & copyright */}
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
             <img src={logo} alt="HARKAS IT" className="h-10" />
-            <p className="text-sm text-muted-foreground">© 2025 Alle rechten voorbehouden</p>
+            <div>
+              <p className="text-sm font-medium">Harkas IT — IT-beheer, websites en digitale oplossingen voor het mkb.</p>
+              <p className="text-sm text-muted-foreground">© 2025 Alle rechten voorbehouden</p>
+            </div>
           </div>
 
-          {/* Legal links */}
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <a href="/#diensten" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              IT Beheer
+            </a>
+            <a href="/diensten/websites" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Websites & Apps
+            </a>
+            <a href="/diensten/marketing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Marketing
+            </a>
             <Link to="/over-ons" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Over Ons
             </Link>
@@ -26,7 +36,6 @@ const Footer = () => {
             </Link>
           </div>
 
-          {/* Social links */}
           <div className="flex items-center gap-4">
             <a
               href="#"
