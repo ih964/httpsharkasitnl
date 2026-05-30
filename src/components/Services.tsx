@@ -1,56 +1,48 @@
-import { Palette, Globe, Megaphone, TrendingUp, Smartphone, BarChart3 } from "lucide-react";
+import { ShieldCheck, Globe, Megaphone, Users, Lock, Laptop, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const services = [
+const mainServices = [
   {
-    icon: Palette,
-    title: "Designs & Branding",
-    description: "De eerste indruk telt. Maak het onvergetelijk en bouw aan een merk dat vertrouwen wekt.",
-    link: "/diensten/branding",
+    icon: ShieldCheck,
+    title: "IT Beheer & Support",
+    description: "Voor bedrijven die hun dagelijkse IT professioneel willen regelen zonder eigen IT-afdeling.",
+    bullets: ["Microsoft 365 beheer", "Gebruikersbeheer", "Remote support", "Werkplekbeheer", "MFA en basisbeveiliging", "Onboarding en offboarding"],
+    link: "/diensten/support",
   },
   {
     icon: Globe,
-    title: "Websites & Apps",
-    description: "Efficiënte systemen die meer leads aantrekken, je winst vergroten en je bedrijf laten bloeien.",
+    title: "Websites & Webapps",
+    description: "Moderne websites en slimme weboplossingen die passen bij je bedrijf.",
+    bullets: ["Zakelijke websites", "Landingspagina's", "Webapps", "Websitebeheer", "Hosting, domein en mail", "AI-websites en automatisering"],
     link: "/diensten/websites",
   },
   {
     icon: Megaphone,
-    title: "Advertentie Marketing",
-    description: "Complete groei-combinatie met website, webshop of app + advertentie marketing.",
+    title: "Marketing & Automatisering",
+    description: "Meer zichtbaarheid, betere processen en minder handmatig werk.",
+    bullets: ["Google bedrijfsprofiel", "SEO basis", "Social media ondersteuning", "Leadformulieren", "Koppelingen", "Digitale groeistrategie"],
     link: "/diensten/marketing",
   },
-  {
-    icon: TrendingUp,
-    title: "SEO Optimalisatie",
-    description: "Verbeter je online zichtbaarheid en bereik meer potentiële klanten organisch.",
-    link: "/diensten/seo",
-  },
-  {
-    icon: Smartphone,
-    title: "Social Media",
-    description: "Strategisch beheer van je social media kanalen voor maximale betrokkenheid.",
-    link: "/diensten/social-media",
-  },
-  {
-    icon: BarChart3,
-    title: "Support & Consultancy",
-    description: "Professionele ondersteuning en advies voor al uw IT-vraagstukken.",
-    link: "/diensten/support",
-  },
 ];
+
+const painPoints = [
+  "Nieuwe medewerkers moeten snel accounts en laptops krijgen.",
+  "Outlook, Teams, OneDrive of printers zorgen regelmatig voor gedoe.",
+  "Je weet niet zeker of MFA, rechten en beveiliging goed staan.",
+  "Je website en online uitstraling moeten professioneel blijven.",
+  "Je wilt één aanspreekpunt voor IT, web en digitale groei.",
+];
+
+const sectors = ["MKB-bedrijven", "Zorgpraktijken", "Fysiopraktijken", "Tandartspraktijken", "Administratiekantoren", "Kinderopvang", "Lokale ondernemers", "Meerdere locaties"];
 
 const Services = () => {
   return (
     <section id="diensten" className="py-24 relative">
-      {/* Background elements */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[150px] pointer-events-none" />
       
       <div className="container px-6">
-        {/* Section header */}
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -59,20 +51,36 @@ const Services = () => {
           className="text-center mb-16"
         >
           <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
-            Onze Diensten
+            IT-partner voor je digitale basis
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Wij doen het werk,{" "}
-            <span className="text-gradient">jij ziet het resultaat</span>
+            Geen eigen IT-afdeling, maar wel afhankelijk van <span className="text-gradient">goede IT?</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Van branding tot marketing, wij hebben alles in huis om jouw bedrijf te laten groeien.
+          <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+            Harkas IT regelt het dagelijkse IT-beheer, je Microsoft 365 omgeving, werkplekken,
+            website en digitale groei vanuit één duidelijk aanspreekpunt.
           </p>
         </motion.div>
 
-        {/* Services grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((service, index) => (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-16"
+        >
+          {painPoints.map((point, index) => (
+            <div key={point} className="p-5 rounded-2xl gradient-card border border-border/50">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center mb-4 text-primary font-semibold">
+                {index + 1}
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">{point}</p>
+            </div>
+          ))}
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
+          {mainServices.map((service, index) => (
             <motion.div
               key={service.title}
               initial={{ opacity: 0, y: 40 }}
@@ -81,12 +89,10 @@ const Services = () => {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="group relative p-8 rounded-2xl gradient-card border border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-glow"
             >
-              {/* Icon */}
               <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <service.icon className="w-7 h-7 text-primary-foreground" />
               </div>
 
-              {/* Content */}
               <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
                 {service.title}
               </h3>
@@ -94,7 +100,15 @@ const Services = () => {
                 {service.description}
               </p>
 
-              {/* Link */}
+              <ul className="space-y-3 mb-6">
+                {service.bullets.map((bullet) => (
+                  <li key={bullet} className="flex items-start gap-3 text-sm text-muted-foreground">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                    {bullet}
+                  </li>
+                ))}
+              </ul>
+
               <Link
                 to={service.link}
                 className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:gap-3 transition-all duration-300"
@@ -103,13 +117,55 @@ const Services = () => {
                 <ArrowRight className="w-4 h-4" />
               </Link>
 
-              {/* Hover glow effect */}
               <div className="absolute inset-0 rounded-2xl bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </motion.div>
           ))}
         </div>
 
-        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch"
+        >
+          <div className="p-8 rounded-2xl gradient-card border border-border/50">
+            <div className="flex items-center gap-3 mb-4">
+              <Users className="w-6 h-6 text-primary" />
+              <h3 className="text-2xl font-semibold">Voor wie werken wij?</h3>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              Vooral voor kleine bedrijven die professioneel willen werken zonder eigen IT-afdeling.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {sectors.map((sector) => (
+                <span key={sector} className="px-4 py-2 rounded-xl bg-secondary text-sm text-muted-foreground border border-border/40">
+                  {sector}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-8 rounded-2xl gradient-card border border-border/50">
+            <div className="flex items-center gap-3 mb-4">
+              <Lock className="w-6 h-6 text-primary" />
+              <h3 className="text-2xl font-semibold">Praktisch, veilig en duidelijk</h3>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              Harkas IT combineert praktijkervaring in IT-support, Microsoft 365, werkplekbeheer,
+              telefonie, cloudbeheer, zorgtechnologie en webontwikkeling.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {["Duidelijke afspraken", "Vaste maandbedragen", "Eén aanspreekpunt", "MKB-proof aanpak"].map((item) => (
+                <div key={item} className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <Laptop className="w-4 h-4 text-primary" />
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -119,7 +175,7 @@ const Services = () => {
         >
           <Button variant="hero" size="lg" asChild>
             <a href="#contact" className="gap-3">
-              Wat heb je nodig?
+              Plan gratis IT-check
               <ArrowRight className="w-5 h-5" />
             </a>
           </Button>
