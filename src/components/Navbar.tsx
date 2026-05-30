@@ -17,14 +17,20 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
-      <div className="glass border-b border-border/30">
-        <div className="container px-6">
+      <div className="glass border-b border-border/30 bg-background/70 backdrop-blur-xl">
+        <div className="container px-4 sm:px-6">
           <div className="flex items-center justify-between h-20">
-            <a href="/" className="flex items-center">
-              <img src={logo} alt="HARKAS IT" className="h-12" />
+            <a href="/" className="flex items-center gap-3 group">
+              <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/70 border border-border/50 p-2 shadow-sm group-hover:border-primary/40 transition-colors">
+                <img src={logo} alt="HARKAS IT" className="h-full w-full object-contain" />
+              </span>
+              <span className="hidden sm:block leading-tight">
+                <span className="block text-sm font-semibold tracking-wide">Harkas IT</span>
+                <span className="block text-xs text-muted-foreground">IT-beheer & digitale groei</span>
+              </span>
             </a>
 
-            <div className="hidden lg:flex items-center gap-7">
+            <div className="hidden lg:flex items-center gap-6 xl:gap-7">
               {navLinks.map((link) => (
                 <a
                   key={link.name}
@@ -43,7 +49,7 @@ const Navbar = () => {
             </div>
 
             <button
-              className="lg:hidden p-2"
+              className="lg:hidden p-2 rounded-xl hover:bg-secondary transition-colors"
               onClick={() => setIsOpen(!isOpen)}
               aria-label="Toggle menu"
             >
@@ -54,7 +60,7 @@ const Navbar = () => {
       </div>
 
       {isOpen && (
-        <div className="lg:hidden glass border-b border-border/30">
+        <div className="lg:hidden glass border-b border-border/30 bg-background/90 backdrop-blur-xl">
           <div className="container px-6 py-6 space-y-4">
             {navLinks.map((link) => (
               <a
