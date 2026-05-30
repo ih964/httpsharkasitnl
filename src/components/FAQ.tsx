@@ -8,50 +8,48 @@ import { motion } from "framer-motion";
 
 const faqs = [
   {
-    question: "Hoe snel kan mijn website klaar zijn?",
+    question: "Wat doet Harkas IT als IT-partner/MSP?",
     answer:
-      "Met onze 24-uurs oplevergarantie kunnen wij standaard one-page websites binnen 24 uur opleveren, mits alle benodigde materialen (teksten, afbeeldingen, logo's) tijdig zijn aangeleverd. Voor complexere projecten maken we een planning op maat.",
+      "Harkas IT helpt kleine bedrijven met Microsoft 365 beheer, gebruikersbeheer, werkplekbeheer, remote support, basisbeveiliging, websites, webapps en digitale groei. Zo heb je één vast aanspreekpunt voor je dagelijkse IT en online basis.",
   },
   {
-    question: "Wat kost een website bij Harkas IT?",
+    question: "Is het IT Start pakket onbeperkt support?",
     answer:
-      "Onze prijzen beginnen vanaf €149 voor een basis one-page website. De exacte kosten zijn afhankelijk van de complexiteit, functionaliteiten en wensen. Neem contact op voor een vrijblijvende offerte.",
+      "Nee. IT Start bevat 4 supporturen per maand. Kleine supportvragen vallen daarbinnen. Werkzaamheden boven de inbegrepen uren stemmen we vooraf af en factureren we op nacalculatie. Zo blijven de afspraken eerlijk en duidelijk.",
   },
   {
-    question: "Bieden jullie ook hosting aan?",
+    question: "Voor welke bedrijven is dit bedoeld?",
     answer:
-      "Ja, wij bieden betrouwbare hostingdiensten aan met jaarlijkse verlenging. Dit zorgt ervoor dat uw website altijd online en veilig is. Hosting is niet inbegrepen bij de 24-uurs oplevergarantie en wordt apart gefactureerd.",
+      "Vooral voor mkb-bedrijven, zorgpraktijken, administratiekantoren, kinderopvang, lokale ondernemers en bedrijven met meerdere medewerkers die geen eigen IT-afdeling hebben, maar wel professionele IT-support willen.",
   },
   {
-    question: "Kan ik mijn website zelf aanpassen?",
+    question: "Kunnen jullie ook websites, apps en marketing blijven doen?",
     answer:
-      "Absoluut! Wij kunnen uw website bouwen met een gebruiksvriendelijk CMS (Content Management System) zodat u zelf eenvoudig teksten en afbeeldingen kunt aanpassen. Ook bieden we onderhoudscontracten aan als u dit liever aan ons overlaat.",
+      "Ja. IT-beheer is de basis, maar Harkas IT kan ook websites, webapps, websitebeheer, SEO basis, Google bedrijfsprofiel, social media ondersteuning en automatiseringen verzorgen.",
   },
   {
-    question: "Wat houdt de SEO optimalisatie in?",
+    question: "Wat houdt de Microsoft 365 & Werkplek Check in?",
     answer:
-      "Onze SEO diensten omvatten technische optimalisatie, keyword research, content optimalisatie en linkbuilding. We zorgen ervoor dat uw website beter vindbaar wordt in zoekmachines zoals Google, zodat u meer organische bezoekers krijgt.",
+      "We controleren onder andere gebruikers, licenties, MFA, rechten, mail, Teams, OneDrive, apparaten en basisbeveiliging. Daarna krijg je duidelijk inzicht in wat goed staat en waar verbetering nodig is.",
   },
   {
-    question: "Hoe werkt de advertentie marketing?",
+    question: "Komen jullie ook op locatie?",
     answer:
-      "Wij beheren uw Google Ads, Facebook Ads en Instagram campagnes van A tot Z. Dit omvat strategie, opzet, monitoring en optimalisatie. U krijgt maandelijkse rapportages over de resultaten en ROI van uw campagnes.",
+      "Ja, locatiebezoeken zijn mogelijk. Remote support is onderdeel van de pakketten. Werk op locatie, nieuwe laptopinstallaties, grotere migraties en projecten worden apart afgestemd en gefactureerd.",
   },
   {
-    question: "Wat als ik niet tevreden ben?",
+    question: "Kan ik klein beginnen en later uitbreiden?",
     answer:
-      "Klanttevredenheid staat bij ons voorop. We werken nauw samen om ervoor te zorgen dat het eindresultaat aan uw verwachtingen voldoet. Mochten er aanpassingen nodig zijn, dan bespreken we dit en lossen we het samen op.",
+      "Ja. Je kunt starten met een check of IT Start en later doorgroeien naar IT + Website Beheer of Digitale Groei wanneer je meer ondersteuning, websitebeheer of marketing/automatisering nodig hebt.",
   },
 ];
 
 const FAQ = () => {
   return (
     <section id="faq" className="py-24 relative">
-      {/* Background elements */}
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[150px] pointer-events-none" />
 
       <div className="container px-6 relative z-10">
-        {/* Section header */}
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -66,11 +64,10 @@ const FAQ = () => {
             Veelgestelde <span className="text-gradient">vragen</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Antwoorden op de meest gestelde vragen over onze diensten
+            Antwoorden op vragen over IT-beheer, support, pakketten en digitale diensten.
           </p>
         </motion.div>
 
-        {/* FAQ Accordion */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
