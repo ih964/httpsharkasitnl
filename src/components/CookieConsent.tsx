@@ -8,8 +8,7 @@ const CookieConsent = () => {
   useEffect(() => {
     const consent = localStorage.getItem("cookie-consent");
     if (!consent) {
-      // Delay showing the banner for better UX
-      const timer = setTimeout(() => setIsVisible(true), 1000);
+      const timer = setTimeout(() => setIsVisible(true), 1400);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -27,46 +26,34 @@ const CookieConsent = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 animate-fade-up">
-      <div className="container max-w-4xl mx-auto">
-        <div className="glass rounded-2xl p-6 border border-border/50 shadow-xl">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-2">🍪 Cookies</h3>
-              <p className="text-sm text-muted-foreground">
-                Wij gebruiken cookies om je ervaring op onze website te verbeteren, 
-                het websiteverkeer te analyseren en gepersonaliseerde content te tonen. 
-                Door op "Accepteren" te klikken, ga je akkoord met ons{" "}
-                <a href="/privacy" className="text-primary hover:underline">
-                  privacybeleid
-                </a>
-                .
-              </p>
-            </div>
-            <button
-              onClick={acceptNecessary}
-              className="p-1 hover:bg-secondary rounded-lg transition-colors"
-              aria-label="Sluiten"
-            >
-              <X className="w-5 h-5 text-muted-foreground" />
-            </button>
+    <div className="fixed bottom-4 left-4 right-4 z-40 animate-fade-up sm:left-auto sm:right-6 sm:max-w-md">
+      <div className="glass rounded-2xl p-4 border border-border/50 shadow-xl backdrop-blur-xl">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-base mb-1">Cookies</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Wij gebruiken cookies om de website goed te laten werken en te verbeteren. Lees meer in ons{" "}
+              <a href="/privacy" className="text-primary hover:underline">
+                privacybeleid
+              </a>
+              .
+            </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={acceptNecessary}
-              variant="outline"
-              className="flex-1"
-            >
-              Alleen noodzakelijk
-            </Button>
-            <Button
-              onClick={acceptAll}
-              variant="hero"
-              className="flex-1"
-            >
-              Alles accepteren
-            </Button>
-          </div>
+          <button
+            onClick={acceptNecessary}
+            className="p-1 hover:bg-secondary rounded-lg transition-colors"
+            aria-label="Sluiten"
+          >
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button onClick={acceptNecessary} variant="outline" className="flex-1 h-10 text-sm">
+            Alleen noodzakelijk
+          </Button>
+          <Button onClick={acceptAll} variant="hero" className="flex-1 h-10 text-sm">
+            Alles accepteren
+          </Button>
         </div>
       </div>
     </div>
