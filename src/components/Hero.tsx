@@ -10,9 +10,9 @@ const trustBullets = [
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden gradient-hero pt-20">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-primary/10 blur-[100px] pointer-events-none" />
+    <section className="relative min-h-screen w-full max-w-full flex items-center justify-center overflow-hidden gradient-hero pt-20">
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[320px] h-[320px] sm:w-[600px] sm:h-[600px] rounded-full bg-primary/5 blur-[100px] sm:blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[260px] h-[260px] sm:w-[400px] sm:h-[400px] rounded-full bg-primary/10 blur-[90px] sm:blur-[100px] pointer-events-none" />
       
       <div 
         className="absolute inset-0 opacity-[0.02]"
@@ -22,34 +22,34 @@ const Hero = () => {
         }}
       />
 
-      <div className="container relative z-10 px-6 py-16 md:py-20">
+      <div className="container relative z-10 w-full max-w-full px-4 sm:px-6 py-14 md:py-20">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-5 text-sm font-medium text-primary"
+            className="inline-flex max-w-full items-center gap-2 glass px-3 sm:px-4 py-2 rounded-full mb-5 text-xs sm:text-sm font-medium text-primary"
           >
-            <ShieldCheck className="w-4 h-4" />
-            Vaste IT-partner voor mkb-bedrijven
+            <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">Vaste IT-partner voor mkb-bedrijven</span>
           </motion.div>
 
           <motion.h1 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] mb-6"
+            className="text-[2.35rem] xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] mb-6 break-words"
           >
             Eén partner voor IT-beheer,
-            <br />
-            <span className="text-gradient">websites en digitale groei</span>
+            <br className="hidden sm:block" />
+            <span className="text-gradient block sm:inline">websites en digitale groei</span>
           </motion.h1>
 
           <motion.p 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-7"
+            className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-7 px-1"
           >
             Harkas IT helpt kleine bedrijven met betrouwbare IT-support, Microsoft 365 beheer,
             veilige werkplekken, moderne websites, webapps en online zichtbaarheid. Alles overzichtelijk
@@ -60,12 +60,12 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-wrap items-center justify-center gap-3 mb-8"
+            className="flex w-full flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-center gap-3 mb-8"
           >
             {trustBullets.map((item) => (
-              <span key={item} className="inline-flex items-center gap-2 glass px-4 py-2 rounded-xl text-sm text-muted-foreground">
-                <MonitorCog className="w-4 h-4 text-primary" />
-                {item}
+              <span key={item} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 glass px-4 py-2 rounded-xl text-sm text-muted-foreground">
+                <MonitorCog className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>{item}</span>
               </span>
             ))}
           </motion.div>
@@ -74,15 +74,15 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 max-w-sm sm:max-w-none mx-auto"
           >
-            <Button variant="hero" size="lg" asChild>
+            <Button variant="hero" size="lg" asChild className="w-full sm:w-auto">
               <a href="#contact" className="gap-3">
                 Plan gratis IT-check
                 <ArrowRight className="w-5 h-5" />
               </a>
             </Button>
-            <Button variant="outline" size="lg" asChild>
+            <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
               <a href="tel:+31851249091" className="gap-3">
                 <Phone className="w-5 h-5" />
                 085 124 9091
