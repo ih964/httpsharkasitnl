@@ -18,7 +18,7 @@ import About from "./pages/About";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCustomers from "./pages/admin/AdminCustomers";
-import AdminInvoices from "./pages/admin/AdminInvoices";
+import AdminInvoicesWithStatus from "./pages/admin/AdminInvoicesWithStatus";
 import AdminBtwOverzicht from "./pages/admin/AdminBtwOverzicht";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminDomains from "./pages/admin/AdminDomains";
@@ -47,12 +47,10 @@ const App = () => (
             <Route path="/diensten/support" element={<Support />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/voorwaarden" element={<Terms />} />
-
-            {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
-              <Route path="invoices" element={<AdminInvoices />} />
+              <Route path="invoices" element={<AdminInvoicesWithStatus />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="btw-overzicht" element={<AdminBtwOverzicht />} />
               <Route path="domeinen" element={<AdminDomains />} />
@@ -60,8 +58,6 @@ const App = () => (
               <Route path="wachtwoorden" element={<AdminPasswords />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
-
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
