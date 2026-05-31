@@ -4,6 +4,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 
+const MAX_ATTACHMENT_SIZE_MB = 3;
+const MAX_ATTACHMENT_SIZE_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
+
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -15,6 +18,13 @@ const Contact = () => {
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  const clearAttachment = () => {
+    setAttachmentName("");
+    setAttachmentFile(null);
+    const attachmentInput = document.getElementById("attachment") as HTMLInputElement | null;
+    if (attachmentInput) attachmentInput.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +43,19 @@ const Contact = () => {
       return;
     }
 
+    if (attachmentFile && attachmentFile.size > MAX_ATTACHMENT_SIZE_BYTES) {
+      toast({
+        title: "Bijlage is te groot",
+        description: `Gebruik maximaal ${MAX_ATTACHMENT_SIZE_MB} MB of verstuur de bijlage apart per e-mail.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
 
     try {
       const payload = new FormData();
@@ -53,6 +75,7 @@ const Contact = () => {
       const response = await fetch("https://formsubmit.co/ajax/info@harkasit.nl", {
         method: "POST",
         body: payload,
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -61,10 +84,7 @@ const Contact = () => {
 
       setSubmitted(true);
       setFormData({ name: "", email: "", phone: "", message: "" });
-      setAttachmentName("");
-      setAttachmentFile(null);
-      const attachmentInput = document.getElementById("attachment") as HTMLInputElement | null;
-      if (attachmentInput) attachmentInput.value = "";
+      clearAttachment();
 
       toast({
         title: "Aanvraag verzonden",
@@ -73,10 +93,13 @@ const Contact = () => {
     } catch (error) {
       toast({
         title: "Verzenden niet gelukt",
-        description: "Probeer het opnieuw of mail direct naar info@harkasit.nl.",
+        description: attachmentFile
+          ? "De bijlage kan te groot zijn of het verzenden duurde te lang. Probeer zonder bijlage of mail direct naar info@harkasit.nl."
+          : "Probeer het opnieuw of mail direct naar info@harkasit.nl.",
         variant: "destructive",
       });
     } finally {
+      window.clearTimeout(timeoutId);
       setIsSubmitting(false);
     }
   };
@@ -235,7 +258,7 @@ const Contact = () => {
 
               <div>
                 <label htmlFor="attachment" className="block text-sm font-medium mb-2">
-                  Bijlage <span className="text-muted-foreground font-normal">(optioneel)</span>
+                  Bijlage <span className="text-muted-foreground font-normal">(optioneel, max. {MAX_ATTACHMENT_SIZE_MB} MB)</span>
                 </label>
                 <label
                   htmlFor="attachment"
@@ -253,12 +276,23 @@ const Contact = () => {
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0] || null;
+
+                    if (file && file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+                      toast({
+                        title: "Bijlage is te groot",
+                        description: `Gebruik maximaal ${MAX_ATTACHMENT_SIZE_MB} MB of mail de bijlage apart naar info@harkasit.nl.`,
+                        variant: "destructive",
+                      });
+                      clearAttachment();
+                      return;
+                    }
+
                     setAttachmentFile(file);
                     setAttachmentName(file?.name || "");
                   }}
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  Optioneel. Bijvoorbeeld een screenshot, document of foto van een storing.
+                  Optioneel. Grote bestanden kunnen het verzenden vertragen. Mail grote bijlagen apart naar info@harkasit.nl.
                 </p>
               </div>
 
