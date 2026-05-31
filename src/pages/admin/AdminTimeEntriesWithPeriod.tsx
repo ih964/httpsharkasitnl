@@ -1,0 +1,303 @@
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { CalendarRange } from "lucide-react";
+import AdminTimeEntries from "./AdminTimeEntries";
+
+type Customer = { id: string; name: string; company_name: string | null };
+type TimeEntry = {
+  id: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  work_date: string;
+  description: string;
+  hours: number;
+  hourly_rate: number;
+  status: string;
+  invoice_id: string | null;
+};
+
+const round2 = (value: number) => Math.round(value * 100) / 100;
+const fmt = (value: number) => `€ ${round2(value).toFixed(2).replace(".", ",")}`;
+const formatNlDate = (isoDate: string) => new Date(isoDate).toLocaleDateString("nl-NL");
+const isoToday = () => new Date().toISOString().slice(0, 10);
+
+const getCurrentMonthRange = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  return {
+    from: `${year}-${String(month).padStart(2, "0")}-01`,
+    to: new Date(year, month, 0).toISOString().slice(0, 10),
+  };
+};
+
+const AdminTimeEntriesWithPeriod = () => {
+  const { toast } = useToast();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [customerId, setCustomerId] = useState("");
+  const [fromDate, setFromDate] = useState(getCurrentMonthRange().from);
+  const [toDate, setToDate] = useState(getCurrentMonthRange().to);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    const [customersRes, entriesRes] = await Promise.all([
+      supabase.from("customers").select("id, name, company_name").order("name"),
+      supabase
+        .from("time_entries")
+        .select("id, customer_id, customer_name, work_date, description, hours, hourly_rate, status, invoice_id")
+        .order("work_date", { ascending: true }),
+    ]);
+
+    if (customersRes.error) {
+      toast({ title: "Klanten laden mislukt", description: customersRes.error.message, variant: "destructive" });
+    } else {
+      setCustomers((customersRes.data ?? []) as Customer[]);
+    }
+
+    if (entriesRes.error) {
+      toast({ title: "Uren laden mislukt", description: entriesRes.error.message, variant: "destructive" });
+    } else {
+      setEntries((entriesRes.data ?? []) as TimeEntry[]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const invoiceableEntries = useMemo(() => {
+    if (!customerId || !fromDate || !toDate) return [];
+    return entries.filter((entry) =>
+      entry.customer_id === customerId &&
+      entry.work_date >= fromDate &&
+      entry.work_date <= toDate &&
+      entry.status === "concept" &&
+      !entry.invoice_id
+    );
+  }, [entries, customerId, fromDate, toDate]);
+
+  const totals = useMemo(() => {
+    const hours = invoiceableEntries.reduce((sum, entry) => sum + Number(entry.hours), 0);
+    const subtotal = invoiceableEntries.reduce((sum, entry) => sum + Number(entry.hours) * Number(entry.hourly_rate), 0);
+    const vat = subtotal * 0.21;
+    return {
+      count: invoiceableEntries.length,
+      hours: round2(hours),
+      subtotal: round2(subtotal),
+      vat: round2(vat),
+      total: round2(subtotal + vat),
+    };
+  }, [invoiceableEntries]);
+
+  const createInvoice = async () => {
+    if (!customerId) {
+      toast({ title: "Selecteer eerst een klant", variant: "destructive" });
+      return;
+    }
+    if (!fromDate || !toDate) {
+      toast({ title: "Selecteer een vanaf- en tot-datum", variant: "destructive" });
+      return;
+    }
+    if (fromDate > toDate) {
+      toast({ title: "Vanaf datum mag niet na tot datum liggen", variant: "destructive" });
+      return;
+    }
+    if (invoiceableEntries.length === 0) {
+      toast({ title: "Geen factureerbare uren gevonden voor deze klant en periode", variant: "destructive" });
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth() + 1;
+
+      const { data: invoiceNumber, error: invoiceNumberError } = await supabase.rpc("generate_invoice_number", { p_year: year });
+      if (invoiceNumberError || !invoiceNumber) {
+        throw new Error(invoiceNumberError?.message || "Kon factuurnummer niet genereren");
+      }
+
+      const { data: settings } = await supabase.from("settings").select("payment_terms").maybeSingle();
+      const paymentTerms = settings?.payment_terms ?? 30;
+      const dueDate = new Date(today);
+      dueDate.setDate(dueDate.getDate() + paymentTerms);
+
+      const { data: invoice, error: invoiceError } = await supabase
+        .from("invoices")
+        .insert({
+          invoice_number: invoiceNumber,
+          customer_id: customerId,
+          invoice_date: isoToday(),
+          due_date: dueDate.toISOString().slice(0, 10),
+          status: "concept",
+          source_type: "generated",
+          invoice_year: year,
+          invoice_month: month,
+          subtotal: totals.subtotal,
+          vat_total: totals.vat,
+          total: totals.total,
+        })
+        .select("id")
+        .single();
+
+      if (invoiceError || !invoice) {
+        throw new Error(invoiceError?.message || "Kon factuur niet aanmaken");
+      }
+
+      const invoiceItems = invoiceableEntries.map((entry) => {
+        const subtotal = round2(Number(entry.hours) * Number(entry.hourly_rate));
+        return {
+          invoice_id: invoice.id,
+          description: `${formatNlDate(entry.work_date)} - ${entry.description}`,
+          quantity: Number(entry.hours),
+          price: Number(entry.hourly_rate),
+          vat_percentage: 21,
+          subtotal,
+        };
+      });
+
+      const { error: itemError } = await supabase.from("invoice_items").insert(invoiceItems);
+      if (itemError) throw new Error(itemError.message);
+
+      const { error: updateError } = await supabase
+        .from("time_entries")
+        .update({ status: "gefactureerd", invoice_id: invoice.id })
+        .in("id", invoiceableEntries.map((entry) => entry.id));
+      if (updateError) throw new Error(updateError.message);
+
+      await supabase.from("activity_logs").insert({
+        type: "invoice_created_from_hours_period",
+        reference_id: invoice.id,
+        description: `Factuur ${invoiceNumber} aangemaakt voor ${invoiceableEntries.length} urenregel(s) via periode`,
+      });
+
+      const customer = customers.find((item) => item.id === customerId);
+      toast({
+        title: "Factuur aangemaakt",
+        description: `Factuur ${invoiceNumber} aangemaakt voor ${customer?.company_name || customer?.name || "klant"}`,
+      });
+
+      setDialogOpen(false);
+      await loadData();
+    } catch (error: any) {
+      toast({ title: "Fout bij factuur aanmaken", description: error.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="px-6 pt-6">
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-6">
+            <div>
+              <h2 className="font-semibold">Factuur maken per klant/periode</h2>
+              <p className="text-sm text-muted-foreground">
+                Kies klant + periode en maak automatisch één factuur van alle concepturen.
+              </p>
+            </div>
+            <Button onClick={() => { loadData(); setDialogOpen(true); }}>
+              <CalendarRange className="h-4 w-4 mr-2" />
+              Factuur maken per periode
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <AdminTimeEntries />
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Factuur maken per periode</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label>Klant</Label>
+                <Select value={customerId} onValueChange={setCustomerId}>
+                  <SelectTrigger><SelectValue placeholder="Kies klant" /></SelectTrigger>
+                  <SelectContent>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        {customer.company_name || customer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Vanaf datum</Label>
+                <Input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} />
+              </div>
+              <div>
+                <Label>Tot datum</Label>
+                <Input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} />
+              </div>
+            </div>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Preview factureerbare uren</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-sm text-muted-foreground">Laden...</div>
+                ) : !customerId || !fromDate || !toDate ? (
+                  <div className="text-sm text-muted-foreground">Kies een klant en periode om de preview te tonen.</div>
+                ) : invoiceableEntries.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">Geen factureerbare concepturen gevonden voor deze klant en periode.</div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div><div className="text-xs text-muted-foreground">Regels</div><div className="font-bold">{totals.count}</div></div>
+                      <div><div className="text-xs text-muted-foreground">Uren</div><div className="font-bold">{totals.hours}</div></div>
+                      <div><div className="text-xs text-muted-foreground">Excl. btw</div><div className="font-bold">{fmt(totals.subtotal)}</div></div>
+                      <div><div className="text-xs text-muted-foreground">BTW 21%</div><div className="font-bold">{fmt(totals.vat)}</div></div>
+                      <div><div className="text-xs text-muted-foreground">Incl. btw</div><div className="font-bold text-primary">{fmt(totals.total)}</div></div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto border rounded-md divide-y">
+                      {invoiceableEntries.map((entry) => (
+                        <div key={entry.id} className="flex items-center justify-between gap-3 p-2 text-sm">
+                          <div className="min-w-0">
+                            <div className="font-medium">{formatNlDate(entry.work_date)} - {entry.description}</div>
+                            <div className="text-xs text-muted-foreground">{Number(entry.hours)} uur × {fmt(Number(entry.hourly_rate))}</div>
+                          </div>
+                          <div className="font-medium whitespace-nowrap">{fmt(Number(entry.hours) * Number(entry.hourly_rate))}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuleren</Button>
+            <Button onClick={createInvoice} disabled={creating || invoiceableEntries.length === 0}>
+              {creating ? "Bezig..." : "Factuur aanmaken"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default AdminTimeEntriesWithPeriod;
