@@ -1,7 +1,8 @@
-import { Phone, Mail, MapPin, Send } from "lucide-react";
+import { Phone, Mail, MapPin, Send, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "@/hooks/use-toast";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -10,10 +11,49 @@ const Contact = () => {
     phone: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData);
+
+    const name = formData.name.trim();
+    const email = formData.email.trim();
+    const phone = formData.phone.trim();
+    const message = formData.message.trim();
+
+    if (!name || !email || !message) {
+      toast({
+        title: "Niet alles is ingevuld",
+        description: "Vul minimaal je naam, e-mailadres en bericht in.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const subject = encodeURIComponent(`Nieuwe aanvraag via harkasit.nl - ${name}`);
+    const body = encodeURIComponent(
+      `Nieuwe aanvraag via harkasit.nl\n\n` +
+        `Naam: ${name}\n` +
+        `E-mail: ${email}\n` +
+        `Telefoon: ${phone || "Niet ingevuld"}\n\n` +
+        `Bericht:\n${message}\n\n` +
+        `---\nDeze aanvraag is verstuurd via het contactformulier op harkasit.nl.`
+    );
+
+    window.location.href = `mailto:info@harkasit.nl?subject=${subject}&body=${body}`;
+
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setSubmitted(true);
+      setFormData({ name: "", email: "", phone: "", message: "" });
+      toast({
+        title: "Aanvraag voorbereid",
+        description: "Je e-mailprogramma is geopend met je aanvraag. Verstuur de e-mail om de aanvraag definitief te verzenden.",
+      });
+    }, 600);
   };
 
   return (
@@ -110,12 +150,22 @@ const Contact = () => {
             onSubmit={handleSubmit} 
             className="p-8 rounded-2xl gradient-card border border-border/50"
           >
-            <h3 className="text-xl font-semibold mb-6">Vraag een IT-check of pakket aan</h3>
+            <h3 className="text-xl font-semibold mb-2">Vraag een IT-check of pakket aan</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Het formulier opent je e-mailprogramma met een ingevulde aanvraag naar info@harkasit.nl.
+            </p>
+
+            {submitted && (
+              <div className="mb-5 rounded-xl border border-primary/30 bg-primary/10 p-4 text-sm text-muted-foreground flex gap-3">
+                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span>Je aanvraag is voorbereid. Controleer en verstuur de e-mail vanuit je e-mailprogramma.</span>
+              </div>
+            )}
             
             <div className="space-y-5">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium mb-2">
-                  Naam
+                  Naam <span className="text-primary">*</span>
                 </label>
                 <input
                   type="text"
@@ -124,12 +174,13 @@ const Contact = () => {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
                   placeholder="Je naam"
+                  autoComplete="name"
                 />
               </div>
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-2">
-                  E-mail
+                  E-mail <span className="text-primary">*</span>
                 </label>
                 <input
                   type="email"
@@ -138,6 +189,7 @@ const Contact = () => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
                   placeholder="je@email.nl"
+                  autoComplete="email"
                 />
               </div>
 
@@ -152,12 +204,13 @@ const Contact = () => {
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
                   placeholder="+31 6 1234 5678"
+                  autoComplete="tel"
                 />
               </div>
 
               <div>
                 <label htmlFor="message" className="block text-sm font-medium mb-2">
-                  Bericht
+                  Bericht <span className="text-primary">*</span>
                 </label>
                 <textarea
                   id="message"
@@ -169,9 +222,9 @@ const Contact = () => {
                 />
               </div>
 
-              <Button type="submit" variant="hero" className="w-full" size="lg">
+              <Button type="submit" variant="hero" className="w-full" size="lg" disabled={isSubmitting}>
                 <Send className="w-4 h-4" />
-                Verstuur aanvraag
+                {isSubmitting ? "Aanvraag voorbereiden..." : "Verstuur aanvraag"}
               </Button>
             </div>
           </motion.form>
