@@ -5,132 +5,137 @@ const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-24 pb-20">
+      <main className="pt-28 pb-20">
         <div className="container px-6 max-w-4xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold mb-8">Algemene Voorwaarden – Harkas IT</h1>
+          <div className="mb-10">
+            <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
+              Algemene voorwaarden
+            </span>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">Algemene Voorwaarden – Harkas IT</h1>
+            <p className="text-muted-foreground">Laatst bijgewerkt: 31 mei 2026</p>
+          </div>
           
           <div className="prose prose-invert max-w-none space-y-6 text-muted-foreground">
             <h2 className="text-xl font-semibold text-foreground">1. Definities</h2>
-            <p>In deze voorwaarden wordt verstaan onder:</p>
+            <p>In deze algemene voorwaarden wordt verstaan onder:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong className="text-foreground">Opdrachtnemer:</strong> Harkas IT, gevestigd te Tiel, ingeschreven bij de Kamer van Koophandel onder nummer 84795085.</li>
+              <li><strong className="text-foreground">Harkas IT / opdrachtnemer:</strong> Harkas IT, gevestigd te Tiel, ingeschreven bij de Kamer van Koophandel onder nummer 84795085.</li>
               <li><strong className="text-foreground">Opdrachtgever:</strong> de natuurlijke persoon of rechtspersoon die een overeenkomst aangaat met Harkas IT.</li>
-              <li><strong className="text-foreground">Diensten:</strong> alle door Harkas IT geleverde diensten, waaronder IT-support, systeembeheer, cloudoplossingen, webdesign, hosting, marketingdiensten en aanverwante activiteiten.</li>
+              <li><strong className="text-foreground">Diensten:</strong> alle door Harkas IT geleverde diensten, waaronder IT-beheer, Microsoft 365-beheer, werkplekbeheer, IT-support, cloudoplossingen, websites, webapps, hosting, domeinbeheer, marketing, automatisering en aanverwante werkzaamheden.</li>
+              <li><strong className="text-foreground">Overeenkomst:</strong> iedere afspraak tussen Harkas IT en opdrachtgever, waaronder offertes, opdrachtbevestigingen, abonnementen, beheercontracten en projectafspraken.</li>
             </ul>
 
             <h2 className="text-xl font-semibold text-foreground mt-8">2. Toepasselijkheid</h2>
-            <p>2.1 Deze algemene voorwaarden zijn van toepassing op alle aanbiedingen, offertes, overeenkomsten en leveringen van Harkas IT, tenzij schriftelijk anders is overeengekomen.</p>
-            <p>2.2 Afwijkingen van deze voorwaarden zijn slechts geldig indien deze schriftelijk zijn bevestigd door Harkas IT.</p>
+            <p>2.1 Deze algemene voorwaarden zijn van toepassing op alle aanbiedingen, offertes, overeenkomsten, abonnementen, leveringen en werkzaamheden van Harkas IT, tenzij schriftelijk anders is overeengekomen.</p>
+            <p>2.2 Afwijkingen van deze voorwaarden zijn alleen geldig wanneer deze schriftelijk door Harkas IT zijn bevestigd.</p>
+            <p>2.3 Inkoopvoorwaarden of andere voorwaarden van opdrachtgever zijn niet van toepassing, tenzij Harkas IT deze schriftelijk heeft aanvaard.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">3. Offertes en Overeenkomsten</h2>
-            <p>3.1 Alle offertes zijn vrijblijvend en 7 dagen geldig, tenzij anders vermeld.</p>
-            <p>3.2 Een overeenkomst komt tot stand op het moment dat Harkas IT de opdracht schriftelijk bevestigt of feitelijk begint met de uitvoering.</p>
-            <p>3.3 Harkas IT heeft het recht opdrachten zonder opgave van redenen te weigeren.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">3. Offertes en overeenkomsten</h2>
+            <p>3.1 Alle offertes zijn vrijblijvend en 7 dagen geldig, tenzij in de offerte een andere termijn staat.</p>
+            <p>3.2 Een overeenkomst komt tot stand wanneer opdrachtgever akkoord geeft op een offerte, opdrachtbevestiging, abonnement of wanneer Harkas IT feitelijk start met de uitvoering van de werkzaamheden.</p>
+            <p>3.3 Harkas IT mag opdrachten weigeren of aanvullende voorwaarden stellen wanneer dat redelijkerwijs nodig is.</p>
+            <p>3.4 Wijzigingen of aanvullingen op een opdracht kunnen gevolgen hebben voor prijs, planning en oplevertermijn.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">4. Uitvoering van de Diensten</h2>
-            <p>4.1 Harkas IT zal de overeenkomst naar beste inzicht en vermogen uitvoeren, conform de eisen van goed vakmanschap.</p>
-            <p>4.2 Indien noodzakelijk voor een goede uitvoering, mag Harkas IT derden inschakelen.</p>
-            <p>4.3 Wijzigingen in de overeenkomst kunnen leiden tot aanpassing van de overeengekomen prijs en/of levertijd.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">4. Uitvoering van diensten</h2>
+            <p>4.1 Harkas IT voert werkzaamheden naar beste inzicht, vermogen en volgens goed vakmanschap uit. Alle diensten worden geleverd op basis van een inspanningsverplichting, tenzij schriftelijk uitdrukkelijk een concreet resultaat is overeengekomen.</p>
+            <p>4.2 Harkas IT mag derden, partners of onderaannemers inschakelen wanneer dit nodig of wenselijk is voor een goede uitvoering van de opdracht.</p>
+            <p>4.3 Opdrachtgever zorgt voor tijdige toegang tot systemen, accounts, licenties, gegevens, werkplekken, domeinen, hostingomgevingen en andere informatie die nodig is voor de uitvoering van de opdracht.</p>
+            <p>4.4 Vertraging door ontbrekende informatie, ontbrekende toegang, afhankelijkheid van derden of wijzigingen vanuit opdrachtgever komt niet voor rekening van Harkas IT.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">5. Verplichtingen Opdrachtgever</h2>
-            <p>5.1 De opdrachtgever draagt er zorg voor dat alle gegevens waarvan Harkas IT aangeeft dat deze noodzakelijk zijn, tijdig worden verstrekt.</p>
-            <p>5.2 Indien de voor de uitvoering benodigde gegevens niet tijdig worden verstrekt, heeft Harkas IT het recht de uitvoering van de overeenkomst op te schorten.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">5. IT-beheer, support en MSP-diensten</h2>
+            <p>5.1 Voor IT-beheer, Microsoft 365-beheer, werkplekbeheer en support gelden de afspraken zoals vastgelegd in de offerte, overeenkomst of het gekozen pakket.</p>
+            <p>5.2 Inbegrepen supporturen, responstijden, werkzaamheden en eventuele service-afspraken worden per pakket of overeenkomst vastgelegd.</p>
+            <p>5.3 Supporturen die buiten het pakket vallen, spoedwerk, werkzaamheden buiten kantooruren, locatiebezoeken, migraties, nieuwe laptopinstallaties, complexe storingen, projectwerk en werkzaamheden door externe leveranciers kunnen apart worden gefactureerd tegen het geldende uurtarief of projecttarief.</p>
+            <p>5.4 Harkas IT is niet verantwoordelijk voor storingen of beperkingen die worden veroorzaakt door internetproviders, Microsoft, hostingproviders, hardwareleveranciers, softwareleveranciers of andere derde partijen.</p>
+            <p>5.5 Opdrachtgever blijft verantwoordelijk voor het gebruik van eigen accounts, wachtwoorden, licenties, apparaten en interne procedures, tenzij schriftelijk anders is overeengekomen.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">6. Hosting en Domeinregistratie</h2>
-            <p>6.1 Harkas IT biedt hostingdiensten aan onder de voorwaarde van een jaarlijkse verlenging, tenzij schriftelijk anders overeengekomen.</p>
-            <p>6.2 Harkas IT is niet aansprakelijk voor storingen, downtime of verlies van gegevens veroorzaakt door hostingproviders of derden.</p>
-            <p>6.3 Domeinnamen worden geregistreerd op naam van de opdrachtgever. Harkas IT treedt slechts op als tussenpersoon.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">6. Abonnementen en beheercontracten</h2>
+            <p>6.1 Abonnementen en beheercontracten worden aangegaan voor de periode die in de offerte of overeenkomst staat. Als geen specifieke periode is afgesproken, geldt een maandelijkse looptijd.</p>
+            <p>6.2 Maandelijkse abonnementen worden automatisch verlengd met telkens één maand, tenzij opdrachtgever minimaal één maand voor het einde van de lopende periode schriftelijk opzegt.</p>
+            <p>6.3 Jaarlijkse contracten, hostingcontracten of domeindiensten worden automatisch verlengd met dezelfde periode, tenzij schriftelijk anders overeengekomen.</p>
+            <p>6.4 Bij structureel hoger supportverbruik dan past binnen het gekozen pakket, mag Harkas IT voorstellen het pakket aan te passen of extra werkzaamheden afzonderlijk factureren.</p>
+            <p>6.5 Bij niet-tijdige betaling mag Harkas IT diensten, support, beheerwerkzaamheden of toegang tot aanvullende diensten opschorten totdat betaling is ontvangen.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">7. Website-onderhoud</h2>
-            <p>7.1 Bij een onderhoudscontract zorgt Harkas IT voor updates en beveiliging van de website, mits opdrachtgever toegang verstrekt tot alle noodzakelijke systemen.</p>
-            <p>7.2 Harkas IT is niet verantwoordelijk voor schade veroorzaakt door onrechtmatige toegang, hacks of fouten van derden tenzij aantoonbaar sprake is van grove nalatigheid.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">7. Hosting, domeinen en e-mail</h2>
+            <p>7.1 Harkas IT kan hosting, domeinregistratie, DNS, e-mail of gerelateerde diensten verzorgen of beheren. De voorwaarden van externe providers kunnen daarop aanvullend van toepassing zijn.</p>
+            <p>7.2 Domeinnamen worden waar mogelijk geregistreerd op naam van opdrachtgever. Harkas IT kan optreden als technisch beheerder of tussenpersoon.</p>
+            <p>7.3 Harkas IT is niet aansprakelijk voor storingen, downtime, wijzigingen, dataverlies of beperkingen veroorzaakt door hostingproviders, domeinregistrars, DNS-providers, e-mailproviders of andere derde partijen.</p>
+            <p>7.4 Opdrachtgever is verantwoordelijk voor tijdige betaling van domein-, hosting- en licentiekosten. Bij niet-tijdige betaling kunnen diensten tijdelijk worden opgeschort of verlopen.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">8. Online Marketingdiensten</h2>
-            <p>8.1 Resultaten uit SEO, SEA of social media campagnes kunnen niet worden gegarandeerd.</p>
-            <p>8.2 Opdrachtgever is verantwoordelijk voor het aanleveren van correcte informatie en goedkeuring van content.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">8. Websites, webapps en onderhoud</h2>
+            <p>8.1 Voor websites, webapps en digitale oplossingen wordt de inhoud, scope en planning vastgelegd in de offerte of opdrachtbevestiging.</p>
+            <p>8.2 Opdrachtgever is verantwoordelijk voor het tijdig aanleveren van teksten, afbeeldingen, logo’s, huisstijl, feedback en andere benodigde materialen, tenzij schriftelijk anders is overeengekomen.</p>
+            <p>8.3 Meerwerk, extra pagina’s, nieuwe functionaliteiten, koppelingen, spoedwijzigingen of wijzigingen buiten de afgesproken scope worden afzonderlijk gefactureerd.</p>
+            <p>8.4 Bij website- of webapp-onderhoud verricht Harkas IT updates en beheer binnen de afgesproken scope. Harkas IT is niet aansprakelijk voor schade door externe plugins, thema’s, hostingproblemen, hacks, gebruikersfouten of wijzigingen door derden, tenzij sprake is van opzet of grove nalatigheid van Harkas IT.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">9. Leveringstermijnen</h2>
-            <p>9.1 Door Harkas IT opgegeven termijnen zijn indicatief en niet fataal, tenzij uitdrukkelijk schriftelijk anders overeengekomen.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">9. Marketing en advertentiediensten</h2>
+            <p>9.1 Harkas IT kan ondersteuning bieden bij SEO, SEA, social media, Google bedrijfsprofiel, advertentiecampagnes, content en digitale groeistrategie.</p>
+            <p>9.2 Resultaten uit marketing, SEO, advertenties of social media kunnen niet worden gegarandeerd. Externe factoren zoals concurrentie, budget, algoritmes, marktomstandigheden en platformregels hebben invloed op resultaten.</p>
+            <p>9.3 Advertentiebudgetten, mediabudgetten en platformkosten zijn niet inbegrepen, tenzij schriftelijk anders is overeengekomen.</p>
+            <p>9.4 Opdrachtgever is verantwoordelijk voor goedkeuring van content, claims, aanbiedingen, prijzen en informatie die in campagnes wordt gebruikt.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">10. Prijzen en Betaling</h2>
-            <p>10.1 Alle prijzen zijn exclusief BTW, tenzij anders aangegeven.</p>
-            <p>10.2 Betaling dient te geschieden binnen 30 dagen na factuurdatum, zonder opschorting of verrekening.</p>
-            <p>10.3 Bij niet-tijdige betaling is opdrachtgever zonder nadere ingebrekestelling in verzuim en is een rente van 1% per maand verschuldigd.</p>
-            <p>10.4 Alle gerechtelijke en buitengerechtelijke incassokosten zijn voor rekening van de opdrachtgever.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">10. Leveringstermijnen</h2>
+            <p>10.1 Door Harkas IT genoemde termijnen zijn indicatief en niet fataal, tenzij schriftelijk uitdrukkelijk anders is overeengekomen.</p>
+            <p>10.2 Een termijn gaat pas lopen nadat alle benodigde informatie, toegang, materialen en eventuele aanbetaling door Harkas IT zijn ontvangen.</p>
+            <p>10.3 Vertraging geeft opdrachtgever geen recht op schadevergoeding of ontbinding, tenzij schriftelijk anders is overeengekomen en Harkas IT na ingebrekestelling niet binnen een redelijke termijn alsnog nakomt.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">11. Intellectueel Eigendom</h2>
-            <p>11.1 Alle rechten op programmatuur, ontwerpen, teksten, campagnes en andere ontwikkelde werken blijven eigendom van Harkas IT, tenzij schriftelijk anders is overeengekomen.</p>
-            <p>11.2 De opdrachtgever verkrijgt enkel een gebruiksrecht voor het overeengekomen doel.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">11. Prijzen en betaling</h2>
+            <p>11.1 Alle prijzen zijn exclusief btw, tenzij anders vermeld.</p>
+            <p>11.2 Betaling dient te gebeuren binnen 30 dagen na factuurdatum, tenzij schriftelijk een andere betaaltermijn is overeengekomen.</p>
+            <p>11.3 Opdrachtgever is niet gerechtigd betaling op te schorten of te verrekenen zonder schriftelijke toestemming van Harkas IT.</p>
+            <p>11.4 Bij niet-tijdige betaling is opdrachtgever zonder nadere ingebrekestelling in verzuim en is een rente van 1% per maand verschuldigd.</p>
+            <p>11.5 Alle gerechtelijke en buitengerechtelijke incassokosten komen voor rekening van opdrachtgever.</p>
+            <p>11.6 Periodieke kosten, licenties, hosting, domeinen en abonnementen kunnen vooraf worden gefactureerd.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">12. Vertrouwelijkheid</h2>
-            <p>12.1 Partijen zijn verplicht tot geheimhouding van alle vertrouwelijke informatie die zij in het kader van de overeenkomst van elkaar verkrijgen.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">12. Intellectueel eigendom</h2>
+            <p>12.1 Alle rechten op software, ontwerpen, teksten, code, campagnes, concepten, documenten, templates en andere ontwikkelde werken blijven eigendom van Harkas IT of haar licentiegevers, tenzij schriftelijk anders is overeengekomen.</p>
+            <p>12.2 Na volledige betaling krijgt opdrachtgever een gebruiksrecht voor het overeengekomen doel.</p>
+            <p>12.3 Het is opdrachtgever niet toegestaan materialen van Harkas IT te kopiëren, door te verkopen, openbaar te maken of aan derden te verstrekken zonder schriftelijke toestemming, tenzij dit binnen de overeenkomst is toegestaan.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">13. Aansprakelijkheid</h2>
-            <p>13.1 Harkas IT is uitsluitend aansprakelijk voor directe schade veroorzaakt door opzet of grove nalatigheid.</p>
-            <p>13.2 De aansprakelijkheid is beperkt tot het factuurbedrag van de betreffende opdracht, met een maximum van €5.000 per schadegeval.</p>
-            <p>13.3 Harkas IT is niet aansprakelijk voor indirecte schade, waaronder gevolgschade, winstderving en gemiste besparingen.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">13. Vertrouwelijkheid en beveiliging</h2>
+            <p>13.1 Partijen zijn verplicht vertrouwelijke informatie geheim te houden die zij in het kader van de overeenkomst van elkaar ontvangen.</p>
+            <p>13.2 Opdrachtgever is verantwoordelijk voor zorgvuldig gebruik van accounts, wachtwoorden, MFA, toegangsrechten en interne beveiligingsprocedures.</p>
+            <p>13.3 Wanneer Harkas IT toegang krijgt tot systemen of gegevens van opdrachtgever, zal Harkas IT deze toegang zorgvuldig gebruiken en alleen voor de uitvoering van de opdracht.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">14. Overmacht</h2>
-            <p>14.1 Onder overmacht wordt verstaan: elke van de wil van Harkas IT onafhankelijke omstandigheid die nakoming van verplichtingen verhindert.</p>
-            <p>14.2 Tijdens overmacht worden verplichtingen van Harkas IT opgeschort.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">14. Back-ups en data</h2>
+            <p>14.1 Opdrachtgever blijft verantwoordelijk voor eigen data, bestanden en back-ups, tenzij schriftelijk is overeengekomen dat Harkas IT back-upbeheer verzorgt.</p>
+            <p>14.2 Harkas IT is niet aansprakelijk voor dataverlies door storingen, gebruikersfouten, malware, externe leveranciers, verlopen licenties of ontbrekende back-ups, tenzij sprake is van opzet of grove nalatigheid van Harkas IT.</p>
+            <p>14.3 Harkas IT adviseert opdrachtgever om bedrijfskritische data altijd te laten beschermen met een passende back-upoplossing.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">15. Duur en Opzegging</h2>
-            <p>15.1 Hosting- en onderhoudscontracten hebben een looptijd van één jaar, tenzij anders overeengekomen, en worden daarna stilzwijgend verlengd.</p>
-            <p>15.2 Opzegging dient schriftelijk te gebeuren met een opzegtermijn van minimaal 1 maand voor het einde van de lopende periode.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">15. Aansprakelijkheid</h2>
+            <p>15.1 Harkas IT is alleen aansprakelijk voor directe schade die het rechtstreekse gevolg is van een toerekenbare tekortkoming, opzet of grove nalatigheid van Harkas IT.</p>
+            <p>15.2 De aansprakelijkheid van Harkas IT is beperkt tot het bedrag dat voor de betreffende opdracht of dienst in de laatste drie maanden aan opdrachtgever is gefactureerd, met een maximum van €5.000 per schadegeval.</p>
+            <p>15.3 Harkas IT is niet aansprakelijk voor indirecte schade, gevolgschade, omzetverlies, winstderving, gemiste besparingen, reputatieschade, bedrijfsstagnatie, verlies van data of schade door derden.</p>
+            <p>15.4 Beperkingen van aansprakelijkheid gelden niet voor zover aansprakelijkheid wettelijk niet mag worden uitgesloten of beperkt.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">16. Marketing en Publiciteit</h2>
-            <p>16.1 Harkas IT behoudt zich het recht voor geleverde websites, designs of campagnes als referentie te gebruiken, tenzij opdrachtgever hiertegen vooraf schriftelijk bezwaar maakt.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">16. Overmacht</h2>
+            <p>16.1 Onder overmacht wordt verstaan iedere omstandigheid buiten de redelijke invloed van Harkas IT waardoor nakoming tijdelijk of blijvend onmogelijk of bezwaarlijk is.</p>
+            <p>16.2 Onder overmacht vallen onder andere internetstoringen, stroomstoringen, storingen bij leveranciers, cloudproviders of hostingpartijen, cyberaanvallen, ziekte, overheidsmaatregelen, natuurrampen, oorlog, stakingen en andere onvoorziene omstandigheden.</p>
+            <p>16.3 Tijdens overmacht worden verplichtingen van Harkas IT opgeschort. Harkas IT is in dat geval geen schadevergoeding verschuldigd.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">17. 24-uurs Oplevergarantie</h2>
-            <p>17.1 Harkas IT biedt, onder voorwaarden, een 24-uurs oplevergarantie voor websites. Indien de overeengekomen website niet binnen 24 uur na schriftelijke opdrachtbevestiging is opgeleverd, wordt de website kosteloos aan de opdrachtgever geleverd.</p>
-            <p>17.2 De volgende voorwaarden zijn van toepassing om aanspraak te kunnen maken op de 24-uurs oplevergarantie:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>a. Alle benodigde materialen, waaronder maar niet beperkt tot teksten, afbeeldingen, logo's en specifieke instructies, dienen volledig en correct aangeleverd te zijn vóór het moment van opdrachtbevestiging.</li>
-              <li>b. De 24-uurs termijn vangt aan op het moment dat Harkas IT de schriftelijke opdrachtbevestiging én de volledige set materialen heeft ontvangen.</li>
-              <li>c. De garantie geldt uitsluitend voor standaard one-page websites (maximaal 1 pagina), zonder maatwerkfunctionaliteiten, koppelingen met externe systemen of aanvullende ontwikkelverzoeken.</li>
-              <li>d. Eventuele aanvullingen, wijzigingen of nieuwe verzoeken ná de start van de ontwikkeling leiden tot verval van de 24-uurs oplevergarantie.</li>
-              <li>e. Hosting en registratie van een domeinnaam zijn niet inbegrepen in de gratis levering en worden jaarlijks afzonderlijk gefactureerd aan de opdrachtgever.</li>
-              <li>f. Harkas IT behoudt zich het recht voor de oplevergarantie buiten werking te stellen in gevallen van overmacht, waaronder maar niet beperkt tot internetstoringen, serverproblemen, ziekte, natuurrampen of andere onvoorziene omstandigheden buiten de invloedssfeer van Harkas IT.</li>
-            </ul>
-            <p>17.3 Indien aan bovenstaande voorwaarden is voldaan en de website niet binnen de gestelde termijn wordt opgeleverd, zal Harkas IT geen factuur voor de initiële ontwikkelingskosten van de betreffende website in rekening brengen. In dat geval verplicht de opdrachtgever zich echter tot het afnemen en betalen van de hosting- en domeinnaamdiensten gedurende een minimumtermijn van vijf (5) jaren. Deze kosten worden jaarlijks vooraf gefactureerd en zijn bindend, ongeacht tussentijdse beëindiging van de dienstverlening door de opdrachtgever.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">17. Duur en opzegging</h2>
+            <p>17.1 De looptijd van overeenkomsten, abonnementen en beheercontracten wordt vastgelegd in de offerte of overeenkomst.</p>
+            <p>17.2 Opzegging dient schriftelijk te gebeuren met inachtneming van de overeengekomen opzegtermijn.</p>
+            <p>17.3 Bij voortijdige beëindiging van een overeenkomst met vaste looptijd blijven de resterende termijnen verschuldigd, tenzij schriftelijk anders is overeengekomen.</p>
+            <p>17.4 Harkas IT mag de overeenkomst beëindigen of opschorten wanneer opdrachtgever betalingsverplichtingen niet nakomt, noodzakelijke medewerking weigert, misbruik maakt van diensten of handelt in strijd met de overeenkomst.</p>
 
-            <h2 className="text-xl font-semibold text-foreground mt-8">18. Abonnementsvoorwaarden Website, Webshop, App & Advertentie Marketing</h2>
-            <p><strong className="text-foreground">18.1 Dienstverlening:</strong> Harkas IT biedt abonnementen aan waarbij de opdrachtgever gebruik maakt van één of meerdere van de volgende diensten: ontwikkeling en onderhoud van een website, webshop of applicatie, in combinatie met advertentie marketing (inclusief maar niet beperkt tot Google Ads, Facebook Ads, Instagram Ads en andere online campagnes).</p>
-            
-            <p><strong className="text-foreground">18.2 Duur en verlenging:</strong></p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>a. Abonnementen worden standaard aangegaan voor een initiële looptijd van twaalf (12) maanden, tenzij schriftelijk anders overeengekomen.</li>
-              <li>b. Na afloop van de initiële periode wordt het abonnement automatisch verlengd met telkens één (1) maand, tenzij de opdrachtgever ten minste één (1) maand voor het einde van de lopende periode schriftelijk opzegt.</li>
-            </ul>
+            <h2 className="text-xl font-semibold text-foreground mt-8">18. Referenties en publiciteit</h2>
+            <p>18.1 Harkas IT mag geleverde websites, designs, cases, projecten of algemene resultaten als referentie gebruiken, tenzij opdrachtgever hier vooraf schriftelijk bezwaar tegen maakt.</p>
+            <p>18.2 Harkas IT zal daarbij geen vertrouwelijke informatie publiceren zonder toestemming van opdrachtgever.</p>
 
-            <p><strong className="text-foreground">18.3 Kosten en betaling:</strong></p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>a. Abonnementsvergoedingen zijn verschuldigd op maandbasis, voorafgaand aan de betreffende maand.</li>
-              <li>b. Alle tarieven zijn exclusief BTW, tenzij anders vermeld.</li>
-              <li>c. Indien de opdrachtgever verzuimt tijdig te betalen, behoudt Harkas IT zich het recht voor de dienstverlening tijdelijk op te schorten totdat betaling is voldaan.</li>
-            </ul>
+            <h2 className="text-xl font-semibold text-foreground mt-8">19. Bijzondere acties of garanties</h2>
+            <p>19.1 Eventuele acties, kortingen, garanties of opleverbeloften gelden alleen wanneer deze schriftelijk zijn bevestigd en wanneer opdrachtgever aan alle daarvoor genoemde voorwaarden voldoet.</p>
+            <p>19.2 Een eventuele snelle opleverbelofte voor eenvoudige websites geldt alleen voor standaard one-page websites zonder maatwerk, koppelingen of aanvullende functionaliteiten, en alleen wanneer alle benodigde materialen volledig en tijdig zijn aangeleverd.</p>
+            <p>19.3 Aanvullingen, wijzigingen of ontbrekende materialen kunnen leiden tot verval van een actie of opleverbelofte.</p>
 
-            <p><strong className="text-foreground">18.4 Inhoud abonnement:</strong></p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>a. De specifieke inhoud van het abonnement (zoals aantal advertentiecampagnes, aantal websitewijzigingen, hostingcapaciteit, enz.) wordt vastgelegd in de overeenkomst of het bestelformulier.</li>
-              <li>b. Aanpassingen buiten het overeengekomen pakket worden afzonderlijk gefactureerd op basis van het geldende uurtarief of projecttarief.</li>
-            </ul>
+            <h2 className="text-xl font-semibold text-foreground mt-8">20. Toepasselijk recht en geschillen</h2>
+            <p>20.1 Op alle overeenkomsten tussen Harkas IT en opdrachtgever is uitsluitend Nederlands recht van toepassing.</p>
+            <p>20.2 Geschillen worden bij voorkeur eerst in overleg opgelost. Als dat niet lukt, worden geschillen voorgelegd aan de bevoegde rechter in Nederland.</p>
 
-            <p><strong className="text-foreground">18.5 Beëindiging abonnement:</strong></p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>a. Bij voortijdige beëindiging binnen de eerste contractperiode (eerste 12 maanden) blijft het volledige abonnementsbedrag voor de resterende looptijd verschuldigd.</li>
-              <li>b. Na de initiële periode kan het abonnement per maand worden opgezegd met inachtneming van een opzegtermijn van één (1) maand.</li>
-            </ul>
-
-            <p><strong className="text-foreground">18.6 Aansprakelijkheid en prestaties:</strong> Harkas IT spant zich in om de afgesproken diensten naar beste vermogen te leveren, maar kan geen garantie geven op specifieke advertentieresultaten of bezoekersaantallen. De opdrachtgever erkent dat externe factoren (zoals algoritme wijzigingen of marktomstandigheden) invloed kunnen hebben op de resultaten.</p>
-
-            <p><strong className="text-foreground">18.7 Overmacht:</strong> In geval van overmacht is Harkas IT gerechtigd haar verplichtingen uit het abonnement op te schorten zolang de overmachtssituatie voortduurt, zonder dat hierdoor enige schadevergoeding verschuldigd is aan de opdrachtgever.</p>
-
-            <h2 className="text-xl font-semibold text-foreground mt-8">19. Toepasselijk Recht en Geschillen</h2>
-            <p>19.1 Op alle overeenkomsten tussen Harkas IT en opdrachtgever is uitsluitend Nederlands recht van toepassing.</p>
-            <p>19.2 Geschillen worden uitsluitend voorgelegd aan een bevoegde rechter.</p>
-
-            <p className="mt-12 text-center font-semibold text-foreground">(c) 2025 – Harkas IT – Alle rechten voorbehouden.</p>
+            <h2 className="text-xl font-semibold text-foreground mt-8">21. Contact</h2>
+            <p>Voor vragen over deze algemene voorwaarden kunt u contact opnemen via:</p>
+            <p><strong className="text-foreground">E-mail:</strong> info@harkasit.nl</p>
+            <p><strong className="text-foreground">Bedrijf:</strong> Harkas IT</p>
           </div>
         </div>
       </main>
