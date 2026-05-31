@@ -12,10 +12,11 @@ const Contact = () => {
     message: "",
   });
   const [attachmentName, setAttachmentName] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const name = formData.name.trim();
@@ -34,34 +35,50 @@ const Contact = () => {
 
     setIsSubmitting(true);
 
-    const subject = encodeURIComponent(`Nieuwe aanvraag via harkasit.nl - ${name}`);
-    const body = encodeURIComponent(
-      `Nieuwe aanvraag via harkasit.nl\n\n` +
-        `Naam: ${name}\n` +
-        `E-mail: ${email}\n` +
-        `Telefoon: ${phone || "Niet ingevuld"}\n` +
-        `Bijlage: ${attachmentName || "Geen bijlage opgegeven"}\n\n` +
-        `Bericht:\n${message}\n\n` +
-        (attachmentName
-          ? `Let op: de bezoeker heeft aangegeven een bijlage te willen meesturen. Voeg het bestand handmatig toe in deze e-mail voordat je hem verstuurt.\n\n`
-          : "") +
-        `---\nDeze aanvraag is verstuurd via het contactformulier op harkasit.nl.`
-    );
+    try {
+      const payload = new FormData();
+      payload.append("_subject", `Nieuwe aanvraag via harkasit.nl - ${name}`);
+      payload.append("_template", "table");
+      payload.append("_captcha", "false");
+      payload.append("Naam", name);
+      payload.append("E-mail", email);
+      payload.append("Telefoon", phone || "Niet ingevuld");
+      payload.append("Bericht", message);
+      payload.append("Bijlage", attachmentName || "Geen bijlage meegestuurd");
 
-    window.location.href = `mailto:info@harkasit.nl?subject=${subject}&body=${body}`;
+      if (attachmentFile) {
+        payload.append("attachment", attachmentFile);
+      }
 
-    setTimeout(() => {
-      setIsSubmitting(false);
+      const response = await fetch("https://formsubmit.co/ajax/info@harkasit.nl", {
+        method: "POST",
+        body: payload,
+      });
+
+      if (!response.ok) {
+        throw new Error("Formulier kon niet worden verzonden");
+      }
+
       setSubmitted(true);
       setFormData({ name: "", email: "", phone: "", message: "" });
       setAttachmentName("");
+      setAttachmentFile(null);
+      const attachmentInput = document.getElementById("attachment") as HTMLInputElement | null;
+      if (attachmentInput) attachmentInput.value = "";
+
       toast({
-        title: "Aanvraag voorbereid",
-        description: attachmentName
-          ? "Je e-mailprogramma is geopend. Voeg je bijlage handmatig toe en verstuur daarna de e-mail."
-          : "Je e-mailprogramma is geopend met je aanvraag. Verstuur de e-mail om de aanvraag definitief te verzenden.",
+        title: "Aanvraag verzonden",
+        description: "Bedankt. Je aanvraag is verzonden naar Harkas IT.",
       });
-    }, 600);
+    } catch (error) {
+      toast({
+        title: "Verzenden niet gelukt",
+        description: "Probeer het opnieuw of mail direct naar info@harkasit.nl.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -160,13 +177,13 @@ const Contact = () => {
           >
             <h3 className="text-xl font-semibold mb-2">Vraag een IT-check of pakket aan</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Het formulier opent je e-mailprogramma met een ingevulde aanvraag naar info@harkasit.nl.
+              Vul je gegevens in. Je aanvraag wordt direct vanaf de site naar info@harkasit.nl verzonden.
             </p>
 
             {submitted && (
               <div className="mb-5 rounded-xl border border-primary/30 bg-primary/10 p-4 text-sm text-muted-foreground flex gap-3">
                 <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <span>Je aanvraag is voorbereid. Controleer en verstuur de e-mail vanuit je e-mailprogramma.</span>
+                <span>Je aanvraag is verzonden. Wij nemen zo snel mogelijk contact met je op.</span>
               </div>
             )}
             
@@ -232,11 +249,16 @@ const Contact = () => {
                 <input
                   type="file"
                   id="attachment"
+                  name="attachment"
                   className="hidden"
-                  onChange={(e) => setAttachmentName(e.target.files?.[0]?.name || "")}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setAttachmentFile(file);
+                    setAttachmentName(file?.name || "");
+                  }}
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  Let op: door de huidige e-mailoplossing moet je de bijlage na het openen van je e-mailprogramma handmatig toevoegen.
+                  Optioneel. Bijvoorbeeld een screenshot, document of foto van een storing.
                 </p>
               </div>
 
@@ -256,7 +278,7 @@ const Contact = () => {
 
               <Button type="submit" variant="hero" className="w-full" size="lg" disabled={isSubmitting}>
                 <Send className="w-4 h-4" />
-                {isSubmitting ? "Aanvraag voorbereiden..." : "Verstuur aanvraag"}
+                {isSubmitting ? "Aanvraag verzenden..." : "Verstuur aanvraag"}
               </Button>
             </div>
           </motion.form>
