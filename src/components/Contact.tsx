@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, Send, CheckCircle2 } from "lucide-react";
+import { Phone, Mail, MapPin, Send, CheckCircle2, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -11,6 +11,7 @@ const Contact = () => {
     phone: "",
     message: "",
   });
+  const [attachmentName, setAttachmentName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -38,8 +39,12 @@ const Contact = () => {
       `Nieuwe aanvraag via harkasit.nl\n\n` +
         `Naam: ${name}\n` +
         `E-mail: ${email}\n` +
-        `Telefoon: ${phone || "Niet ingevuld"}\n\n` +
+        `Telefoon: ${phone || "Niet ingevuld"}\n` +
+        `Bijlage: ${attachmentName || "Geen bijlage opgegeven"}\n\n` +
         `Bericht:\n${message}\n\n` +
+        (attachmentName
+          ? `Let op: de bezoeker heeft aangegeven een bijlage te willen meesturen. Voeg het bestand handmatig toe in deze e-mail voordat je hem verstuurt.\n\n`
+          : "") +
         `---\nDeze aanvraag is verstuurd via het contactformulier op harkasit.nl.`
     );
 
@@ -49,9 +54,12 @@ const Contact = () => {
       setIsSubmitting(false);
       setSubmitted(true);
       setFormData({ name: "", email: "", phone: "", message: "" });
+      setAttachmentName("");
       toast({
         title: "Aanvraag voorbereid",
-        description: "Je e-mailprogramma is geopend met je aanvraag. Verstuur de e-mail om de aanvraag definitief te verzenden.",
+        description: attachmentName
+          ? "Je e-mailprogramma is geopend. Voeg je bijlage handmatig toe en verstuur daarna de e-mail."
+          : "Je e-mailprogramma is geopend met je aanvraag. Verstuur de e-mail om de aanvraag definitief te verzenden.",
       });
     }, 600);
   };
@@ -100,7 +108,7 @@ const Contact = () => {
                     <Phone className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Telefoon</p>
+                    <p className="text-sm text-muted-foreground">Bel direct</p>
                     <p className="font-medium group-hover:text-primary transition-colors">085 124 9091</p>
                   </div>
                 </a>
@@ -195,7 +203,7 @@ const Contact = () => {
 
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium mb-2">
-                  Telefoonnummer
+                  Telefoonnummer <span className="text-muted-foreground font-normal">(optioneel)</span>
                 </label>
                 <input
                   type="tel"
@@ -206,6 +214,30 @@ const Contact = () => {
                   placeholder="+31 6 1234 5678"
                   autoComplete="tel"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="attachment" className="block text-sm font-medium mb-2">
+                  Bijlage <span className="text-muted-foreground font-normal">(optioneel)</span>
+                </label>
+                <label
+                  htmlFor="attachment"
+                  className="flex cursor-pointer items-center gap-3 rounded-xl bg-secondary border border-border/50 px-4 py-3 hover:border-primary/50 transition-colors"
+                >
+                  <Paperclip className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground truncate">
+                    {attachmentName || "Kies bestand, bijvoorbeeld screenshot of document"}
+                  </span>
+                </label>
+                <input
+                  type="file"
+                  id="attachment"
+                  className="hidden"
+                  onChange={(e) => setAttachmentName(e.target.files?.[0]?.name || "")}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Let op: door de huidige e-mailoplossing moet je de bijlage na het openen van je e-mailprogramma handmatig toevoegen.
+                </p>
               </div>
 
               <div>
