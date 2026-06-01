@@ -70,10 +70,17 @@ const Pricing = () => {
             Start simpel, <span className="text-gradient">groei wanneer nodig</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Kies een duidelijke basis voor IT-beheer, websitebeheer en digitale groei. Geen verborgen kosten,
-            wel duidelijke afspraken over inbegrepen uren en extra werkzaamheden.
+            Kies een duidelijke basis voor IT-beheer, websitebeheer en digitale groei. De pakketten hieronder zijn voorbeelden en indicaties.
+            Het definitieve pakket maken we één-op-één op maat, afgestemd op de wensen, omgeving en voorkeuren van jouw bedrijf.
           </p>
         </motion.div>
+
+        <div className="max-w-4xl mx-auto mb-10 p-5 rounded-2xl gradient-card border border-primary/20 text-center">
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+            <strong className="text-foreground">Maatwerk staat centraal:</strong> geen enkel bedrijf werkt hetzelfde. Daarom gebruiken we deze pakketten als startpunt,
+            maar bepalen we samen wat echt nodig is: aantal gebruikers, apparaten, supportbehoefte, Microsoft 365-inrichting, beveiliging, websitebeheer en eventuele marketing.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {packages.map((pkg, index) => (
@@ -107,7 +114,7 @@ const Pricing = () => {
                     <span className="text-4xl font-bold">{pkg.price}</span>
                     <span className="text-muted-foreground text-sm">{pkg.suffix}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">ex btw</span>
+                  <span className="text-xs text-muted-foreground">ex btw · voorbeeldpakket</span>
                 </div>
               </div>
 
@@ -127,7 +134,7 @@ const Pricing = () => {
                 className="w-full"
                 asChild
               >
-                <a href="#contact">Vraag dit pakket aan</a>
+                <a href="#contact">Bespreek maatwerkpakket</a>
               </Button>
             </motion.div>
           ))}
@@ -146,7 +153,7 @@ const Pricing = () => {
           <h3 className="text-2xl md:text-3xl font-bold mb-3">Microsoft 365 & Werkplek Check</h3>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
             Een eenmalige controle van je Microsoft 365 omgeving, gebruikers, MFA, rechten, mail,
-            Teams, OneDrive en basisbeveiliging. Vanaf €349 ex btw.
+            Teams, OneDrive en basisbeveiliging. Vanaf €349 ex btw. Daarna adviseren we welk pakket of maatwerkplan het beste past.
           </p>
           <Button variant="hero" asChild>
             <a href="#contact">Plan gratis IT-check</a>
