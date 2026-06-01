@@ -139,10 +139,11 @@ const Services = () => {
           <div className="p-8 rounded-2xl gradient-card border border-border/50">
             <div className="flex items-center gap-3 mb-4">
               <Users className="w-6 h-6 text-primary" />
-              <h3 className="text-2xl font-semibold">Voor wie werken wij?</h3>
+              <h3 className="text-2xl font-semibold">Voorbeelden van klanten die wij helpen</h3>
             </div>
             <p className="text-muted-foreground mb-6">
-              Vooral voor kleine bedrijven die professioneel willen werken zonder eigen IT-afdeling.
+              Hieronder staan voorbeelden van organisaties waarvoor onze aanpak goed past. Staat jouw branche er niet tussen?
+              Geen probleem: we kijken altijd naar jouw situatie, systemen, wensen en manier van werken.
             </p>
             <div className="flex flex-wrap gap-3">
               {sectors.map((sector) => (
