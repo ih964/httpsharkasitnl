@@ -1,4 +1,4 @@
-import { ShieldCheck, Globe, Megaphone, Users, Lock, Laptop, ArrowRight } from "lucide-react";
+import { ShieldCheck, Globe, Megaphone, Users, Lock, Laptop, ArrowRight, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -9,6 +9,13 @@ const mainServices = [
     title: "IT Beheer & Support",
     description: "Voor bedrijven die hun dagelijkse IT professioneel willen regelen zonder eigen IT-afdeling.",
     bullets: ["Microsoft 365 beheer", "Gebruikersbeheer", "Remote support", "Werkplekbeheer", "MFA en basisbeveiliging", "Onboarding en offboarding"],
+    link: "/diensten/support",
+  },
+  {
+    icon: KeyRound,
+    title: "Microsoft 365 & Entra ID inrichting",
+    description: "Een veilige Microsoft-basis met accounts, mail, Teams, SharePoint, MFA en apparaatbeheer.",
+    bullets: ["Tenant- en domeininrichting", "Entra ID gebruikers en groepen", "MFA en Conditional Access", "Exchange Online en shared mailboxen", "Teams en SharePoint structuur", "Intune basis voor apparaten"],
     link: "/diensten/support",
   },
   {
@@ -57,7 +64,7 @@ const Services = () => {
             Geen eigen IT-afdeling, maar wel afhankelijk van <span className="text-gradient">goede IT?</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
-            Harkas IT regelt het dagelijkse IT-beheer, je Microsoft 365 omgeving, werkplekken,
+            Harkas IT regelt het dagelijkse IT-beheer, je Microsoft 365 en Entra ID omgeving, werkplekken,
             website en digitale groei vanuit één duidelijk aanspreekpunt.
           </p>
         </motion.div>
@@ -79,7 +86,7 @@ const Services = () => {
           ))}
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-16">
           {mainServices.map((service, index) => (
             <motion.div
               key={service.title}
@@ -152,8 +159,8 @@ const Services = () => {
               <h3 className="text-2xl font-semibold">Praktisch, veilig en duidelijk</h3>
             </div>
             <p className="text-muted-foreground mb-6">
-              Harkas IT combineert praktijkervaring in IT-support, Microsoft 365, werkplekbeheer,
-              telefonie, cloudbeheer, zorgtechnologie en webontwikkeling.
+              Harkas IT combineert praktijkervaring in IT-support, Microsoft 365, Entra ID, Intune,
+              werkplekbeheer, telefonie, cloudbeheer, zorgtechnologie en webontwikkeling.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {["Duidelijke afspraken", "Vaste maandbedragen", "Eén aanspreekpunt", "MKB-proof aanpak"].map((item) => (
