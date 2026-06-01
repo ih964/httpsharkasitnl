@@ -37,18 +37,12 @@ const Contact = () => {
     const timeoutId = window.setTimeout(() => controller.abort(), 12000);
 
     try {
-      const payload = new FormData();
-      payload.append("_subject", `Nieuwe aanvraag via harkasit.nl - ${name}`);
-      payload.append("_template", "table");
-      payload.append("_captcha", "false");
-      payload.append("Naam", name);
-      payload.append("E-mail", email);
-      payload.append("Telefoon", phone || "Niet ingevuld");
-      payload.append("Bericht", message);
-
-      const response = await fetch("https://formsubmit.co/ajax/info@harkasit.nl", {
+      const response = await fetch("/api/contact", {
         method: "POST",
-        body: payload,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, phone, message }),
         signal: controller.signal,
       });
 
