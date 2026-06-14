@@ -12,12 +12,13 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, FileText, Users, Calculator, Settings, LogOut, Globe, Clock, KeyRound } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Calculator, Settings, LogOut, Globe, Clock, KeyRound, ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const items = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Facturen", url: "/admin/invoices", icon: FileText },
+  { title: "Factuur Maker", url: "/admin/factuur-maker", icon: ReceiptText },
   { title: "Klanten", url: "/admin/customers", icon: Users },
   { title: "Domeinen", url: "/admin/domeinen", icon: Globe },
   { title: "Uren", url: "/admin/uren", icon: Clock },
