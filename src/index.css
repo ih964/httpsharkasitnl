@@ -191,7 +191,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    zoom: 0.62;
+    zoom: 0.46;
   }
 
   .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 * {
@@ -233,7 +233,7 @@
 
   @media (max-width: 1024px) {
     .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 {
-      zoom: 0.55;
+      zoom: 0.42;
     }
   }
 }
