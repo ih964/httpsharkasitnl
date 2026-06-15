@@ -173,12 +173,16 @@
     animation: glowPulse 3s ease-in-out infinite;
   }
 
-  /* Factuur Maker preview: maak de A4-preview zichtbaar kleiner in het rechter paneel. */
+  /* Factuur Maker preview: A4-preview op een leesbare middenstand in het rechter paneel. */
   .sticky.top-4.h-fit,
   .sticky.top-4.h-fit > div,
   .sticky.top-4.h-fit [class*="CardContent"] {
     max-width: 100%;
     overflow: visible;
+  }
+
+  .sticky.top-4.h-fit [class*="CardHeader"] > div {
+    flex-wrap: wrap;
   }
 
   .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 {
@@ -191,7 +195,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    zoom: 0.46;
+    zoom: 0.56;
   }
 
   .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 * {
@@ -233,7 +237,7 @@
 
   @media (max-width: 1024px) {
     .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 {
-      zoom: 0.42;
+      zoom: 0.5;
     }
   }
 }
