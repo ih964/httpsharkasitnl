@@ -20,6 +20,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminInvoicesWithStatus from "./pages/admin/AdminInvoicesWithStatus";
 import InvoiceMakerForceLeftRight from "./pages/admin/InvoiceMakerForceLeftRight";
+import "./pages/admin/invoice-maker-preview.css";
 import AdminBtwOverzicht from "./pages/admin/AdminBtwOverzicht";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminDomains from "./pages/admin/AdminDomains";
