@@ -194,6 +194,19 @@
   .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900.p-0 > aside {
     align-self: stretch;
     min-height: inherit;
+    width: 170px !important;
+    min-width: 170px !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900.p-0 > .flex-1 {
+    min-width: 0;
+    height: 100%;
+  }
+
+  .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900.p-0 > .flex-1 > .rounded-lg.bg-slate-50.p-4.text-sm.whitespace-pre-line:last-child {
+    margin-top: auto !important;
   }
 
   /* Zet de opmerking/betaaltekst standaard onderaan de A4-preview. */
