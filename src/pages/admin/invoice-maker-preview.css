@@ -1,16 +1,17 @@
-.sticky.top-4.h-fit [class*="CardHeader"] > div {
+.sticky.top-4.h-fit > div:first-child > div {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.75rem;
 }
 
-.sticky.top-4.h-fit [class*="CardHeader"] button {
+.sticky.top-4.h-fit > div:first-child button {
   align-self: flex-start;
+  width: auto;
   max-width: 100%;
   white-space: nowrap;
 }
 
-.sticky.top-4.h-fit [class*="CardContent"] {
+.sticky.top-4.h-fit > div:nth-child(2) {
   overflow: visible;
 }
 
