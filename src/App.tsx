@@ -19,7 +19,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminInvoicesWithStatus from "./pages/admin/AdminInvoicesWithStatus";
-import InvoiceMakerV2 from "./pages/admin/InvoiceMakerV2";
+import InvoiceMakerTemplates from "./pages/admin/InvoiceMakerTemplates";
 import AdminBtwOverzicht from "./pages/admin/AdminBtwOverzicht";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminDomains from "./pages/admin/AdminDomains";
@@ -52,7 +52,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="invoices" element={<AdminInvoicesWithStatus />} />
-              <Route path="factuur-maker" element={<InvoiceMakerV2 />} />
+              <Route path="factuur-maker" element={<InvoiceMakerTemplates />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="btw-overzicht" element={<AdminBtwOverzicht />} />
               <Route path="domeinen" element={<AdminDomains />} />
