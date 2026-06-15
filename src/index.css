@@ -172,6 +172,22 @@
   .animate-glow-pulse {
     animation: glowPulse 3s ease-in-out infinite;
   }
+
+  /* Factuur Maker preview: forceer standaard A4-verhouding in de admin preview. */
+  .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 {
+    width: min(100%, 794px);
+    aspect-ratio: 210 / 297;
+    min-height: 840px;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden;
+  }
+
+  @media (max-width: 1024px) {
+    .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 {
+      min-height: auto;
+    }
+  }
 }
 
 @keyframes float {
