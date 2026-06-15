@@ -173,16 +173,33 @@
     animation: glowPulse 3s ease-in-out infinite;
   }
 
-  /* Factuur Maker preview: forceer standaard A4-verhouding in de admin preview. */
+  /* Factuur Maker preview: A4 blijft volledig zichtbaar binnen het rechter preview-paneel. */
+  .sticky.top-4.h-fit,
+  .sticky.top-4.h-fit > div,
+  .sticky.top-4.h-fit [class*="CardContent"] {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
   .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 {
-    width: min(100%, 794px);
+    width: 100%;
+    max-width: 720px;
     aspect-ratio: 210 / 297;
-    min-height: 840px;
+    min-height: 720px;
+    max-height: calc(100vh - 230px);
     margin-left: auto;
     margin-right: auto;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+
+  .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 * {
+    min-width: 0;
+  }
+
+  .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 .grid {
+    max-width: 100%;
   }
 
   /* Sidebar-template heeft een echte linker kolom, dus die mag niet als column worden geforceerd. */
@@ -194,8 +211,8 @@
   .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900.p-0 > aside {
     align-self: stretch;
     min-height: inherit;
-    width: 170px !important;
-    min-width: 170px !important;
+    width: 150px !important;
+    min-width: 150px !important;
     overflow-wrap: anywhere;
     word-break: break-word;
   }
@@ -217,6 +234,7 @@
   @media (max-width: 1024px) {
     .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 {
       min-height: auto;
+      max-height: none;
     }
   }
 }
