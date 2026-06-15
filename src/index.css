@@ -185,6 +185,17 @@
     flex-direction: column;
   }
 
+  /* Sidebar-template heeft een echte linker kolom, dus die mag niet als column worden geforceerd. */
+  .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900.p-0 {
+    flex-direction: row !important;
+    align-items: stretch;
+  }
+
+  .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900.p-0 > aside {
+    align-self: stretch;
+    min-height: inherit;
+  }
+
   /* Zet de opmerking/betaaltekst standaard onderaan de A4-preview. */
   .sticky.top-4.h-fit .rounded-xl.border.bg-white.text-slate-900 > .rounded-lg.bg-slate-50.p-4.text-sm.whitespace-pre-line:last-child {
     margin-top: auto;
