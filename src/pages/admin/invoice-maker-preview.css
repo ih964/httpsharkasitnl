@@ -20,3 +20,12 @@
   margin-right: auto;
   zoom: 0.56;
 }
+
+.space-y-6 > .flex.flex-col {
+  align-items: flex-start;
+}
+
+.space-y-6 > .flex.flex-col > span {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+}
