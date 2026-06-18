@@ -8,39 +8,39 @@ import { motion } from "framer-motion";
 
 const faqs = [
   {
-    question: "Wat doet Harkas IT als IT-partner/MSP?",
+    question: "Waar helpt Harkas IT mee?",
     answer:
-      "Harkas IT helpt kleine bedrijven met Microsoft 365 beheer, gebruikersbeheer, werkplekbeheer, remote support, basisbeveiliging, websites, webapps en digitale groei. Zo heb je één vast aanspreekpunt voor je dagelijkse IT en online basis.",
+      "Harkas IT helpt met IT-beheer, Microsoft 365, werkplekbeheer, remote support, websites, webapps en praktische automatisering.",
   },
   {
-    question: "Is het IT Start pakket onbeperkt support?",
+    question: "Wat houdt een IT-check in?",
     answer:
-      "Nee. IT Start bevat 4 supporturen per maand. Kleine supportvragen vallen daarbinnen. Werkzaamheden boven de inbegrepen uren stemmen we vooraf af en factureren we op nacalculatie. Zo blijven de afspraken eerlijk en duidelijk.",
+      "We kijken naar je huidige IT-situatie, Microsoft 365, gebruikers, rechten, werkplekken en verbeterpunten. Daarna krijg je duidelijk advies over wat beter kan.",
+  },
+  {
+    question: "Is support onbeperkt?",
+    answer:
+      "Nee. Pakketten bevatten afspraken over supporturen en werkzaamheden. Extra werk stemmen we vooraf af, zodat duidelijk blijft wat binnen beheer valt.",
   },
   {
     question: "Voor welke bedrijven is dit bedoeld?",
     answer:
-      "Vooral voor mkb-bedrijven, zorgpraktijken, administratiekantoren, kinderopvang, lokale ondernemers en bedrijven met meerdere medewerkers die geen eigen IT-afdeling hebben, maar wel professionele IT-support willen.",
+      "Vooral voor mkb-bedrijven, zorgpraktijken, zelfstandigen en lokale ondernemers die geen eigen IT-afdeling hebben maar wel professionele hulp willen.",
   },
   {
-    question: "Kunnen jullie ook websites, apps en marketing blijven doen?",
+    question: "Kunnen jullie Microsoft 365 beheren?",
     answer:
-      "Ja. IT-beheer is de basis, maar Harkas IT kan ook websites, webapps, websitebeheer, SEO basis, Google bedrijfsprofiel, social media ondersteuning en automatiseringen verzorgen.",
+      "Ja. We helpen met e-mail, Teams, SharePoint, OneDrive, gebruikers, groepen, mailboxen, MFA, rechten en licenties.",
   },
   {
-    question: "Wat houdt de Microsoft 365 & Werkplek Check in?",
+    question: "Kunnen jullie op afstand helpen?",
     answer:
-      "We controleren onder andere gebruikers, licenties, MFA, rechten, mail, Teams, OneDrive, apparaten en basisbeveiliging. Daarna krijg je duidelijk inzicht in wat goed staat en waar verbetering nodig is.",
+      "Ja. Veel vragen kunnen remote worden opgelost, zoals e-mailproblemen, Teams/OneDrive, printervragen, werkplekinstellingen en kleine storingen.",
   },
   {
-    question: "Komen jullie ook op locatie?",
+    question: "Doen jullie ook websites en automatisering?",
     answer:
-      "Ja, locatiebezoeken zijn mogelijk. Remote support is onderdeel van de pakketten. Werk op locatie, nieuwe laptopinstallaties, grotere migraties en projecten worden apart afgestemd en gefactureerd.",
-  },
-  {
-    question: "Kan ik klein beginnen en later uitbreiden?",
-    answer:
-      "Ja. Je kunt starten met een check of IT Start en later doorgroeien naar IT + Website Beheer of Digitale Groei wanneer je meer ondersteuning, websitebeheer of marketing/automatisering nodig hebt.",
+      "Ja. Naast IT-beheer helpt Harkas IT met bedrijfswebsites, webapps, formulieren, klantportalen en praktische automatisering.",
   },
 ];
 
@@ -64,7 +64,7 @@ const FAQ = () => {
             Veelgestelde <span className="text-gradient">vragen</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Antwoorden op vragen over IT-beheer, support, pakketten en digitale diensten.
+            Antwoorden op vragen over IT-beheer, Microsoft 365, support en digitale oplossingen.
           </p>
         </motion.div>
 
