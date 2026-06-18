@@ -1,40 +1,61 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, ArrowRight, Check, KeyRound, Mail, MonitorCog, Users, Lock } from "lucide-react";
+import { ShieldCheck, ArrowRight, Check, KeyRound, Mail, MonitorCog, Users, Lock, LifeBuoy, Laptop } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const features = [
-  "Microsoft 365 tenant inrichting of optimalisatie",
-  "Entra ID gebruikers, groepen en rollen",
-  "MFA, security defaults en Conditional Access basis",
-  "Exchange Online, shared mailboxen en aliassen",
-  "Teams en SharePoint basisstructuur",
-  "Intune basis voor werkplekken en apparaten",
+  "IT-beheer en dagelijkse support",
+  "Microsoft 365 beheer en optimalisatie",
+  "Gebruikers, groepen en mailboxen",
+  "Teams, SharePoint en OneDrive ondersteuning",
+  "Werkplekbeheer voor laptops en apparaten",
+  "MFA, rechten en basisbeveiliging",
   "Onboarding en offboarding van medewerkers",
-  "Remote support en praktisch beheer",
+  "Remote support en duidelijke opvolging",
 ];
 
 const setupSteps = [
   {
-    icon: KeyRound,
-    title: "Accounts & toegang",
-    text: "Gebruikers, groepen, beheerrollen, MFA en veilige admin-accounts worden netjes ingericht.",
+    icon: LifeBuoy,
+    title: "Support die snel schakelt",
+    text: "Hulp bij dagelijkse IT-vragen, storingen, e-mail, Teams, printers, scanners en werkplekproblemen.",
   },
   {
-    icon: Mail,
-    title: "E-mail & samenwerking",
-    text: "Exchange Online, shared mailboxen, Teams, SharePoint en basisrechten worden overzichtelijk opgezet.",
+    icon: KeyRound,
+    title: "Microsoft 365 beheer",
+    text: "Gebruikers, mailboxen, Teams, SharePoint, OneDrive, rechten en veilige toegang overzichtelijk geregeld.",
   },
   {
     icon: MonitorCog,
-    title: "Werkplekken & beheer",
-    text: "Basis voor apparaten, updates, beveiliging, OneDrive en werkplekbeheer via Intune waar mogelijk.",
+    title: "Werkplekken & apparaten",
+    text: "Ondersteuning bij laptops, instellingen, updates, basisbeveiliging en apparaatbeheer waar mogelijk.",
   },
   {
     icon: Lock,
-    title: "Security basis",
-    text: "MFA, rechten, DKIM/SPF/DMARC, adminbeveiliging en offboarding-proces worden meegenomen.",
+    title: "Veilige basis",
+    text: "MFA, rechten, accountbeheer en praktische security-checks worden meegenomen in de aanpak.",
+  },
+];
+
+const serviceBlocks = [
+  {
+    icon: Users,
+    title: "Eenmalige IT-check",
+    text: "Voor bedrijven die hun huidige Microsoft 365, werkplekken, rechten en basisbeveiliging willen laten controleren.",
+    points: ["Korte inventarisatie", "Microsoft 365 basiscontrole", "Werkplek- en supportadvies", "Duidelijke verbeterpunten"],
+  },
+  {
+    icon: ShieldCheck,
+    title: "Maandelijks IT-beheer",
+    text: "Voor bedrijven die geen eigen IT-afdeling hebben, maar wel een vaste IT-partner willen voor beheer en support.",
+    points: ["Gebruikersbeheer", "Remote support", "Werkplekbeheer", "Maandelijkse controle"],
+  },
+  {
+    icon: Laptop,
+    title: "Werkplek & remote support",
+    text: "Voor praktische hulp bij laptops, accounts, e-mail, printers, scanners en dagelijkse werkplekproblemen.",
+    points: ["Remote meekijken", "Nieuwe werkplekken", "Printer/scanner hulp", "Heldere opvolging"],
   },
 ];
 
@@ -45,34 +66,35 @@ const Support = () => {
       <main>
         <section className="pt-32 pb-20 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-primary/10 blur-[150px] pointer-events-none" />
-          
           <div className="container px-6 relative">
             <Link to="/#diensten" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8">
-              ← Terug naar diensten
+              Terug naar diensten
             </Link>
-            
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
                 <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mb-6">
                   <ShieldCheck className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-                  Microsoft 365, Entra ID & <span className="text-gradient">IT-beheer</span>
+                  IT-beheer, Microsoft 365 & <span className="text-gradient">remote support</span>
                 </h1>
                 <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-                  Een veilige en overzichtelijke Microsoft-omgeving voor mkb-bedrijven: accounts, mail,
-                  Teams, SharePoint, MFA, werkplekken en praktisch dagelijks beheer.
+                  Harkas IT helpt ondernemers met dagelijkse IT-support, veilige Microsoft 365-inrichting, werkplekbeheer en duidelijke opvolging zonder onnodig gedoe.
                 </p>
-                <Button variant="hero" size="lg" asChild>
-                  <Link to="/#contact" className="gap-3">
-                    Vraag Microsoft 365 check aan
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button variant="hero" size="lg" asChild>
+                    <Link to="/#contact" className="gap-3">
+                      Plan gratis IT-check
+                      <ArrowRight className="w-5 h-5" />
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="lg" asChild>
+                    <a href="tel:+31851249091">Bel 085 124 9091</a>
+                  </Button>
+                </div>
               </div>
-              
               <div className="gradient-card rounded-3xl p-8 border border-border/50">
-                <h3 className="text-2xl font-semibold mb-6">Wat wij inrichten en beheren</h3>
+                <h3 className="text-2xl font-semibold mb-6">Waarmee wij helpen</h3>
                 <ul className="space-y-4">
                   {features.map((feature) => (
                     <li key={feature} className="flex items-center gap-3">
@@ -91,16 +113,12 @@ const Support = () => {
         <section className="py-20 bg-secondary/30">
           <div className="container px-6">
             <div className="max-w-3xl mx-auto text-center mb-12">
-              <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
-                Veilige Microsoft-basis
-              </span>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Voorkom losse accounts, onduidelijke rechten en onbeheerde apparaten</h2>
+              <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">Aanpak</span>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Van losse IT-problemen naar een beheerbare basis</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Veel kleine bedrijven gebruiken Microsoft 365, maar hebben geen duidelijke inrichting. Harkas IT helpt
-                met een praktische basis die veilig, beheerbaar en begrijpelijk blijft.
+                Veel kleine bedrijven gebruiken Microsoft 365 en losse apparaten, maar missen structuur. Harkas IT helpt met een praktische basis die veilig, duidelijk en beheersbaar blijft.
               </p>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {setupSteps.map((step) => (
                 <div key={step.title} className="p-6 rounded-2xl gradient-card border border-border/50">
@@ -117,45 +135,28 @@ const Support = () => {
 
         <section className="py-20">
           <div className="container px-6">
-            <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-              <div className="p-8 rounded-2xl gradient-card border border-border/50">
-                <Users className="w-8 h-8 text-primary mb-5" />
-                <h2 className="text-2xl font-bold mb-4">Eenmalige inrichting</h2>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  Voor bedrijven die Microsoft 365 professioneel willen opzetten of hun bestaande omgeving willen laten nalopen.
-                </p>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li>• Tenant- en domeincontrole</li>
-                  <li>• Gebruikers, groepen en mailboxen</li>
-                  <li>• MFA en basisbeveiliging</li>
-                  <li>• Teams/SharePoint basisstructuur</li>
-                  <li>• Oplevering met duidelijke afspraken</li>
-                </ul>
-              </div>
-
-              <div className="p-8 rounded-2xl gradient-card border border-border/50">
-                <ShieldCheck className="w-8 h-8 text-primary mb-5" />
-                <h2 className="text-2xl font-bold mb-4">Maandelijks beheer</h2>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  Voor bedrijven die geen eigen IT-afdeling hebben, maar wel een vaste IT-partner willen voor beheer en support.
-                </p>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li>• Gebruikersbeheer en support</li>
-                  <li>• Mailboxen, rechten en groepen</li>
-                  <li>• Werkplekbeheer en Intune basis</li>
-                  <li>• Security-checks en advies</li>
-                  <li>• Duidelijke afspraken over meerwerk</li>
-                </ul>
-              </div>
+            <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+              {serviceBlocks.map((block) => (
+                <div key={block.title} className="p-8 rounded-2xl gradient-card border border-border/50">
+                  <block.icon className="w-8 h-8 text-primary mb-5" />
+                  <h2 className="text-2xl font-bold mb-4">{block.title}</h2>
+                  <p className="text-muted-foreground mb-6 leading-relaxed">{block.text}</p>
+                  <ul className="space-y-3 text-sm text-muted-foreground">
+                    {block.points.map((point) => (
+                      <li key={point}>• {point}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
         <section className="py-20 bg-secondary/30">
           <div className="container px-6 text-center">
-            <h2 className="text-3xl font-bold mb-4">Wil je weten of je Microsoft 365 goed staat?</h2>
+            <h2 className="text-3xl font-bold mb-4">Wil je weten waar jouw IT beter kan?</h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Vraag een korte Microsoft 365 & Entra ID check aan. Dan kijken we naar accounts, MFA, rechten, mail en basisbeveiliging.
+              Plan een gratis IT-check. We kijken naar je huidige situatie en geven eerlijk advies over wat beter, veiliger of slimmer kan.
             </p>
             <Button variant="hero" size="lg" asChild>
               <Link to="/#contact" className="gap-3">
