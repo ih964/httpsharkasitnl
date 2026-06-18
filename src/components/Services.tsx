@@ -1,4 +1,4 @@
-import { ShieldCheck, Globe, Megaphone, Users, Lock, Laptop, ArrowRight, KeyRound } from "lucide-react";
+import { ShieldCheck, Globe, Megaphone, Users, Lock, Laptop, ArrowRight, KeyRound, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -8,38 +8,38 @@ const mainServices = [
     icon: ShieldCheck,
     title: "IT Beheer & Support",
     description: "Voor bedrijven die hun dagelijkse IT professioneel willen regelen zonder eigen IT-afdeling.",
-    bullets: ["Microsoft 365 beheer", "Gebruikersbeheer", "Remote support", "Werkplekbeheer", "MFA en basisbeveiliging", "Onboarding en offboarding"],
-    link: "/diensten/support",
+    bullets: ["Gebruikersbeheer", "Remote support", "Werkplekbeheer", "Storingen oplossen", "Onboarding en offboarding", "Proactief meedenken"],
+    link: "/diensten/it-beheer",
   },
   {
     icon: KeyRound,
-    title: "Microsoft 365 & Entra ID inrichting",
+    title: "Microsoft 365 & Security",
     description: "Een veilige Microsoft-basis met accounts, mail, Teams, SharePoint, MFA en apparaatbeheer.",
-    bullets: ["Tenant- en domeininrichting", "Entra ID gebruikers en groepen", "MFA en Conditional Access", "Exchange Online en shared mailboxen", "Teams en SharePoint structuur", "Intune basis voor apparaten"],
-    link: "/diensten/support",
+    bullets: ["Exchange Online", "Teams en SharePoint", "OneDrive", "MFA en rechten", "Intune basis", "Licentieadvies"],
+    link: "/diensten/microsoft-365",
+  },
+  {
+    icon: LifeBuoy,
+    title: "Werkplekbeheer & Remote Support",
+    description: "Snel hulp bij laptops, accounts, e-mail, printers, scanners, werkplekproblemen en dagelijkse supportvragen.",
+    bullets: ["Nieuwe werkplekken", "Remote meekijken", "Printer/scanner hulp", "Apparaatinstellingen", "Supporttickets", "Duidelijke opvolging"],
+    link: "/diensten/remote-support",
   },
   {
     icon: Globe,
-    title: "Websites & Webapps",
-    description: "Moderne websites en slimme weboplossingen die passen bij je bedrijf.",
-    bullets: ["Zakelijke websites", "Landingspagina's", "Webapps", "Websitebeheer", "Hosting, domein en mail", "AI-websites en automatisering"],
+    title: "Websites & Automatisering",
+    description: "Moderne websites, webapps, formulieren, klantportalen en slimme automatisering voor ondernemers.",
+    bullets: ["Bedrijfswebsites", "Webapps", "Klantportalen", "Formulieren", "Harkas Web Builder", "AI en workflows"],
     link: "/diensten/websites",
-  },
-  {
-    icon: Megaphone,
-    title: "Marketing & Automatisering",
-    description: "Meer zichtbaarheid, betere processen en minder handmatig werk.",
-    bullets: ["Google bedrijfsprofiel", "SEO basis", "Social media ondersteuning", "Leadformulieren", "Koppelingen", "Digitale groeistrategie"],
-    link: "/diensten/marketing",
   },
 ];
 
 const painPoints = [
-  "Nieuwe medewerkers moeten snel accounts en laptops krijgen.",
-  "Outlook, Teams, OneDrive of printers zorgen regelmatig voor gedoe.",
+  "Nieuwe medewerkers moeten snel accounts, rechten en laptops krijgen.",
+  "Outlook, Teams, OneDrive, printers of werkplekken zorgen voor gedoe.",
   "Je weet niet zeker of MFA, rechten en beveiliging goed staan.",
-  "Je website en online uitstraling moeten professioneel blijven.",
-  "Je wilt één aanspreekpunt voor IT, web en digitale groei.",
+  "Je wilt één aanspreekpunt voor IT, support, web en automatisering.",
+  "Je bedrijf groeit, maar je IT-processen groeien nog niet goed mee.",
 ];
 
 const sectors = ["MKB-bedrijven", "Zorgpraktijken", "Fysiopraktijken", "Tandartspraktijken", "Administratiekantoren", "Kinderopvang", "Lokale ondernemers", "Meerdere locaties"];
@@ -58,14 +58,14 @@ const Services = () => {
           className="text-center mb-16"
         >
           <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
-            IT-partner voor je digitale basis
+            IT die gewoon werkt
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Geen eigen IT-afdeling, maar wel afhankelijk van <span className="text-gradient">goede IT?</span>
+            Geen eigen IT-afdeling, maar wel afhankelijk van <span className="text-gradient">betrouwbare IT?</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
-            Harkas IT regelt het dagelijkse IT-beheer, je Microsoft 365 en Entra ID omgeving, werkplekken,
-            website en digitale groei vanuit één duidelijk aanspreekpunt.
+            Harkas IT regelt het dagelijkse IT-beheer, Microsoft 365, werkplekken, support,
+            websites en automatisering vanuit één duidelijk aanspreekpunt.
           </p>
         </motion.div>
 
@@ -84,6 +84,38 @@ const Services = () => {
               <p className="text-sm text-muted-foreground leading-relaxed">{point}</p>
             </div>
           ))}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mb-16 p-8 md:p-10 rounded-3xl gradient-card border border-primary/30 overflow-hidden relative"
+        >
+          <div className="absolute inset-y-0 right-0 w-1/2 bg-primary/5 blur-3xl pointer-events-none" />
+          <div className="relative grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-8 items-center">
+            <div>
+              <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-3">
+                Supportportaal
+              </span>
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">Klant van Harkas IT?</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Maak eenvoudig een supportticket aan, start remote ondersteuning of bekijk de status van je aanvraag via het Harkas IT supportportaal.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
+              <Button variant="hero" asChild>
+                <a href="https://support.harkasit.nl">Ticket aanmaken</a>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/diensten/remote-support">Remote support starten</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href="https://support.harkasit.nl">Naar klantportaal</a>
+              </Button>
+            </div>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-16">
@@ -139,11 +171,11 @@ const Services = () => {
           <div className="p-8 rounded-2xl gradient-card border border-border/50">
             <div className="flex items-center gap-3 mb-4">
               <Users className="w-6 h-6 text-primary" />
-              <h3 className="text-2xl font-semibold">Voorbeelden van klanten die wij helpen</h3>
+              <h3 className="text-2xl font-semibold">Voor wie Harkas IT geschikt is</h3>
             </div>
             <p className="text-muted-foreground mb-6">
-              Hieronder staan voorbeelden van organisaties waarvoor onze aanpak goed past. Staat jouw branche er niet tussen?
-              Geen probleem: we kijken altijd naar jouw situatie, systemen, wensen en manier van werken.
+              Onze aanpak past goed bij organisaties die professioneel willen werken, maar geen grote interne IT-afdeling hebben.
+              We kijken altijd naar jouw situatie, systemen, wensen en manier van werken.
             </p>
             <div className="flex flex-wrap gap-3">
               {sectors.map((sector) => (
@@ -161,10 +193,10 @@ const Services = () => {
             </div>
             <p className="text-muted-foreground mb-6">
               Harkas IT combineert praktijkervaring in IT-support, Microsoft 365, Entra ID, Intune,
-              werkplekbeheer, telefonie, cloudbeheer, zorgtechnologie en webontwikkeling.
+              werkplekbeheer, cloudbeheer, zorgtechnologie, websites en automatisering.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {["Duidelijke afspraken", "Vaste maandbedragen", "Eén aanspreekpunt", "MKB-proof aanpak"].map((item) => (
+              {["Duidelijke afspraken", "Veilige basis", "Eén aanspreekpunt", "MKB-proof aanpak"].map((item) => (
                 <div key={item} className="flex items-center gap-3 text-sm text-muted-foreground">
                   <Laptop className="w-4 h-4 text-primary" />
                   {item}
