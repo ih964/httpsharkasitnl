@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 const navLinks = [
   { name: "Home", href: "/" },
   { name: "Diensten", href: "/#diensten" },
-  { name: "IT Beheer", href: "/diensten/it-beheer" },
-  { name: "Microsoft 365", href: "/diensten/microsoft-365" },
+  { name: "IT Beheer", href: "/diensten/support" },
+  { name: "Microsoft 365", href: "/diensten/support" },
   { name: "Websites", href: "/diensten/websites" },
-  { name: "Support", href: "/support" },
+  { name: "Support", href: "/diensten/support" },
   { name: "Over ons", href: "/over-ons" },
   { name: "Contact", href: "/#contact" },
 ];
