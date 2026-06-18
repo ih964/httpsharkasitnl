@@ -1,11 +1,11 @@
-import { ShieldCheck, ArrowRight, Phone, MonitorCog } from "lucide-react";
+import { ShieldCheck, ArrowRight, Phone, MonitorCog, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 const trustBullets = [
-  "Microsoft 365 & werkplekbeheer",
-  "Remote support en security",
-  "Websites, apps en automatisering",
+  "Microsoft 365 beheer",
+  "Werkplekken en remote support",
+  "Websites, webapps en automatisering",
 ];
 
 const Hero = () => {
@@ -31,7 +31,7 @@ const Hero = () => {
             className="inline-flex max-w-full items-center gap-2 glass px-3 sm:px-4 py-2 rounded-full mb-5 text-xs sm:text-sm font-medium text-primary"
           >
             <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">Vaste IT-partner voor mkb-bedrijven</span>
+            <span className="truncate">IT-partner voor mkb, zorg en zelfstandigen</span>
           </motion.div>
 
           <motion.h1 
@@ -40,9 +40,9 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-[2.35rem] xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] mb-6 break-words"
           >
-            Eén partner voor IT-beheer,
+            Zorgeloos IT-beheer,
             <br className="hidden sm:block" />
-            <span className="text-gradient block sm:inline">websites en digitale groei</span>
+            <span className="text-gradient block sm:inline">Microsoft 365 en slimme websites</span>
           </motion.h1>
 
           <motion.p 
@@ -51,9 +51,8 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-7 px-1"
           >
-            Harkas IT helpt kleine bedrijven met betrouwbare IT-support, Microsoft 365 beheer,
-            veilige werkplekken, moderne websites, webapps en online zichtbaarheid. Alles overzichtelijk
-            geregeld bij één vaste IT-partner.
+            Harkas IT helpt ondernemers en organisaties met veilige werkplekken, snelle support,
+            Microsoft 365-beheer, moderne websites en automatisering zonder gedoe.
           </motion.p>
 
           <motion.div 
@@ -80,6 +79,12 @@ const Hero = () => {
               <a href="#contact" className="gap-3">
                 Plan gratis IT-check
                 <ArrowRight className="w-5 h-5" />
+              </a>
+            </Button>
+            <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
+              <a href="/support" className="gap-3">
+                <LifeBuoy className="w-5 h-5" />
+                Direct support aanvragen
               </a>
             </Button>
             <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
