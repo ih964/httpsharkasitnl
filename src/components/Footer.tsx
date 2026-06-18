@@ -43,9 +43,9 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Support</h3>
             <div className="space-y-3">
-              <a href="https://support.harkasit.nl" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Ticket aanmaken</a>
+              <a href="/diensten/support" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Ticket aanmaken</a>
               <a href="/diensten/support" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Remote support</a>
-              <a href="https://support.harkasit.nl" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Klantportaal</a>
+              <a href="/diensten/support" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Klantportaal</a>
               <a href="/#contact" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</a>
             </div>
           </div>
