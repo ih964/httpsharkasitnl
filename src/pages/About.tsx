@@ -2,29 +2,36 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Target, Award, Clock } from "lucide-react";
+import { ArrowRight, Users, Target, Award, Clock, ShieldCheck, Laptop, Globe } from "lucide-react";
 
 const values = [
   {
     icon: Users,
-    title: "Klantgericht",
-    description: "Jouw succes is ons succes. We denken mee en leveren oplossingen die écht werken.",
+    title: "Persoonlijk contact",
+    description: "Je hebt direct contact met iemand die jouw omgeving begrijpt en snel kan schakelen.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Veilige basis",
+    description: "We letten op gebruikers, werkplekken, toegang, updates en duidelijke afspraken.",
   },
   {
     icon: Target,
-    title: "Resultaatgericht",
-    description: "Geen praatjes, maar daden. We focussen op meetbare resultaten voor jouw bedrijf.",
+    title: "Praktisch en duidelijk",
+    description: "Geen onnodig ingewikkelde taal, maar duidelijke uitleg en oplossingen die werken.",
   },
   {
     icon: Award,
     title: "Kwaliteit",
-    description: "We leveren alleen werk waar we trots op zijn. Geen shortcuts, alleen kwaliteit.",
+    description: "We leveren liever betrouwbaar werk dan snelle oplossingen die later problemen geven.",
   },
-  {
-    icon: Clock,
-    title: "Snelheid",
-    description: "Met onze 24-uurs garantie bewijzen we dat snel en goed samen kunnen gaan.",
-  },
+];
+
+const expertise = [
+  { icon: ShieldCheck, title: "Microsoft 365", text: "E-mail, Teams, SharePoint, OneDrive, gebruikers en licenties." },
+  { icon: Laptop, title: "Werkplekbeheer", text: "Laptops, printers, scanners, instellingen en dagelijkse support." },
+  { icon: Clock, title: "Support", text: "Remote hulp, duidelijke opvolging en praktisch meedenken." },
+  { icon: Globe, title: "Web & automatisering", text: "Websites, webapps, formulieren en slimme digitale workflows." },
 ];
 
 const About = () => {
@@ -32,85 +39,73 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="pt-20">
-        {/* Hero section */}
         <section className="py-20 md:py-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.15),transparent_60%)]" />
           
           <div className="container px-6 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
-                Over Ons
+                Over Harkas IT
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-                Wij zijn <span className="text-gradient">Harkas IT</span>
+                Jouw vaste partner voor <span className="text-gradient">IT, support en digitale oplossingen</span>
               </h1>
-              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Een jong en dynamisch IT-bedrijf dat gelooft in de kracht van digitale oplossingen. 
-                Wij helpen ondernemers groeien met websites, apps en marketing die werken.
+              <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+                Harkas IT helpt ondernemers en organisaties met betrouwbare, begrijpelijke en veilige IT. Van Microsoft 365 en werkplekken tot websites, webapps en automatisering.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Story section */}
         <section className="py-20 relative">
           <div className="container px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                  Onze <span className="text-gradient">missie</span>
+                  IT moet rust geven, <span className="text-gradient">geen gedoe</span>
                 </h2>
                 <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                  Bij Harkas IT geloven we dat elk bedrijf, groot of klein, toegang verdient tot 
-                  hoogwaardige digitale oplossingen. Daarom maken wij professionele websites, 
-                  apps en marketing toegankelijk en betaalbaar.
+                  Veel bedrijven lopen vast op dezelfde problemen: trage werkplekken, onduidelijke Microsoft 365-instellingen, rechten die niet goed staan, support die te lang duurt of websites die niet meer professioneel aanvoelen.
+                </p>
+                <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
+                  Harkas IT helpt praktisch en persoonlijk. We denken mee, lossen problemen op en zorgen dat jouw digitale omgeving beter werkt.
                 </p>
                 <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-                  Ons team combineert technische expertise met een passie voor ondernemen. 
-                  We begrijpen de uitdagingen waar je als ondernemer tegenaan loopt en bieden 
-                  oplossingen die écht impact maken op je bedrijfsresultaten.
+                  Met ervaring in systeembeheer, functioneel beheer, Microsoft 365, werkplekbeheer, supportprocessen en weboplossingen biedt Harkas IT brede ondersteuning voor moderne bedrijven.
                 </p>
                 <Button variant="hero" size="lg" asChild>
                   <a href="/#contact" className="gap-3">
-                    Neem contact op
+                    Plan gratis IT-check
                     <ArrowRight className="w-5 h-5" />
                   </a>
                 </Button>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-6 rounded-2xl gradient-card border border-border/50 text-center">
-                  <p className="text-4xl font-bold text-gradient mb-2">100+</p>
-                  <p className="text-muted-foreground">Tevreden klanten</p>
-                </div>
-                <div className="p-6 rounded-2xl gradient-card border border-border/50 text-center">
-                  <p className="text-4xl font-bold text-gradient mb-2">24u</p>
-                  <p className="text-muted-foreground">Snelle levering</p>
-                </div>
-                <div className="p-6 rounded-2xl gradient-card border border-border/50 text-center">
-                  <p className="text-4xl font-bold text-gradient mb-2">5★</p>
-                  <p className="text-muted-foreground">Gemiddelde score</p>
-                </div>
-                <div className="p-6 rounded-2xl gradient-card border border-border/50 text-center">
-                  <p className="text-4xl font-bold text-gradient mb-2">24/7</p>
-                  <p className="text-muted-foreground">Support</p>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {expertise.map((item) => (
+                  <div key={item.title} className="p-6 rounded-2xl gradient-card border border-border/50">
+                    <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
+                      <item.icon className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.text}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Values section */}
         <section className="py-20 relative">
           <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[150px] pointer-events-none" />
           
           <div className="container px-6 relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Onze <span className="text-gradient">kernwaarden</span>
+                Waar Harkas IT voor <span className="text-gradient">staat</span>
               </h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Deze waarden vormen de basis van alles wat we doen
+                De basis van onze aanpak: duidelijk, veilig, persoonlijk en gericht op oplossingen die in de praktijk werken.
               </p>
             </div>
 
@@ -132,25 +127,24 @@ const About = () => {
           </div>
         </section>
 
-        {/* CTA section */}
         <section className="py-20 relative">
           <div className="container px-6">
             <div className="max-w-4xl mx-auto text-center p-12 rounded-3xl gradient-card border border-border/50">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Klaar om <span className="text-gradient">samen te werken</span>?
+                Wil je weten waar jouw IT <span className="text-gradient">beter kan?</span>
               </h2>
               <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-                Laten we bespreken hoe we jouw bedrijf naar het volgende niveau kunnen tillen.
+                Vraag een gratis IT-check aan. We kijken mee naar je huidige situatie en geven eerlijk advies over wat beter, veiliger of slimmer kan.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button variant="hero" size="lg" asChild>
-                  <a href="tel:+31851249091" className="gap-2">
-                    Bel ons direct
+                  <a href="/#contact" className="gap-2">
+                    Plan gratis IT-check
                   </a>
                 </Button>
                 <Button variant="outline" size="lg" asChild>
-                  <a href="/#contact" className="gap-2">
-                    Stuur een bericht
+                  <a href="tel:+31851249091" className="gap-2">
+                    Bel 085 124 9091
                   </a>
                 </Button>
               </div>
