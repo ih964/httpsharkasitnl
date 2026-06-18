@@ -5,12 +5,12 @@ import { Megaphone, ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const features = [
-  "Google Ads campagnes",
-  "Facebook & Instagram Ads",
-  "LinkedIn advertenties",
-  "Remarketing strategieën",
-  "A/B testing & optimalisatie",
-  "Conversie tracking",
+  "Formulieren automatisch verwerken",
+  "E-mails omzetten naar acties of tickets",
+  "Klantportalen en aanvraagflows",
+  "Microsoft 365 workflows",
+  "AI-ondersteuning voor processen",
+  "Koppelingen tussen tools",
 ];
 
 const Marketing = () => {
@@ -18,7 +18,6 @@ const Marketing = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main>
-        {/* Hero Section */}
         <section className="pt-32 pb-20 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-primary/10 blur-[150px] pointer-events-none" />
           
@@ -33,22 +32,21 @@ const Marketing = () => {
                   <Megaphone className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-                  Advertentie{" "}
-                  <span className="text-gradient">Marketing</span>
+                  Slimmer werken met <span className="text-gradient">automatisering</span>
                 </h1>
                 <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-                  Complete groei-combinatie met gerichte advertentiecampagnes die jouw ideale klanten bereiken en converteren.
+                  Minder handmatig werk, betere opvolging en duidelijkere processen. Harkas IT helpt met praktische automatisering die past bij je bedrijf.
                 </p>
                 <Button variant="hero" size="lg" asChild>
-                  <a href="#contact" className="gap-3">
-                    Offerte aanvragen
+                  <Link to="/#contact" className="gap-3">
+                    Bespreek automatisering
                     <ArrowRight className="w-5 h-5" />
-                  </a>
+                  </Link>
                 </Button>
               </div>
               
               <div className="gradient-card rounded-3xl p-8 border border-border/50">
-                <h3 className="text-2xl font-semibold mb-6">Wat wij bieden</h3>
+                <h3 className="text-2xl font-semibold mb-6">Voorbeelden van automatisering</h3>
                 <ul className="space-y-4">
                   {features.map((feature) => (
                     <li key={feature} className="flex items-center gap-3">
@@ -64,34 +62,32 @@ const Marketing = () => {
           </div>
         </section>
 
-        {/* Content Section */}
         <section className="py-20 bg-secondary/30">
           <div className="container px-6">
             <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl font-bold mb-6">Bereik de juiste doelgroep</h2>
+              <h2 className="text-3xl font-bold mb-6">Van losse handelingen naar slimme workflows</h2>
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                Online adverteren is de snelste manier om zichtbaar te worden bij potentiële klanten. Maar zonder de juiste strategie kan het een dure gok zijn. Wij zorgen ervoor dat elke euro meetbaar resultaat oplevert.
+                Veel ondernemers verliezen tijd aan dezelfde terugkerende taken: aanvragen handmatig verwerken, e-mails opvolgen, klanten informeren of gegevens overtypen tussen systemen.
               </p>
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                Met data-gedreven campagnes op Google, Facebook, Instagram en LinkedIn bereiken we precies de mensen die interesse hebben in jouw producten of diensten. We optimaliseren continu om de beste resultaten te behalen.
+                Harkas IT kijkt welke stappen slimmer kunnen. Denk aan formulieren, ticketflows, klantportalen, e-mailautomatisering, Microsoft 365-workflows en AI-ondersteuning.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                Van het opzetten van campagnes tot het analyseren van resultaten, wij nemen het complete advertentiebeheer uit handen zodat jij je kunt focussen op je core business.
+                We beginnen praktisch: eerst het proces begrijpen, daarna pas automatiseren wat echt waarde toevoegt.
               </p>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
         <section className="py-20">
           <div className="container px-6 text-center">
-            <h2 className="text-3xl font-bold mb-4">Klaar om te groeien met advertenties?</h2>
+            <h2 className="text-3xl font-bold mb-4">Welke taak kost jou nu te veel tijd?</h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Neem contact met ons op voor een vrijblijvend gesprek over de mogelijkheden.
+              Vertel waar je in je proces tegenaan loopt. Dan kijken we welke automatisering logisch is.
             </p>
             <Button variant="hero" size="lg" asChild>
               <Link to="/#contact" className="gap-3">
-                Neem contact op
+                Bespreek je proces
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </Button>
