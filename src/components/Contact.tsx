@@ -4,11 +4,21 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 
+const serviceOptions = [
+  "Gratis IT-check",
+  "IT-beheer & support",
+  "Microsoft 365 beheer",
+  "Werkplekbeheer / remote support",
+  "Website, webapp of automatisering",
+  "Anders",
+];
+
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
+    service: "Gratis IT-check",
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,6 +30,7 @@ const Contact = () => {
     const name = formData.name.trim();
     const email = formData.email.trim();
     const phone = formData.phone.trim();
+    const service = formData.service.trim();
     const message = formData.message.trim();
 
     if (!name || !email || !message) {
@@ -42,7 +53,7 @@ const Contact = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, phone, message }),
+        body: JSON.stringify({ name, email, phone, service, message }),
         signal: controller.signal,
       });
 
@@ -51,7 +62,7 @@ const Contact = () => {
       }
 
       setSubmitted(true);
-      setFormData({ name: "", email: "", phone: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", service: "Gratis IT-check", message: "" });
 
       toast({
         title: "Aanvraag verzonden",
@@ -88,8 +99,7 @@ const Contact = () => {
             Klaar om je IT <span className="text-gradient">professioneel te regelen?</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Plan een gratis kennismaking of start met een Microsoft 365 & Werkplek Check.
-            Dan weet je direct waar je IT goed staat en waar verbetering nodig is.
+            Plan een gratis IT-check of stuur direct je vraag over IT-beheer, Microsoft 365, support, websites of automatisering.
           </p>
         </motion.div>
 
@@ -157,9 +167,9 @@ const Contact = () => {
             onSubmit={handleSubmit}
             className="p-8 rounded-2xl gradient-card border border-border/50"
           >
-            <h3 className="text-xl font-semibold mb-2">Vraag een IT-check of pakket aan</h3>
+            <h3 className="text-xl font-semibold mb-2">Vraag een IT-check of hulp aan</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Vul je gegevens in. Je aanvraag wordt direct vanaf de site naar info@harkasit.nl verzonden.
+              Kies waar je hulp bij nodig hebt. Je aanvraag wordt direct naar info@harkasit.nl verzonden.
             </p>
 
             {submitted && (
@@ -216,6 +226,22 @@ const Contact = () => {
               </div>
 
               <div>
+                <label htmlFor="service" className="block text-sm font-medium mb-2">
+                  Waar gaat je aanvraag over?
+                </label>
+                <select
+                  id="service"
+                  value={formData.service}
+                  onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                >
+                  {serviceOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label htmlFor="message" className="block text-sm font-medium mb-2">
                   Bericht <span className="text-primary">*</span>
                 </label>
@@ -225,7 +251,7 @@ const Contact = () => {
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors resize-none"
-                  placeholder="Bijvoorbeeld: ik wil een Microsoft 365 check, IT-beheer of websitebeheer bespreken..."
+                  placeholder="Bijvoorbeeld: ik wil mijn Microsoft 365 laten controleren, zoek IT-beheer of heb hulp nodig met een werkplekprobleem..."
                 />
               </div>
 
