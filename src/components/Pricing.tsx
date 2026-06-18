@@ -7,43 +7,43 @@ const packages = [
     name: "IT Start",
     price: "499",
     suffix: "p/m",
-    description: "Voor kleine bedrijven die hun Microsoft 365, gebruikersbeheer, support en basisbeveiliging goed geregeld willen hebben.",
+    description: "Voor kleine bedrijven die hun IT-support, Microsoft 365 en basisbeheer professioneel willen regelen.",
     features: [
-      "Microsoft 365 beheer",
+      "Microsoft 365 basisbeheer",
       "Remote support",
       "4 supporturen per maand",
-      "MFA/security basis",
-      "Maandelijkse controle",
-      "Extra uren op nacalculatie",
+      "Gebruikersbeheer",
+      "MFA/security basischeck",
+      "Extra uren in overleg",
     ],
     popular: false,
   },
   {
-    name: "IT + Website Beheer",
+    name: "IT Beheer Plus",
     price: "699",
     suffix: "p/m",
-    description: "Voor bedrijven die naast IT-beheer ook hun website professioneel willen laten beheren.",
+    description: "Voor bedrijven die naast support ook structureel werkplekbeheer en Microsoft 365-beheer willen.",
     features: [
       "Alles van IT Start",
-      "Website onderhoud",
-      "Kleine tekst- en beeldwijzigingen",
-      "Domein/mail/hosting ondersteuning",
-      "Maandelijkse verbeteringen",
-      "Eén aanspreekpunt voor IT en web",
+      "Werkplekbeheer basis",
+      "Teams/SharePoint ondersteuning",
+      "Maandelijkse controle",
+      "Onboarding/offboarding",
+      "Vast aanspreekpunt",
     ],
     popular: true,
   },
   {
-    name: "Digitale Groei",
+    name: "IT + Web",
     price: "999",
     suffix: "p/m",
-    description: "Voor bedrijven die IT, website, marketing en automatisering willen combineren.",
+    description: "Voor bedrijven die IT-beheer willen combineren met websitebeheer, formulieren en automatisering.",
     features: [
-      "IT-beheer",
+      "IT-beheer en support",
       "Websitebeheer",
-      "SEO basis",
-      "Google bedrijfsprofiel",
-      "Automatiseringen",
+      "Kleine websitewijzigingen",
+      "Formulieren en workflows",
+      "Domein/mail/hosting hulp",
       "Periodiek advies",
     ],
     popular: false,
@@ -67,18 +67,16 @@ const Pricing = () => {
             Pakketten
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Start simpel, <span className="text-gradient">groei wanneer nodig</span>
+            Duidelijke IT-basis, <span className="text-gradient">op maat uit te breiden</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Kies een duidelijke basis voor IT-beheer, websitebeheer en digitale groei. De pakketten hieronder zijn voorbeelden en indicaties.
-            Het definitieve pakket maken we één-op-één op maat, afgestemd op de wensen, omgeving en voorkeuren van jouw bedrijf.
+            De pakketten hieronder zijn voorbeeldpakketten. Het definitieve voorstel stemmen we af op je aantal gebruikers, apparaten, Microsoft 365-omgeving, supportbehoefte en gewenste responstijd.
           </p>
         </motion.div>
 
         <div className="max-w-4xl mx-auto mb-10 p-5 rounded-2xl gradient-card border border-primary/20 text-center">
           <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">Maatwerk staat centraal:</strong> geen enkel bedrijf werkt hetzelfde. Daarom gebruiken we deze pakketten als startpunt,
-            maar bepalen we samen wat echt nodig is: aantal gebruikers, apparaten, supportbehoefte, Microsoft 365-inrichting, beveiliging, websitebeheer en eventuele marketing.
+            <strong className="text-foreground">Maatwerk staat centraal:</strong> ieder bedrijf werkt anders. Daarom gebruiken we deze pakketten als startpunt en bepalen we samen wat echt nodig is.
           </p>
         </div>
 
@@ -134,7 +132,7 @@ const Pricing = () => {
                 className="w-full"
                 asChild
               >
-                <a href="#contact">Bespreek maatwerkpakket</a>
+                <a href="#contact">Bespreek pakket</a>
               </Button>
             </motion.div>
           ))}
@@ -152,8 +150,7 @@ const Pricing = () => {
           </span>
           <h3 className="text-2xl md:text-3xl font-bold mb-3">Microsoft 365 & Werkplek Check</h3>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-            Een eenmalige controle van je Microsoft 365 omgeving, gebruikers, MFA, rechten, mail,
-            Teams, OneDrive en basisbeveiliging. Vanaf €349 ex btw. Daarna adviseren we welk pakket of maatwerkplan het beste past.
+            Een eenmalige controle van je Microsoft 365 omgeving, gebruikers, MFA, rechten, mail, Teams, OneDrive en basisbeveiliging. Vanaf €349 ex btw. Daarna adviseren we welk pakket of maatwerkplan het beste past.
           </p>
           <Button variant="hero" asChild>
             <a href="#contact">Plan gratis IT-check</a>
