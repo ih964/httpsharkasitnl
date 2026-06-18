@@ -82,7 +82,7 @@ const Hero = () => {
               </a>
             </Button>
             <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-              <a href="/support" className="gap-3">
+              <a href="/diensten/support" className="gap-3">
                 <LifeBuoy className="w-5 h-5" />
                 Direct support aanvragen
               </a>
