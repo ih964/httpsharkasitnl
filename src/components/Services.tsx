@@ -1,4 +1,4 @@
-import { ShieldCheck, Globe, Megaphone, Users, Lock, Laptop, ArrowRight, KeyRound, LifeBuoy } from "lucide-react";
+import { ShieldCheck, Globe, Users, Lock, Laptop, ArrowRight, KeyRound, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -9,21 +9,21 @@ const mainServices = [
     title: "IT Beheer & Support",
     description: "Voor bedrijven die hun dagelijkse IT professioneel willen regelen zonder eigen IT-afdeling.",
     bullets: ["Gebruikersbeheer", "Remote support", "Werkplekbeheer", "Storingen oplossen", "Onboarding en offboarding", "Proactief meedenken"],
-    link: "/diensten/it-beheer",
+    link: "/diensten/support",
   },
   {
     icon: KeyRound,
     title: "Microsoft 365 & Security",
     description: "Een veilige Microsoft-basis met accounts, mail, Teams, SharePoint, MFA en apparaatbeheer.",
     bullets: ["Exchange Online", "Teams en SharePoint", "OneDrive", "MFA en rechten", "Intune basis", "Licentieadvies"],
-    link: "/diensten/microsoft-365",
+    link: "/diensten/support",
   },
   {
     icon: LifeBuoy,
     title: "Werkplekbeheer & Remote Support",
     description: "Snel hulp bij laptops, accounts, e-mail, printers, scanners, werkplekproblemen en dagelijkse supportvragen.",
     bullets: ["Nieuwe werkplekken", "Remote meekijken", "Printer/scanner hulp", "Apparaatinstellingen", "Supporttickets", "Duidelijke opvolging"],
-    link: "/diensten/remote-support",
+    link: "/diensten/support",
   },
   {
     icon: Globe,
@@ -109,7 +109,7 @@ const Services = () => {
                 <a href="https://support.harkasit.nl">Ticket aanmaken</a>
               </Button>
               <Button variant="outline" asChild>
-                <Link to="/diensten/remote-support">Remote support starten</Link>
+                <Link to="/diensten/support">Remote support starten</Link>
               </Button>
               <Button variant="outline" asChild>
                 <a href="https://support.harkasit.nl">Naar klantportaal</a>
