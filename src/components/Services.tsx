@@ -6,43 +6,43 @@ import { motion } from "framer-motion";
 const mainServices = [
   {
     icon: ShieldCheck,
-    title: "IT Beheer & Support",
+    title: "Managed IT & Support",
     description: "Voor bedrijven die hun dagelijkse IT professioneel willen regelen zonder eigen IT-afdeling.",
-    bullets: ["Microsoft 365 beheer", "Gebruikersbeheer", "Remote support", "Werkplekbeheer", "MFA en basisbeveiliging", "Onboarding en offboarding"],
+    bullets: ["Werkplekbeheer", "Remote support", "Gebruikersbeheer", "Onboarding/offboarding", "Printer, mail en Teams support", "Periodieke controle"],
     link: "/diensten/support",
   },
   {
     icon: KeyRound,
-    title: "Microsoft 365 & Entra ID inrichting",
-    description: "Een veilige Microsoft-basis met accounts, mail, Teams, SharePoint, MFA en apparaatbeheer.",
-    bullets: ["Tenant- en domeininrichting", "Entra ID gebruikers en groepen", "MFA en Conditional Access", "Exchange Online en shared mailboxen", "Teams en SharePoint structuur", "Intune basis voor apparaten"],
+    title: "Microsoft 365, Entra ID & Intune",
+    description: "Een veilige Microsoft-basis met accounts, mail, Teams, SharePoint, MFA, rechten en apparaatbeheer.",
+    bullets: ["Tenant- en domeininrichting", "Exchange Online", "Teams en SharePoint", "MFA en Conditional Access", "Intune basisbeheer", "Rechten en security review"],
     link: "/diensten/support",
   },
   {
     icon: Globe,
-    title: "Websites & Webapps",
-    description: "Moderne websites en slimme weboplossingen die passen bij je bedrijf.",
-    bullets: ["Zakelijke websites", "Landingspagina's", "Webapps", "Websitebeheer", "Hosting, domein en mail", "AI-websites en automatisering"],
+    title: "Websites, hosting & webapps",
+    description: "Moderne websites en slimme weboplossingen die je bedrijf beter vindbaar en professioneler maken.",
+    bullets: ["Zakelijke websites", "Landingspagina's", "Webapps", "Websitebeheer", "Domein, hosting en mail", "Conversie en formulieren"],
     link: "/diensten/websites",
   },
   {
     icon: Megaphone,
-    title: "Marketing & Automatisering",
-    description: "Meer zichtbaarheid, betere processen en minder handmatig werk.",
-    bullets: ["Google bedrijfsprofiel", "SEO basis", "Social media ondersteuning", "Leadformulieren", "Koppelingen", "Digitale groeistrategie"],
+    title: "Automatisering & digitale groei",
+    description: "Minder handmatig werk, betere opvolging en meer online zichtbaarheid.",
+    bullets: ["Google bedrijfsprofiel", "SEO basis", "Leadformulieren", "Procesautomatisering", "AI-ondersteuning", "Digitale groeistrategie"],
     link: "/diensten/marketing",
   },
 ];
 
 const painPoints = [
-  "Nieuwe medewerkers moeten snel accounts en laptops krijgen.",
-  "Outlook, Teams, OneDrive of printers zorgen regelmatig voor gedoe.",
-  "Je weet niet zeker of MFA, rechten en beveiliging goed staan.",
-  "Je website en online uitstraling moeten professioneel blijven.",
-  "Je wilt één aanspreekpunt voor IT, web en digitale groei.",
+  "Nieuwe medewerkers moeten snel en veilig toegang krijgen tot mail, Teams en bestanden.",
+  "Outlook, OneDrive, printers, laptops of rechten zorgen te vaak voor onderbreking.",
+  "Je weet niet zeker of MFA, accounts, apparaten en bestanden goed beveiligd zijn.",
+  "Je website moet professioneler worden en beter aanvragen opleveren.",
+  "Je wilt één aanspreekpunt voor IT, Microsoft 365, web en automatisering.",
 ];
 
-const sectors = ["MKB-bedrijven", "Zorgpraktijken", "Fysiopraktijken", "Tandartspraktijken", "Administratiekantoren", "Kinderopvang", "Lokale ondernemers", "Meerdere locaties"];
+const sectors = ["MKB-bedrijven", "Zorgpraktijken", "Fysiopraktijken", "Tandartspraktijken", "Administratiekantoren", "Kinderopvang", "Lokale ondernemers", "Bedrijven met meerdere locaties"];
 
 const Services = () => {
   return (
@@ -61,11 +61,10 @@ const Services = () => {
             IT-partner voor je digitale basis
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Geen eigen IT-afdeling, maar wel afhankelijk van <span className="text-gradient">goede IT?</span>
+            Alles wat je nodig hebt voor <span className="text-gradient">stabiele en veilige bedrijfs-IT</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
-            Harkas IT regelt het dagelijkse IT-beheer, je Microsoft 365 en Entra ID omgeving, werkplekken,
-            website en digitale groei vanuit één duidelijk aanspreekpunt.
+            Harkas IT combineert dagelijks IT-beheer, Microsoft 365, werkplekbeheer, websites en automatisering in één praktische aanpak voor ondernemers.
           </p>
         </motion.div>
 
@@ -139,11 +138,10 @@ const Services = () => {
           <div className="p-8 rounded-2xl gradient-card border border-border/50">
             <div className="flex items-center gap-3 mb-4">
               <Users className="w-6 h-6 text-primary" />
-              <h3 className="text-2xl font-semibold">Voorbeelden van klanten die wij helpen</h3>
+              <h3 className="text-2xl font-semibold">Voor wie Harkas IT ideaal is</h3>
             </div>
             <p className="text-muted-foreground mb-6">
-              Hieronder staan voorbeelden van organisaties waarvoor onze aanpak goed past. Staat jouw branche er niet tussen?
-              Geen probleem: we kijken altijd naar jouw situatie, systemen, wensen en manier van werken.
+              Harkas IT is vooral sterk voor kleine en middelgrote organisaties die professioneel willen werken, maar geen volledige interne IT-afdeling hebben.
             </p>
             <div className="flex flex-wrap gap-3">
               {sectors.map((sector) => (
@@ -157,11 +155,10 @@ const Services = () => {
           <div className="p-8 rounded-2xl gradient-card border border-border/50">
             <div className="flex items-center gap-3 mb-4">
               <Lock className="w-6 h-6 text-primary" />
-              <h3 className="text-2xl font-semibold">Praktisch, veilig en duidelijk</h3>
+              <h3 className="text-2xl font-semibold">Praktisch, veilig en schaalbaar</h3>
             </div>
             <p className="text-muted-foreground mb-6">
-              Harkas IT combineert praktijkervaring in IT-support, Microsoft 365, Entra ID, Intune,
-              werkplekbeheer, telefonie, cloudbeheer, zorgtechnologie en webontwikkeling.
+              We richten je basis goed in, houden het overzichtelijk en zorgen dat je bedrijf kan doorgroeien zonder onnodige complexiteit.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {["Duidelijke afspraken", "Vaste maandbedragen", "Eén aanspreekpunt", "MKB-proof aanpak"].map((item) => (
