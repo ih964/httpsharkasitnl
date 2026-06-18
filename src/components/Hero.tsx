@@ -1,11 +1,17 @@
-import { ShieldCheck, ArrowRight, Phone, MonitorCog } from "lucide-react";
+import { ShieldCheck, ArrowRight, Phone, MonitorCog, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 const trustBullets = [
-  "Microsoft 365 & werkplekbeheer",
-  "Remote support en security",
-  "Websites, apps en automatisering",
+  "Microsoft 365, Entra ID & Intune",
+  "Werkplekbeheer, support & beveiliging",
+  "Websites, automatisering & digitale groei",
+];
+
+const proofPoints = [
+  "Voor mkb en lokale ondernemers",
+  "Vaste contactpersoon",
+  "Praktisch advies zonder gedoe",
 ];
 
 const Hero = () => {
@@ -23,7 +29,7 @@ const Hero = () => {
       />
 
       <div className="container relative z-10 w-full max-w-full px-4 sm:px-6 py-14 md:py-20">
-        <div className="max-w-5xl mx-auto text-center">
+        <div className="max-w-6xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -31,7 +37,7 @@ const Hero = () => {
             className="inline-flex max-w-full items-center gap-2 glass px-3 sm:px-4 py-2 rounded-full mb-5 text-xs sm:text-sm font-medium text-primary"
           >
             <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">Vaste IT-partner voor mkb-bedrijven</span>
+            <span className="truncate">IT-partner voor bedrijven die professioneel willen groeien</span>
           </motion.div>
 
           <motion.h1 
@@ -40,9 +46,9 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-[2.35rem] xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] mb-6 break-words"
           >
-            Eén partner voor IT-beheer,
+            Professioneel IT-beheer voor mkb-bedrijven
             <br className="hidden sm:block" />
-            <span className="text-gradient block sm:inline">websites en digitale groei</span>
+            <span className="text-gradient block sm:inline">zonder eigen IT-afdeling</span>
           </motion.h1>
 
           <motion.p 
@@ -51,9 +57,9 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-7 px-1"
           >
-            Harkas IT helpt kleine bedrijven met betrouwbare IT-support, Microsoft 365 beheer,
-            veilige werkplekken, moderne websites, webapps en online zichtbaarheid. Alles overzichtelijk
-            geregeld bij één vaste IT-partner.
+            Harkas IT helpt ondernemers met Microsoft 365, Entra ID, Intune, veilige werkplekken,
+            remote support, websites en slimme automatisering. Eén vaste partner voor je dagelijkse IT,
+            je online uitstraling en je digitale groei.
           </motion.p>
 
           <motion.div 
@@ -74,7 +80,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 max-w-sm sm:max-w-none mx-auto"
+            className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 max-w-sm sm:max-w-none mx-auto mb-8"
           >
             <Button variant="hero" size="lg" asChild className="w-full sm:w-auto">
               <a href="#contact" className="gap-3">
@@ -88,6 +94,20 @@ const Hero = () => {
                 085 124 9091
               </a>
             </Button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="mx-auto grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3"
+          >
+            {proofPoints.map((point) => (
+              <div key={point} className="flex items-center justify-center gap-2 rounded-xl border border-border/40 bg-background/40 px-4 py-3 text-sm text-muted-foreground backdrop-blur">
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
+                <span>{point}</span>
+              </div>
+            ))}
           </motion.div>
         </div>
       </div>

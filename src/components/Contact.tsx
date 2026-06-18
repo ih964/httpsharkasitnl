@@ -85,11 +85,10 @@ const Contact = () => {
             Contact
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Klaar om je IT <span className="text-gradient">professioneel te regelen?</span>
+            Wil je weten waar je IT <span className="text-gradient">beter, veiliger of slimmer kan?</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Plan een gratis kennismaking of start met een Microsoft 365 & Werkplek Check.
-            Dan weet je direct waar je IT goed staat en waar verbetering nodig is.
+            Plan een gratis kennismaking. We kijken mee naar je situatie en adviseren welke eerste stap het meeste oplevert.
           </p>
         </motion.div>
 
@@ -130,8 +129,8 @@ const Contact = () => {
                     <MapPin className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Locatie</p>
-                    <p className="font-medium">Burgemeester de Manstraat 45, Tiel</p>
+                    <p className="text-sm text-muted-foreground">Werkgebied</p>
+                    <p className="font-medium">Tiel, Rotterdam en landelijk remote</p>
                   </div>
                 </div>
               </div>
@@ -157,9 +156,9 @@ const Contact = () => {
             onSubmit={handleSubmit}
             className="p-8 rounded-2xl gradient-card border border-border/50"
           >
-            <h3 className="text-xl font-semibold mb-2">Vraag een IT-check of pakket aan</h3>
+            <h3 className="text-xl font-semibold mb-2">Vraag een gratis kennismaking aan</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Vul je gegevens in. Je aanvraag wordt direct vanaf de site naar info@harkasit.nl verzonden.
+              Vertel kort waar je hulp bij nodig hebt: Microsoft 365, werkplekken, support, beveiliging, website of automatisering.
             </p>
 
             {submitted && (
@@ -217,7 +216,7 @@ const Contact = () => {
 
               <div>
                 <label htmlFor="message" className="block text-sm font-medium mb-2">
-                  Bericht <span className="text-primary">*</span>
+                  Waar wil je hulp bij? <span className="text-primary">*</span>
                 </label>
                 <textarea
                   id="message"
@@ -225,7 +224,7 @@ const Contact = () => {
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors resize-none"
-                  placeholder="Bijvoorbeeld: ik wil een Microsoft 365 check, IT-beheer of websitebeheer bespreken..."
+                  placeholder="Bijvoorbeeld: we willen Microsoft 365 veiliger inrichten, hulp met werkplekken, websitebeheer of automatisering..."
                 />
               </div>
 

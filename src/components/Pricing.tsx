@@ -4,47 +4,47 @@ import { motion } from "framer-motion";
 
 const packages = [
   {
-    name: "IT Start",
+    name: "IT Basis",
     price: "499",
     suffix: "p/m",
-    description: "Voor kleine bedrijven die hun Microsoft 365, gebruikersbeheer, support en basisbeveiliging goed geregeld willen hebben.",
+    description: "Voor kleine bedrijven die Microsoft 365, gebruikersbeheer, support en basisbeveiliging goed geregeld willen hebben.",
     features: [
       "Microsoft 365 beheer",
       "Remote support",
       "4 supporturen per maand",
+      "Gebruikersbeheer",
       "MFA/security basis",
       "Maandelijkse controle",
-      "Extra uren op nacalculatie",
     ],
     popular: false,
   },
   {
-    name: "IT + Website Beheer",
-    price: "699",
+    name: "IT Zeker",
+    price: "749",
     suffix: "p/m",
-    description: "Voor bedrijven die naast IT-beheer ook hun website professioneel willen laten beheren.",
+    description: "Voor bedrijven die meer zekerheid willen rond werkplekken, apparaten, rechten, onboarding en dagelijkse ondersteuning.",
     features: [
-      "Alles van IT Start",
-      "Website onderhoud",
-      "Kleine tekst- en beeldwijzigingen",
-      "Domein/mail/hosting ondersteuning",
-      "Maandelijkse verbeteringen",
-      "Eén aanspreekpunt voor IT en web",
+      "Alles van IT Basis",
+      "Werkplekbeheer",
+      "Intune basisbeheer",
+      "Onboarding/offboarding",
+      "SharePoint/Teams support",
+      "Periodiek verbeteradvies",
     ],
     popular: true,
   },
   {
-    name: "Digitale Groei",
+    name: "IT + Digitale Groei",
     price: "999",
     suffix: "p/m",
-    description: "Voor bedrijven die IT, website, marketing en automatisering willen combineren.",
+    description: "Voor bedrijven die IT-beheer, websitebeheer, automatisering en online zichtbaarheid willen combineren.",
     features: [
-      "IT-beheer",
+      "Alles van IT Zeker",
       "Websitebeheer",
       "SEO basis",
       "Google bedrijfsprofiel",
-      "Automatiseringen",
-      "Periodiek advies",
+      "Procesautomatisering",
+      "Strategische roadmap",
     ],
     popular: false,
   },
@@ -67,18 +67,16 @@ const Pricing = () => {
             Pakketten
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Start simpel, <span className="text-gradient">groei wanneer nodig</span>
+            Duidelijke IT-pakketten, <span className="text-gradient">altijd op maat gemaakt</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Kies een duidelijke basis voor IT-beheer, websitebeheer en digitale groei. De pakketten hieronder zijn voorbeelden en indicaties.
-            Het definitieve pakket maken we één-op-één op maat, afgestemd op de wensen, omgeving en voorkeuren van jouw bedrijf.
+            Gebruik deze pakketten als startpunt. Het definitieve voorstel stemmen we af op het aantal gebruikers, apparaten, supportbehoefte, Microsoft 365-inrichting en gewenste groei.
           </p>
         </motion.div>
 
         <div className="max-w-4xl mx-auto mb-10 p-5 rounded-2xl gradient-card border border-primary/20 text-center">
           <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">Maatwerk staat centraal:</strong> geen enkel bedrijf werkt hetzelfde. Daarom gebruiken we deze pakketten als startpunt,
-            maar bepalen we samen wat echt nodig is: aantal gebruikers, apparaten, supportbehoefte, Microsoft 365-inrichting, beveiliging, websitebeheer en eventuele marketing.
+            <strong className="text-foreground">Laagdrempelig beginnen:</strong> start met een Microsoft 365 & Werkplek Check. Daarna weet je precies waar risico's, verbeterpunten en quick wins zitten.
           </p>
         </div>
 
@@ -100,21 +98,21 @@ const Pricing = () => {
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                   <span className="inline-flex items-center gap-1 px-4 py-1 rounded-full gradient-primary text-sm font-semibold text-primary-foreground">
                     <Zap className="w-3 h-3" />
-                    Populair
+                    Aanbevolen
                   </span>
                 </div>
               )}
 
               <div className="text-center mb-8">
                 <h3 className="text-xl font-semibold mb-2">{pkg.name}</h3>
-                <p className="text-muted-foreground text-sm mb-4 min-h-[60px]">{pkg.description}</p>
+                <p className="text-muted-foreground text-sm mb-4 min-h-[72px]">{pkg.description}</p>
                 <div className="flex flex-col items-center gap-1">
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="text-muted-foreground text-sm">vanaf €</span>
                     <span className="text-4xl font-bold">{pkg.price}</span>
                     <span className="text-muted-foreground text-sm">{pkg.suffix}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">ex btw · voorbeeldpakket</span>
+                  <span className="text-xs text-muted-foreground">ex btw · indicatief startpakket</span>
                 </div>
               </div>
 
@@ -134,7 +132,7 @@ const Pricing = () => {
                 className="w-full"
                 asChild
               >
-                <a href="#contact">Bespreek maatwerkpakket</a>
+                <a href="#contact">Vraag voorstel aan</a>
               </Button>
             </motion.div>
           ))}
@@ -148,12 +146,12 @@ const Pricing = () => {
           className="max-w-4xl mx-auto mt-10 p-8 rounded-2xl gradient-card border border-primary/30 text-center"
         >
           <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-3">
-            Laagdrempelige instap
+            Eerste stap
           </span>
           <h3 className="text-2xl md:text-3xl font-bold mb-3">Microsoft 365 & Werkplek Check</h3>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
             Een eenmalige controle van je Microsoft 365 omgeving, gebruikers, MFA, rechten, mail,
-            Teams, OneDrive en basisbeveiliging. Vanaf €349 ex btw. Daarna adviseren we welk pakket of maatwerkplan het beste past.
+            Teams, OneDrive, apparaten en basisbeveiliging. Vanaf €349 ex btw. Daarna krijg je een helder verbeteradvies.
           </p>
           <Button variant="hero" asChild>
             <a href="#contact">Plan gratis IT-check</a>
