@@ -13,7 +13,6 @@ const Hero = () => {
     <section className="relative min-h-screen w-full max-w-full flex items-center justify-center overflow-hidden gradient-hero pt-20">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[320px] h-[320px] sm:w-[600px] sm:h-[600px] rounded-full bg-primary/5 blur-[100px] sm:blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[260px] h-[260px] sm:w-[400px] sm:h-[400px] rounded-full bg-primary/10 blur-[90px] sm:blur-[100px] pointer-events-none" />
-      
       <div 
         className="absolute inset-0 opacity-[0.02]"
         style={{
@@ -31,7 +30,7 @@ const Hero = () => {
             className="inline-flex max-w-full items-center gap-2 glass px-3 sm:px-4 py-2 rounded-full mb-5 text-xs sm:text-sm font-medium text-primary"
           >
             <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">IT-partner voor mkb, zorg en zelfstandigen</span>
+            <span className="truncate">IT-partner voor ondernemers in heel Nederland</span>
           </motion.div>
 
           <motion.h1 
@@ -51,7 +50,7 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-7 px-1"
           >
-            Harkas IT helpt ondernemers en organisaties met veilige werkplekken, snelle support,
+            Harkas IT helpt ondernemers en organisaties in heel Nederland met veilige werkplekken, snelle remote support,
             Microsoft 365-beheer, moderne websites en automatisering zonder gedoe.
           </motion.p>
 
