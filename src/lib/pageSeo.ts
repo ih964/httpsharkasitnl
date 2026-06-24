@@ -13,4 +13,14 @@ export const applyPageSeo = ({ title, description }: PageSeoOptions) => {
   descriptionTags.forEach((tag) => {
     tag.setAttribute("content", description);
   });
+
+  const iconLinks = Array.from(document.getElementsByTagName("link")).filter((link) => {
+    const rel = link.getAttribute("rel") || "";
+    return rel.includes("icon");
+  });
+
+  iconLinks.forEach((link) => {
+    link.setAttribute("href", "/favicon.svg");
+    link.setAttribute("type", "image/svg+xml");
+  });
 };
