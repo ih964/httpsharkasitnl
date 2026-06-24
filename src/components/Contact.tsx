@@ -99,7 +99,7 @@ const Contact = () => {
             Klaar om je IT <span className="text-gradient">professioneel te regelen?</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Plan een gratis IT-check of stuur direct je vraag over IT-beheer, Microsoft 365, support, websites of automatisering.
+            Plan een gratis IT-check of stuur direct je vraag. Harkas IT werkt remote voor ondernemers in heel Nederland.
           </p>
         </motion.div>
 
@@ -140,8 +140,8 @@ const Contact = () => {
                     <MapPin className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Locatie</p>
-                    <p className="font-medium">Burgemeester de Manstraat 45, Tiel</p>
+                    <p className="text-sm text-muted-foreground">Werkgebied</p>
+                    <p className="font-medium">Gevestigd in Tiel, actief in heel Nederland</p>
                   </div>
                 </div>
               </div>
@@ -184,60 +184,27 @@ const Contact = () => {
                 <label htmlFor="name" className="block text-sm font-medium mb-2">
                   Naam <span className="text-primary">*</span>
                 </label>
-                <input
-                  type="text"
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
-                  placeholder="Je naam"
-                  autoComplete="name"
-                />
+                <input type="text" id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors" placeholder="Je naam" autoComplete="name" />
               </div>
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-2">
                   E-mail <span className="text-primary">*</span>
                 </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
-                  placeholder="je@email.nl"
-                  autoComplete="email"
-                />
+                <input type="email" id="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors" placeholder="je@email.nl" autoComplete="email" />
               </div>
 
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium mb-2">
                   Telefoonnummer <span className="text-muted-foreground font-normal">(optioneel)</span>
                 </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
-                  placeholder="+31 6 1234 5678"
-                  autoComplete="tel"
-                />
+                <input type="tel" id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors" placeholder="+31 6 1234 5678" autoComplete="tel" />
               </div>
 
               <div>
-                <label htmlFor="service" className="block text-sm font-medium mb-2">
-                  Waar gaat je aanvraag over?
-                </label>
-                <select
-                  id="service"
-                  value={formData.service}
-                  onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
-                >
-                  {serviceOptions.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
+                <label htmlFor="service" className="block text-sm font-medium mb-2">Waar gaat je aanvraag over?</label>
+                <select id="service" value={formData.service} onChange={(e) => setFormData({ ...formData, service: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors">
+                  {serviceOptions.map((option) => (<option key={option} value={option}>{option}</option>))}
                 </select>
               </div>
 
@@ -245,14 +212,7 @@ const Contact = () => {
                 <label htmlFor="message" className="block text-sm font-medium mb-2">
                   Bericht <span className="text-primary">*</span>
                 </label>
-                <textarea
-                  id="message"
-                  rows={5}
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors resize-none"
-                  placeholder="Bijvoorbeeld: ik wil mijn Microsoft 365 laten controleren, zoek IT-beheer of heb hulp nodig met een werkplekprobleem..."
-                />
+                <textarea id="message" rows={5} value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-secondary border border-border/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors resize-none" placeholder="Bijvoorbeeld: ik wil mijn Microsoft 365 laten controleren, zoek IT-beheer of heb hulp nodig met een werkplekprobleem..." />
               </div>
 
               <Button type="submit" variant="hero" className="w-full" size="lg" disabled={isSubmitting}>
