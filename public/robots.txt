@@ -14,3 +14,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://harkasit.nl/sitemap.xml
+Sitemap: https://harkasit.nl/sitemap-services.xml
