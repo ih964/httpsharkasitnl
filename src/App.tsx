@@ -12,6 +12,7 @@ import Marketing from "./pages/services/Marketing";
 import SEO from "./pages/services/SEO";
 import SocialMedia from "./pages/services/SocialMedia";
 import Support from "./pages/services/Support";
+import NationalLanding from "./pages/services/NationalLanding";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import About from "./pages/About";
@@ -47,6 +48,11 @@ const App = () => (
             <Route path="/diensten/seo" element={<SEO />} />
             <Route path="/diensten/social-media" element={<SocialMedia />} />
             <Route path="/diensten/support" element={<Support />} />
+            <Route path="/diensten/it-beheer" element={<NationalLanding />} />
+            <Route path="/diensten/microsoft-365-beheer" element={<NationalLanding />} />
+            <Route path="/diensten/werkplekbeheer" element={<NationalLanding />} />
+            <Route path="/diensten/remote-support" element={<NationalLanding />} />
+            <Route path="/diensten/it-support-mkb" element={<NationalLanding />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/voorwaarden" element={<Terms />} />
             <Route path="/admin/login" element={<AdminLogin />} />
