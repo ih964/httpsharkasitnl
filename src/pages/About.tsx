@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Target, Award, Clock, ShieldCheck, Laptop, Globe } from "lucide-react";
+import { applyPageSeo } from "@/lib/pageSeo";
 
 const values = [
   {
@@ -35,13 +37,19 @@ const expertise = [
 ];
 
 const About = () => {
+  useEffect(() => {
+    applyPageSeo({
+      title: "Over Harkas IT | IT-partner voor ondernemers",
+      description: "Lees meer over Harkas IT: jouw praktische partner voor IT-beheer, Microsoft 365, werkplekbeheer, support, websites en automatisering.",
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="pt-20">
         <section className="py-20 md:py-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.15),transparent_60%)]" />
-          
           <div className="container px-6 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">
@@ -80,7 +88,6 @@ const About = () => {
                   </a>
                 </Button>
               </div>
-              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {expertise.map((item) => (
                   <div key={item.title} className="p-6 rounded-2xl gradient-card border border-border/50">
@@ -96,59 +103,40 @@ const About = () => {
           </div>
         </section>
 
-        <section className="py-20 relative">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[150px] pointer-events-none" />
-          
-          <div className="container px-6 relative z-10">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Waar Harkas IT voor <span className="text-gradient">staat</span>
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                De basis van onze aanpak: duidelijk, veilig, persoonlijk en gericht op oplossingen die in de praktijk werken.
+        <section className="py-20 bg-secondary/30">
+          <div className="container px-6">
+            <div className="max-w-3xl mx-auto text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Waar Harkas IT voor staat</h2>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Duidelijke communicatie, praktische oplossingen en een veilige digitale basis voor ondernemers die door willen.
               </p>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {values.map((value, index) => (
-                <div
-                  key={index}
-                  className="p-6 rounded-2xl gradient-card border border-border/50 hover:border-primary/30 transition-all duration-500 text-center group animate-fade-up"
-                  style={{ animationDelay: `${0.1 * index}s` }}
-                >
-                  <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+              {values.map((value) => (
+                <div key={value.title} className="p-6 rounded-2xl gradient-card border border-border/50 text-center">
+                  <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center mx-auto mb-5">
                     <value.icon className="w-7 h-7 text-primary-foreground" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{value.title}</h3>
-                  <p className="text-muted-foreground text-sm">{value.description}</p>
+                  <h3 className="text-lg font-semibold mb-3">{value.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{value.description}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="py-20 relative">
-          <div className="container px-6">
-            <div className="max-w-4xl mx-auto text-center p-12 rounded-3xl gradient-card border border-border/50">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Wil je weten waar jouw IT <span className="text-gradient">beter kan?</span>
-              </h2>
-              <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-                Vraag een gratis IT-check aan. We kijken mee naar je huidige situatie en geven eerlijk advies over wat beter, veiliger of slimmer kan.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button variant="hero" size="lg" asChild>
-                  <a href="/#contact" className="gap-2">
-                    Plan gratis IT-check
-                  </a>
-                </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <a href="tel:+31851249091" className="gap-2">
-                    Bel 085 124 9091
-                  </a>
-                </Button>
-              </div>
-            </div>
+        <section className="py-20">
+          <div className="container px-6 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Wil je weten waar jouw IT beter kan?</h2>
+            <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
+              Plan een gratis IT-check. Dan kijken we samen naar je huidige situatie en de beste eerste stap.
+            </p>
+            <Button variant="hero" size="lg" asChild>
+              <a href="/#contact" className="gap-3">
+                Plan gratis IT-check
+                <ArrowRight className="w-5 h-5" />
+              </a>
+            </Button>
           </div>
         </section>
       </main>
