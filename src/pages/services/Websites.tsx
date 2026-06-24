@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Globe, ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { applyPageSeo } from "@/lib/pageSeo";
 
 const features = [
   "Professionele bedrijfswebsites",
@@ -14,18 +16,23 @@ const features = [
 ];
 
 const Websites = () => {
+  useEffect(() => {
+    applyPageSeo({
+      title: "Websites, Webapps & Automatisering | Harkas IT",
+      description: "Harkas IT bouwt professionele bedrijfswebsites, webapps, formulieren, klantportalen en automatisering die praktisch werken voor ondernemers.",
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main>
         <section className="pt-32 pb-20 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-primary/10 blur-[150px] pointer-events-none" />
-          
           <div className="container px-6 relative">
             <Link to="/#diensten" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8">
-              ← Terug naar diensten
+              Terug naar diensten
             </Link>
-            
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
                 <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mb-6">
@@ -44,7 +51,6 @@ const Websites = () => {
                   </Link>
                 </Button>
               </div>
-              
               <div className="gradient-card rounded-3xl p-8 border border-border/50">
                 <h3 className="text-2xl font-semibold mb-6">Wat wij bouwen en beheren</h3>
                 <ul className="space-y-4">
