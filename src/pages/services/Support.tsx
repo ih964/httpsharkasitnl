@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, ArrowRight, Check, KeyRound, Mail, MonitorCog, Users, Lock, LifeBuoy, Laptop } from "lucide-react";
+import { ShieldCheck, ArrowRight, Check, KeyRound, MonitorCog, Users, Lock, LifeBuoy, Laptop } from "lucide-react";
 import { Link } from "react-router-dom";
+import { applyPageSeo } from "@/lib/pageSeo";
 
 const features = [
   "IT-beheer en dagelijkse support",
@@ -60,6 +62,13 @@ const serviceBlocks = [
 ];
 
 const Support = () => {
+  useEffect(() => {
+    applyPageSeo({
+      title: "IT-beheer & Microsoft 365 Support | Harkas IT",
+      description: "Harkas IT helpt met IT-beheer, Microsoft 365 beheer, werkplekbeheer, remote support, gebruikersbeheer en veilige IT-basis voor ondernemers.",
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
