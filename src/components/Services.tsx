@@ -7,7 +7,7 @@ const mainServices = [
   {
     icon: ShieldCheck,
     title: "IT Beheer & Support",
-    description: "Voor bedrijven die hun dagelijkse IT professioneel willen regelen zonder eigen IT-afdeling.",
+    description: "Voor bedrijven in heel Nederland die hun dagelijkse IT professioneel willen regelen zonder eigen IT-afdeling.",
     bullets: ["Gebruikersbeheer", "Remote support", "Werkplekbeheer", "Storingen oplossen", "Onboarding en offboarding", "Proactief meedenken"],
     link: "/diensten/support",
   },
@@ -21,7 +21,7 @@ const mainServices = [
   {
     icon: LifeBuoy,
     title: "Werkplekbeheer & Remote Support",
-    description: "Snel hulp bij laptops, accounts, e-mail, printers, scanners, werkplekproblemen en dagelijkse supportvragen.",
+    description: "Snel hulp op afstand bij laptops, accounts, e-mail, printers, scanners, werkplekproblemen en dagelijkse supportvragen.",
     bullets: ["Nieuwe werkplekken", "Remote meekijken", "Printer/scanner hulp", "Apparaatinstellingen", "Supporttickets", "Duidelijke opvolging"],
     link: "/diensten/support",
   },
@@ -42,7 +42,7 @@ const painPoints = [
   "Je bedrijf groeit, maar je IT-processen groeien nog niet goed mee.",
 ];
 
-const sectors = ["MKB-bedrijven", "Zorgpraktijken", "Fysiopraktijken", "Tandartspraktijken", "Administratiekantoren", "Kinderopvang", "Lokale ondernemers", "Meerdere locaties"];
+const sectors = ["MKB-bedrijven", "Zorgpraktijken", "Fysiopraktijken", "Tandartspraktijken", "Administratiekantoren", "Kinderopvang", "ZZP en kleine teams", "Meerdere locaties"];
 
 const Services = () => {
   return (
@@ -55,7 +55,7 @@ const Services = () => {
             Geen eigen IT-afdeling, maar wel afhankelijk van <span className="text-gradient">betrouwbare IT?</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
-            Harkas IT regelt het dagelijkse IT-beheer, Microsoft 365, werkplekken, support, websites en automatisering vanuit één duidelijk aanspreekpunt.
+            Harkas IT regelt dagelijks IT-beheer, Microsoft 365, werkplekken, support, websites en automatisering voor ondernemers in heel Nederland.
           </p>
         </motion.div>
 
@@ -72,10 +72,10 @@ const Services = () => {
           <div className="absolute inset-y-0 right-0 w-1/2 bg-primary/5 blur-3xl pointer-events-none" />
           <div className="relative grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-8 items-center">
             <div>
-              <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-3">Supportportaal</span>
-              <h3 className="text-2xl md:text-3xl font-bold mb-4">Klant van Harkas IT?</h3>
+              <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-3">Support op afstand</span>
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">Hulp nodig, ook buiten Tiel?</h3>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                Maak eenvoudig een supportaanvraag aan, start remote ondersteuning of neem contact op via de bestaande supportpagina.
+                Veel IT-vragen kunnen snel remote worden opgepakt. Voor klanten in heel Nederland helpt Harkas IT met support, beheer en duidelijke opvolging.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
@@ -106,7 +106,7 @@ const Services = () => {
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
           <div className="p-8 rounded-2xl gradient-card border border-border/50">
             <div className="flex items-center gap-3 mb-4"><Users className="w-6 h-6 text-primary" /><h3 className="text-2xl font-semibold">Voor wie Harkas IT geschikt is</h3></div>
-            <p className="text-muted-foreground mb-6">Onze aanpak past goed bij organisaties die professioneel willen werken, maar geen grote interne IT-afdeling hebben.</p>
+            <p className="text-muted-foreground mb-6">Onze aanpak past goed bij organisaties in Nederland die professioneel willen werken, maar geen grote interne IT-afdeling hebben.</p>
             <div className="flex flex-wrap gap-3">{sectors.map((sector) => (<span key={sector} className="px-4 py-2 rounded-xl bg-secondary text-sm text-muted-foreground border border-border/40">{sector}</span>))}</div>
           </div>
           <div className="p-8 rounded-2xl gradient-card border border-border/50">
