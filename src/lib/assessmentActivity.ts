@@ -13,6 +13,12 @@ const statusLabels: Record<string, string> = {
   lost: "Verloren",
 };
 
+const proposalStatusLabels: Record<string, string> = {
+  draft: "Concept",
+  reviewed: "Gecontroleerd",
+  approved: "Goedgekeurd",
+};
+
 const formatCurrency = (value: unknown): string | null => {
   const amount = Number(value);
   if (!Number.isFinite(amount)) return null;
@@ -50,6 +56,12 @@ export const formatAssessmentActivity = (event: AssessmentActivityEvent): string
     const lineCount = Number(metadata.line_count);
     const lines = Number.isFinite(lineCount) ? ` met ${lineCount} ${lineCount === 1 ? "regel" : "regels"}` : "";
     return total ? `Conceptofferte opgeslagen${lines} · ${total}` : `Conceptofferte opgeslagen${lines}`;
+  }
+
+  if (event.event_type === "proposal_status_updated") {
+    const from = proposalStatusLabels[String(metadata.status_from)] ?? String(metadata.status_from ?? "onbekend");
+    const to = proposalStatusLabels[String(metadata.status_to)] ?? String(metadata.status_to ?? "onbekend");
+    return `Offertestatus gewijzigd van ${from} naar ${to}`;
   }
 
   if (event.event_type === "lead_updated") return "Leadgegevens bijgewerkt";
