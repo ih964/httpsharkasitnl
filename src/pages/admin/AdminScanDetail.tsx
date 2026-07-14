@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Activity, ArrowLeft, Building2, CalendarClock, Mail, Phone, Save, ShieldAlert, Users } from "lucide-react";
+import { Activity, ArrowLeft, Building2, CalendarClock, CheckCircle2, Mail, Phone, Save, ShieldAlert, UserPlus, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ type LeadStatus = "new" | "contacted" | "qualified" | "won" | "lost";
 
 type ScanDetail = {
   id: string;
+  customer_id: string | null;
   company_name: string;
   contact_name: string;
   email: string;
@@ -59,6 +60,7 @@ export default function AdminScanDetail() {
   const [followUpAt, setFollowUpAt] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [converting, setConverting] = useState(false);
   const { toast } = useToast();
 
   const loadActivities = async (id: string) => {
@@ -80,7 +82,7 @@ export default function AdminScanDetail() {
       const client = supabase as any;
       const { data, error } = await client
         .from("assessment_leads")
-        .select("id,company_name,contact_name,email,phone,employee_count,status,notes,follow_up_at,consent_report,consent_marketing,source,created_at,assessment_runs(id,total_score,risk_level,category_scores,recommendations,created_at)")
+        .select("id,customer_id,company_name,contact_name,email,phone,employee_count,status,notes,follow_up_at,consent_report,consent_marketing,source,created_at,assessment_runs(id,total_score,risk_level,category_scores,recommendations,created_at)")
         .eq("id", leadId)
         .single();
 
@@ -155,6 +157,28 @@ export default function AdminScanDetail() {
     toast({ title: "Opvolging opgeslagen" });
   };
 
+  const convertToCustomer = async () => {
+    if (!lead || lead.customer_id) return;
+    if (!window.confirm(`Zet ${lead.company_name} om naar een klant? Bij een bestaand klantrecord met hetzelfde e-mailadres wordt die klant hergebruikt.`)) return;
+
+    setConverting(true);
+    const client = supabase as any;
+    const { data, error } = await client.rpc("convert_assessment_lead_to_customer", {
+      p_lead_id: lead.id,
+    });
+    setConverting(false);
+
+    if (error) {
+      toast({ title: "Omzetten naar klant is niet gelukt", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const customerId = typeof data === "string" ? data : String(Array.isArray(data) ? data[0] : data ?? "");
+    setLead({ ...lead, customer_id: customerId || null, status: "won" });
+    await loadActivities(lead.id);
+    toast({ title: "Lead omgezet naar klant", description: "Het klantrecord staat nu in het klantenoverzicht." });
+  };
+
   if (loading) return <div className="flex min-h-[320px] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" /></div>;
   if (!lead) return <div className="space-y-4"><p>Deze scanlead kon niet worden gevonden.</p><Link to="/admin/scans" className="text-primary hover:underline">Terug naar scans</Link></div>;
 
@@ -172,10 +196,15 @@ export default function AdminScanDetail() {
           <h1 className="text-3xl font-heading font-bold">{lead.company_name}</h1>
           <p className="mt-1 text-muted-foreground">Ingediend op {new Intl.DateTimeFormat("nl-NL", { dateStyle: "long", timeStyle: "short" }).format(new Date(lead.created_at))}</p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
           <a href={`mailto:${lead.email}?subject=Uw%20IT%20Quick%20Scan`} className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium"><Mail className="h-4 w-4" /> E-mail</a>
           {lead.phone ? <a href={`tel:${lead.phone}`} className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium"><Phone className="h-4 w-4" /> Bellen</a> : null}
-          <Select disabled={saving} value={lead.status} onValueChange={(value) => void updateStatus(value as LeadStatus)}>
+          {lead.customer_id ? (
+            <Link to="/admin/customers" className="inline-flex items-center justify-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-medium text-primary"><CheckCircle2 className="h-4 w-4" /> Klant gekoppeld</Link>
+          ) : (
+            <button type="button" disabled={converting || saving} onClick={() => void convertToCustomer()} className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"><UserPlus className="h-4 w-4" />{converting ? "Omzetten..." : "Omzetten naar klant"}</button>
+          )}
+          <Select disabled={saving || converting} value={lead.status} onValueChange={(value) => void updateStatus(value as LeadStatus)}>
             <SelectTrigger className="w-full sm:w-52"><SelectValue /></SelectTrigger>
             <SelectContent>{statuses.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent>
           </Select>
@@ -198,6 +227,7 @@ export default function AdminScanDetail() {
               <div><p className="text-sm text-muted-foreground">Risiconiveau</p><p className="mt-1 inline-flex items-center gap-2 font-semibold"><ShieldAlert className="h-4 w-4 text-primary" />{riskLabel(run?.risk_level)}</p></div>
               <div><p className="text-sm text-muted-foreground">Rapportverwerking</p><p className="font-medium">{lead.consent_report ? "Toegestaan" : "Niet toegestaan"}</p></div>
               <div><p className="text-sm text-muted-foreground">Commerciële opvolging</p><p className="font-medium">{lead.consent_marketing ? "Toegestaan" : "Niet toegestaan"}</p></div>
+              <div><p className="text-sm text-muted-foreground">Klantrecord</p><p className="font-medium">{lead.customer_id ? "Gekoppeld" : "Nog niet gekoppeld"}</p></div>
             </CardContent>
           </Card>
 
@@ -206,7 +236,7 @@ export default function AdminScanDetail() {
             <CardContent className="space-y-4">
               <div className="space-y-2"><Label htmlFor="followUpAt">Opvolgdatum</Label><Input id="followUpAt" type="datetime-local" value={followUpAt} onChange={(event) => setFollowUpAt(event.target.value)} /></div>
               <div className="space-y-2"><Label htmlFor="notes">Interne notities</Label><textarea id="notes" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={5000} rows={7} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring" placeholder="Gesprek, behoefte, afgesproken vervolgstappen..." /></div>
-              <button type="button" disabled={saving} onClick={() => void saveFollowUp()} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"><Save className="h-4 w-4" />{saving ? "Opslaan..." : "Opvolging opslaan"}</button>
+              <button type="button" disabled={saving || converting} onClick={() => void saveFollowUp()} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"><Save className="h-4 w-4" />{saving ? "Opslaan..." : "Opvolging opslaan"}</button>
             </CardContent>
           </Card>
         </div>
