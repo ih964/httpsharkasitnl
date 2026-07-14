@@ -1,4 +1,4 @@
-import { calculateQuoteTotals, validateQuoteLines, type AssessmentQuoteLine } from "./assessmentQuote";
+import { calculateQuoteTotals, validateQuoteLines, type AssessmentQuoteLine } from "./assessmentQuote.ts";
 
 export type AssessmentQuoteDocumentInput = {
   companyName: string;
