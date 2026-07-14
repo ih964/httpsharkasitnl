@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Building2, CalendarClock, Mail, Phone, Save, ShieldAlert, Users } from "lucide-react";
+import { Activity, ArrowLeft, Building2, CalendarClock, Mail, Phone, Save, ShieldAlert, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { formatAssessmentActivity, type AssessmentActivityEvent } from "@/lib/assessmentActivity";
 
 type LeadStatus = "new" | "contacted" | "qualified" | "won" | "lost";
 
@@ -53,11 +54,24 @@ const toLocalInputValue = (value: string | null) => value ? new Date(value).toIS
 export default function AdminScanDetail() {
   const { leadId } = useParams<{ leadId: string }>();
   const [lead, setLead] = useState<ScanDetail | null>(null);
+  const [activities, setActivities] = useState<AssessmentActivityEvent[]>([]);
   const [notes, setNotes] = useState("");
   const [followUpAt, setFollowUpAt] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+
+  const loadActivities = async (id: string) => {
+    const client = supabase as any;
+    const { data, error } = await client
+      .from("assessment_audit_events")
+      .select("id,event_type,metadata,created_at")
+      .eq("lead_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (!error) setActivities((data ?? []) as AssessmentActivityEvent[]);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -77,6 +91,7 @@ export default function AdminScanDetail() {
         setLead(result);
         setNotes(result.notes ?? "");
         setFollowUpAt(toLocalInputValue(result.follow_up_at));
+        await loadActivities(result.id);
       }
       setLoading(false);
     };
@@ -86,31 +101,57 @@ export default function AdminScanDetail() {
 
   const updateStatus = async (status: LeadStatus) => {
     if (!lead) return;
+    setSaving(true);
     const client = supabase as any;
-    const { error } = await client.from("assessment_leads").update({ status }).eq("id", lead.id);
+    const { data, error } = await client.rpc("update_assessment_lead", {
+      p_lead_id: lead.id,
+      p_status: status,
+      p_notes: null,
+      p_follow_up_at: null,
+      p_update_status: true,
+      p_update_follow_up: false,
+    });
+    setSaving(false);
+
     if (error) {
       toast({ title: "Status niet opgeslagen", description: error.message, variant: "destructive" });
       return;
     }
-    setLead({ ...lead, status });
+
+    const updated = (Array.isArray(data) ? data[0] : data) as ScanDetail | null;
+    setLead(updated ? { ...lead, status: updated.status } : { ...lead, status });
+    await loadActivities(lead.id);
     toast({ title: "Leadstatus bijgewerkt" });
   };
 
   const saveFollowUp = async () => {
     if (!lead) return;
     setSaving(true);
-    const payload = {
-      notes: notes.trim() || null,
-      follow_up_at: followUpAt ? new Date(followUpAt).toISOString() : null,
-    };
+    const normalizedNotes = notes.trim() || null;
+    const normalizedFollowUp = followUpAt ? new Date(followUpAt).toISOString() : null;
     const client = supabase as any;
-    const { error } = await client.from("assessment_leads").update(payload).eq("id", lead.id);
+    const { data, error } = await client.rpc("update_assessment_lead", {
+      p_lead_id: lead.id,
+      p_status: null,
+      p_notes: normalizedNotes,
+      p_follow_up_at: normalizedFollowUp,
+      p_update_status: false,
+      p_update_follow_up: true,
+    });
     setSaving(false);
+
     if (error) {
       toast({ title: "Opvolging niet opgeslagen", description: error.message, variant: "destructive" });
       return;
     }
-    setLead({ ...lead, ...payload });
+
+    const updated = (Array.isArray(data) ? data[0] : data) as ScanDetail | null;
+    setLead({
+      ...lead,
+      notes: updated?.notes ?? normalizedNotes,
+      follow_up_at: updated?.follow_up_at ?? normalizedFollowUp,
+    });
+    await loadActivities(lead.id);
     toast({ title: "Opvolging opgeslagen" });
   };
 
@@ -134,7 +175,7 @@ export default function AdminScanDetail() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <a href={`mailto:${lead.email}?subject=Uw%20IT%20Quick%20Scan`} className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium"><Mail className="h-4 w-4" /> E-mail</a>
           {lead.phone ? <a href={`tel:${lead.phone}`} className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium"><Phone className="h-4 w-4" /> Bellen</a> : null}
-          <Select value={lead.status} onValueChange={(value) => void updateStatus(value as LeadStatus)}>
+          <Select disabled={saving} value={lead.status} onValueChange={(value) => void updateStatus(value as LeadStatus)}>
             <SelectTrigger className="w-full sm:w-52"><SelectValue /></SelectTrigger>
             <SelectContent>{statuses.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent>
           </Select>
@@ -182,6 +223,13 @@ export default function AdminScanDetail() {
             <CardHeader><CardTitle>Aanbevelingen</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {recommendations.length === 0 ? <p className="text-muted-foreground">Geen aanbevelingen opgeslagen.</p> : recommendations.map((item, index) => <div key={`${item.question_id}-${index}`} className="rounded-xl bg-muted/50 p-4"><div className="flex items-start gap-3"><span className="font-bold text-primary">{index + 1}</span><div><p className="font-semibold">{item.category} · score {item.answer_score}/100</p><p className="mt-1 text-muted-foreground">{item.recommendation}</p></div></div></div>)}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5" /> Activiteiten</CardTitle></CardHeader>
+            <CardContent>
+              {activities.length === 0 ? <p className="text-muted-foreground">Nog geen activiteiten geregistreerd.</p> : <div className="space-y-4">{activities.map((event) => <div key={event.id} className="flex gap-3"><div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-primary" /><div><p className="font-medium">{formatAssessmentActivity(event)}</p><p className="text-xs text-muted-foreground">{new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(event.created_at))}</p></div></div>)}</div>}
             </CardContent>
           </Card>
         </div>
