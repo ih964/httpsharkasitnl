@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CalendarClock, Eye, Search, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Eye, Search, ShieldCheck } from "lucide-react";
 import { classifyFollowUp, formatFollowUpLabel, type FollowUpBucket } from "@/lib/assessmentFollowUp";
 
 interface ScanLead {
   id: string;
+  customer_id: string | null;
   company_name: string;
   contact_name: string;
   email: string;
@@ -62,7 +63,7 @@ export default function AdminScans() {
     const client = supabase as any;
     const { data, error } = await client
       .from("assessment_leads")
-      .select("id,company_name,contact_name,email,phone,employee_count,status,consent_marketing,follow_up_at,created_at,assessment_runs(id,total_score,risk_level,category_scores,created_at)")
+      .select("id,customer_id,company_name,contact_name,email,phone,employee_count,status,consent_marketing,follow_up_at,created_at,assessment_runs(id,total_score,risk_level,category_scores,created_at)")
       .order("created_at", { ascending: false });
     if (error) toast({ title: "Scans konden niet worden geladen", description: error.message, variant: "destructive" });
     else setLeads((data ?? []) as ScanLead[]);
@@ -104,6 +105,7 @@ export default function AdminScans() {
   const stats = useMemo(() => ({
     total: leads.length,
     new: leads.filter((lead) => lead.status === "new").length,
+    customers: leads.filter((lead) => Boolean(lead.customer_id)).length,
     overdue: leads.filter((lead) => classifyFollowUp(lead.follow_up_at) === "overdue").length,
     today: leads.filter((lead) => classifyFollowUp(lead.follow_up_at) === "today").length,
     upcoming: leads.filter((lead) => classifyFollowUp(lead.follow_up_at) === "upcoming").length,
@@ -116,9 +118,10 @@ export default function AdminScans() {
         <p className="mt-1 text-muted-foreground">Beheer scanresultaten en commerciële opvolging vanuit één overzicht.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Totaal</CardTitle></CardHeader><CardContent className="text-3xl font-bold">{stats.total}</CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Nieuwe leads</CardTitle></CardHeader><CardContent className="text-3xl font-bold">{stats.new}</CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm text-muted-foreground"><CheckCircle2 className="h-4 w-4" />Klanten</CardTitle></CardHeader><CardContent className="text-3xl font-bold">{stats.customers}</CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle className="h-4 w-4" />Te laat</CardTitle></CardHeader><CardContent className="text-3xl font-bold">{stats.overdue}</CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Vandaag</CardTitle></CardHeader><CardContent className="text-3xl font-bold">{stats.today}</CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Binnen 7 dagen</CardTitle></CardHeader><CardContent className="text-3xl font-bold">{stats.upcoming}</CardContent></Card>
@@ -150,13 +153,13 @@ export default function AdminScans() {
                 const run = lead.assessment_runs?.[0];
                 const followUpBucket = classifyFollowUp(lead.follow_up_at);
                 return <TableRow key={lead.id}>
-                  <TableCell><div className="font-medium">{lead.company_name}</div><div className="text-xs text-muted-foreground">{lead.employee_count ? `${lead.employee_count} medewerkers` : "Omvang onbekend"}</div></TableCell>
+                  <TableCell><div className="font-medium">{lead.company_name}</div><div className="text-xs text-muted-foreground">{lead.employee_count ? `${lead.employee_count} medewerkers` : "Omvang onbekend"}</div>{lead.customer_id ? <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary"><CheckCircle2 className="h-3.5 w-3.5" />Klant gekoppeld</div> : null}</TableCell>
                   <TableCell><div>{lead.contact_name}</div><a className="text-xs text-primary hover:underline" href={`mailto:${lead.email}`}>{lead.email}</a></TableCell>
                   <TableCell className="font-semibold">{run ? `${run.total_score}/100` : "—"}</TableCell>
                   <TableCell>{run ? riskLabel(run.risk_level) : "—"}</TableCell>
                   <TableCell>{lead.follow_up_at ? <div><span className="inline-flex items-center gap-1 text-sm"><CalendarClock className="h-4 w-4 text-primary" />{new Intl.DateTimeFormat("nl-NL", { dateStyle: "short", timeStyle: "short" }).format(new Date(lead.follow_up_at))}</span><div className={`mt-1 text-xs ${followUpBucket === "overdue" ? "font-semibold text-destructive" : "text-muted-foreground"}`}>{formatFollowUpLabel(lead.follow_up_at)}</div></div> : <span className="text-sm text-muted-foreground">Niet gepland</span>}</TableCell>
                   <TableCell>{new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lead.created_at))}</TableCell>
-                  <TableCell><Select disabled={updatingId === lead.id} value={lead.status} onValueChange={(value) => void updateStatus(lead.id, value as ScanLead["status"])}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent>{statuses.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent></Select></TableCell>
+                  <TableCell><Select disabled={updatingId === lead.id || Boolean(lead.customer_id)} value={lead.status} onValueChange={(value) => void updateStatus(lead.id, value as ScanLead["status"])}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent>{statuses.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent></Select></TableCell>
                   <TableCell className="text-right"><Link to={`/admin/scans/${lead.id}`} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted"><Eye className="h-4 w-4" /> Bekijk</Link></TableCell>
                 </TableRow>;
               })}</TableBody>
