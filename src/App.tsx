@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
+import ITQuickScan from "./pages/ITQuickScan";
 import NotFound from "./pages/NotFound";
 import Branding from "./pages/services/Branding";
 import Websites from "./pages/services/Websites";
@@ -41,6 +42,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/it-check" element={<ITQuickScan />} />
             <Route path="/over-ons" element={<About />} />
             <Route path="/diensten/branding" element={<Branding />} />
             <Route path="/diensten/websites" element={<Websites />} />
