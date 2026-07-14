@@ -1,20 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
-import { ArrowLeft, ArrowRight, Download, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Download, Loader2, ShieldCheck } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import CookieConsent from "@/components/CookieConsent";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { applyPageSeo } from "@/lib/pageSeo";
 
 type Category = "Beveiliging" | "Back-up" | "Werkplekken" | "Microsoft 365";
-type Question = {
-  id: string;
-  category: Category;
-  question: string;
-  explanation: string;
-  recommendation: string;
-};
+type Question = { id: string; category: Category; question: string; explanation: string; recommendation: string; };
 
 const questions: Question[] = [
   { id: "mfa", category: "Beveiliging", question: "Is multifactorauthenticatie verplicht voor alle zakelijke accounts?", explanation: "MFA beperkt de impact van gestolen wachtwoorden.", recommendation: "Maak MFA verplicht voor alle gebruikers en beheerders." },
@@ -32,70 +31,90 @@ const options = [
   { label: "Gedeeltelijk geregeld", value: 50 },
   { label: "Nee of onbekend", value: 0 },
 ];
-
 const categories: Category[] = ["Beveiliging", "Back-up", "Werkplekken", "Microsoft 365"];
+const emptyLead = { companyName: "", contactName: "", email: "", phone: "", employeeCount: "", consentReport: false, consentMarketing: false };
 
 export default function ITQuickScan() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [finished, setFinished] = useState(false);
+  const [lead, setLead] = useState(emptyLead);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    applyPageSeo({
-      title: "Gratis IT Quick Scan | Harkas IT",
-      description: "Ontvang direct een indicatieve IT-score met concrete verbeterpunten.",
-    });
-  }, []);
+  useEffect(() => { applyPageSeo({ title: "Gratis IT Quick Scan | Harkas IT", description: "Ontvang direct een indicatieve IT-score met concrete verbeterpunten." }); }, []);
 
   const current = questions[step];
   const answered = Object.keys(answers).length;
   const score = useMemo(() => Math.round(questions.reduce((sum, q) => sum + (answers[q.id] ?? 0), 0) / questions.length), [answers]);
   const categoryScores = useMemo(() => categories.map((category) => {
     const items = questions.filter((q) => q.category === category);
-    const value = Math.round(items.reduce((sum, q) => sum + (answers[q.id] ?? 0), 0) / items.length);
-    return { category, value };
+    return { category, value: Math.round(items.reduce((sum, q) => sum + (answers[q.id] ?? 0), 0) / items.length) };
   }), [answers]);
   const priorities = useMemo(() => questions.filter((q) => (answers[q.id] ?? 0) < 100).sort((a, b) => (answers[a.id] ?? 0) - (answers[b.id] ?? 0)).slice(0, 5), [answers]);
   const label = score >= 80 ? "Goed op weg" : score >= 60 ? "Aandacht nodig" : "Verhoogd risico";
+  const riskLevel = score >= 80 ? "low" : score >= 60 ? "medium" : "high";
   const progress = finished ? 100 : Math.round((answered / questions.length) * 100);
 
   const next = () => {
     if (answers[current.id] === undefined) return;
-    if (step === questions.length - 1) {
-      setFinished(true);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else setStep((value) => value + 1);
+    if (step === questions.length - 1) { setFinished(true); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    else setStep((value) => value + 1);
   };
 
   const download = () => {
     const pdf = new jsPDF();
     let y = 20;
-    pdf.setFontSize(20);
-    pdf.text("Harkas IT - IT Quick Scan", 20, y);
-    y += 12;
-    pdf.setFontSize(12);
-    pdf.text(`Indicatieve score: ${score}/100 - ${label}`, 20, y);
-    y += 10;
-    pdf.setFontSize(9);
-    pdf.text("Deze quick scan is een indicatie en geen technische audit of penetratietest.", 20, y);
-    y += 14;
-    pdf.setFontSize(14);
-    pdf.text("Scores per onderdeel", 20, y);
-    y += 9;
-    pdf.setFontSize(11);
-    categoryScores.forEach((item) => { pdf.text(`${item.category}: ${item.value}/100`, 24, y); y += 7; });
-    y += 6;
-    pdf.setFontSize(14);
-    pdf.text("Belangrijkste verbeterpunten", 20, y);
-    y += 9;
-    pdf.setFontSize(10);
-    priorities.forEach((item, index) => {
-      const lines = pdf.splitTextToSize(`${index + 1}. ${item.recommendation}`, 165);
-      pdf.text(lines, 24, y);
-      y += lines.length * 6 + 3;
-    });
+    pdf.setFontSize(20); pdf.text("Harkas IT - IT Quick Scan", 20, y); y += 12;
+    if (lead.companyName) { pdf.setFontSize(11); pdf.text(`Bedrijf: ${lead.companyName}`, 20, y); y += 8; }
+    pdf.setFontSize(12); pdf.text(`Indicatieve score: ${score}/100 - ${label}`, 20, y); y += 10;
+    pdf.setFontSize(9); pdf.text("Deze quick scan is een indicatie en geen technische audit of penetratietest.", 20, y); y += 14;
+    pdf.setFontSize(14); pdf.text("Scores per onderdeel", 20, y); y += 9;
+    pdf.setFontSize(11); categoryScores.forEach((item) => { pdf.text(`${item.category}: ${item.value}/100`, 24, y); y += 7; });
+    y += 6; pdf.setFontSize(14); pdf.text("Belangrijkste verbeterpunten", 20, y); y += 9; pdf.setFontSize(10);
+    priorities.forEach((item, index) => { const lines = pdf.splitTextToSize(`${index + 1}. ${item.recommendation}`, 165); pdf.text(lines, 24, y); y += lines.length * 6 + 3; });
     pdf.text("Bespreek de uitslag via info@harkasit.nl of 085 124 9091.", 20, y + 5);
     pdf.save("Harkas-IT-Quick-Scan.pdf");
+  };
+
+  const submitLead = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!lead.companyName.trim() || !lead.contactName.trim() || !lead.email.trim() || !lead.consentReport) {
+      toast({ title: "Vul de verplichte velden in", description: "Bedrijf, naam, e-mail en toestemming voor rapportlevering zijn verplicht.", variant: "destructive" });
+      return;
+    }
+
+    setSubmitting(true);
+    const client = supabase as any;
+    const { error } = await client.rpc("submit_it_quick_scan", {
+      p_company_name: lead.companyName.trim(),
+      p_contact_name: lead.contactName.trim(),
+      p_email: lead.email.trim(),
+      p_phone: lead.phone.trim() || null,
+      p_employee_count: lead.employeeCount ? Number(lead.employeeCount) : null,
+      p_consent_report: lead.consentReport,
+      p_consent_marketing: lead.consentMarketing,
+      p_total_score: score,
+      p_risk_level: riskLevel,
+      p_answers: answers,
+      p_category_scores: Object.fromEntries(categoryScores.map((item) => [item.category, item.value])),
+      p_recommendations: priorities.map((item) => ({ category: item.category, question_id: item.id, recommendation: item.recommendation, answer_score: answers[item.id] ?? 0 })),
+    });
+    setSubmitting(false);
+
+    if (error) {
+      toast({ title: "Opslaan is niet gelukt", description: "Probeer het later opnieuw of neem contact op via info@harkasit.nl.", variant: "destructive" });
+      return;
+    }
+
+    setSubmitted(true);
+    toast({ title: "Rapportaanvraag ontvangen", description: "De scan is veilig opgeslagen voor opvolging." });
+  };
+
+  const restart = () => {
+    setAnswers({}); setStep(0); setFinished(false); setLead(emptyLead); setSubmitted(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -115,18 +134,13 @@ export default function ITQuickScan() {
 
             {!finished ? (
               <div className="rounded-3xl border bg-card p-6 shadow-sm md:p-10">
-                <div className="mb-7 flex items-center justify-between">
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">{current.category}</span>
-                  <span className="text-sm text-muted-foreground">Vraag {step + 1} van {questions.length}</span>
-                </div>
+                <div className="mb-7 flex items-center justify-between"><span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">{current.category}</span><span className="text-sm text-muted-foreground">Vraag {step + 1} van {questions.length}</span></div>
                 <h2 className="text-2xl font-semibold md:text-3xl">{current.question}</h2>
                 <p className="mt-3 text-muted-foreground">{current.explanation}</p>
-                <div className="mt-8 grid gap-3">
-                  {options.map((option) => {
-                    const selected = answers[current.id] === option.value;
-                    return <button key={option.label} type="button" onClick={() => setAnswers((old) => ({ ...old, [current.id]: option.value }))} className={`rounded-2xl border p-4 text-left font-medium transition ${selected ? "border-primary bg-primary/10 text-primary" : "hover:border-primary/50 hover:bg-muted/50"}`}>{option.label}</button>;
-                  })}
-                </div>
+                <div className="mt-8 grid gap-3">{options.map((option) => {
+                  const selected = answers[current.id] === option.value;
+                  return <button key={option.label} type="button" onClick={() => setAnswers((old) => ({ ...old, [current.id]: option.value }))} className={`rounded-2xl border p-4 text-left font-medium transition ${selected ? "border-primary bg-primary/10 text-primary" : "hover:border-primary/50 hover:bg-muted/50"}`}>{option.label}</button>;
+                })}</div>
                 <div className="mt-8 flex justify-between gap-3">
                   <button type="button" disabled={step === 0} onClick={() => setStep((value) => Math.max(0, value - 1))} className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 font-medium disabled:opacity-40"><ArrowLeft className="h-4 w-4" /> Vorige</button>
                   <button type="button" disabled={answers[current.id] === undefined} onClick={next} className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-40">{step === questions.length - 1 ? "Bekijk uitslag" : "Volgende"}<ArrowRight className="h-4 w-4" /></button>
@@ -140,21 +154,43 @@ export default function ITQuickScan() {
                   <p className="mt-3 text-xl font-semibold">{label}</p>
                   <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Dit resultaat is een eerste indicatie. Voor een betrouwbaar advies is controle van de technische omgeving nodig.</p>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {categoryScores.map((item) => <div key={item.category} className="rounded-2xl border bg-card p-5"><div className="flex justify-between font-semibold"><span>{item.category}</span><span>{item.value}/100</span></div><div className="mt-3 h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-primary" style={{ width: `${item.value}%` }} /></div></div>)}
-                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">{categoryScores.map((item) => <div key={item.category} className="rounded-2xl border bg-card p-5"><div className="flex justify-between font-semibold"><span>{item.category}</span><span>{item.value}/100</span></div><div className="mt-3 h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-primary" style={{ width: `${item.value}%` }} /></div></div>)}</div>
+
                 <div className="rounded-3xl border bg-card p-6 md:p-8">
                   <h2 className="text-2xl font-bold">Belangrijkste verbeterpunten</h2>
                   <div className="mt-5 space-y-4">{priorities.length ? priorities.map((item, index) => <div key={item.id} className="flex gap-4 rounded-2xl bg-muted/50 p-4"><span className="font-bold text-primary">{index + 1}</span><div><p className="font-semibold">{item.category}</p><p className="text-muted-foreground">{item.recommendation}</p></div></div>) : <p className="text-muted-foreground">Alle onderdelen zijn positief beantwoord. Laat de instellingen periodiek technisch controleren.</p>}</div>
                 </div>
+
+                {!submitted ? (
+                  <form onSubmit={submitLead} className="rounded-3xl border bg-card p-6 md:p-8">
+                    <h2 className="text-2xl font-bold">Bewaar je rapport en ontvang persoonlijk advies</h2>
+                    <p className="mt-2 text-muted-foreground">Laat je gegevens achter zodat Harkas IT de uitslag kan bewaren en met je kan bespreken.</p>
+                    <div className="mt-6 grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2"><Label htmlFor="companyName">Bedrijfsnaam *</Label><Input id="companyName" value={lead.companyName} onChange={(e) => setLead({ ...lead, companyName: e.target.value })} maxLength={120} /></div>
+                      <div className="space-y-2"><Label htmlFor="contactName">Naam *</Label><Input id="contactName" value={lead.contactName} onChange={(e) => setLead({ ...lead, contactName: e.target.value })} maxLength={120} /></div>
+                      <div className="space-y-2"><Label htmlFor="email">Zakelijk e-mailadres *</Label><Input id="email" type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} maxLength={180} /></div>
+                      <div className="space-y-2"><Label htmlFor="phone">Telefoonnummer</Label><Input id="phone" type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} maxLength={40} /></div>
+                      <div className="space-y-2"><Label htmlFor="employeeCount">Aantal medewerkers</Label><Input id="employeeCount" type="number" min="1" max="10000" value={lead.employeeCount} onChange={(e) => setLead({ ...lead, employeeCount: e.target.value })} /></div>
+                    </div>
+                    <div className="mt-6 space-y-4">
+                      <label className="flex items-start gap-3 text-sm"><Checkbox checked={lead.consentReport} onCheckedChange={(checked) => setLead({ ...lead, consentReport: checked === true })} /><span>Ik geef toestemming om mijn gegevens en scanresultaat te verwerken voor het leveren en bespreken van dit rapport. *</span></label>
+                      <label className="flex items-start gap-3 text-sm"><Checkbox checked={lead.consentMarketing} onCheckedChange={(checked) => setLead({ ...lead, consentMarketing: checked === true })} /><span>Harkas IT mag mij benaderen over passende IT-diensten. Dit is optioneel.</span></label>
+                    </div>
+                    <button disabled={submitting} type="submit" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-60">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{submitting ? "Bezig met opslaan..." : "Bewaar scan en vraag advies aan"}</button>
+                  </form>
+                ) : (
+                  <div className="rounded-3xl border bg-card p-7 text-center"><CheckCircle2 className="mx-auto h-12 w-12 text-primary" /><h2 className="mt-4 text-2xl font-bold">Je scan is ontvangen</h2><p className="mt-2 text-muted-foreground">De uitslag staat klaar voor Harkas IT. Je kunt het rapport hieronder direct downloaden.</p></div>
+                )}
+
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <button type="button" onClick={download} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground"><Download className="h-4 w-4" /> Download PDF-rapport</button>
                   <a href="mailto:info@harkasit.nl?subject=Adviesgesprek%20IT%20Quick%20Scan" className="inline-flex flex-1 items-center justify-center rounded-xl border px-5 py-3 font-semibold">Plan een gratis adviesgesprek</a>
-                  <button type="button" onClick={() => { setAnswers({}); setStep(0); setFinished(false); }} className="rounded-xl border px-5 py-3 font-semibold">Opnieuw</button>
+                  <button type="button" onClick={restart} className="rounded-xl border px-5 py-3 font-semibold">Opnieuw</button>
                 </div>
               </div>
             )}
-            <p className="mt-6 text-center text-xs text-muted-foreground">De scan slaat in deze eerste versie geen antwoorden of persoonsgegevens op.</p>
+            <p className="mt-6 text-center text-xs text-muted-foreground">Antwoorden worden alleen opgeslagen nadat je daarvoor expliciet toestemming geeft.</p>
           </div>
         </section>
       </main>
