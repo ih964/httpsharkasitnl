@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Building2, Mail, Phone, ShieldAlert, Users } from "lucide-react";
+import { ArrowLeft, Building2, CalendarClock, Mail, Phone, Save, ShieldAlert, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,6 +18,8 @@ type ScanDetail = {
   phone: string | null;
   employee_count: number | null;
   status: LeadStatus;
+  notes: string | null;
+  follow_up_at: string | null;
   consent_report: boolean;
   consent_marketing: boolean;
   source: string;
@@ -44,11 +48,15 @@ const statuses: Array<{ value: LeadStatus; label: string }> = [
 ];
 
 const riskLabel = (risk?: string) => risk === "high" ? "Hoog" : risk === "medium" ? "Middel" : "Laag";
+const toLocalInputValue = (value: string | null) => value ? new Date(value).toISOString().slice(0, 16) : "";
 
 export default function AdminScanDetail() {
   const { leadId } = useParams<{ leadId: string }>();
   const [lead, setLead] = useState<ScanDetail | null>(null);
+  const [notes, setNotes] = useState("");
+  const [followUpAt, setFollowUpAt] = useState("");
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,14 +66,17 @@ export default function AdminScanDetail() {
       const client = supabase as any;
       const { data, error } = await client
         .from("assessment_leads")
-        .select("id,company_name,contact_name,email,phone,employee_count,status,consent_report,consent_marketing,source,created_at,assessment_runs(id,total_score,risk_level,category_scores,recommendations,created_at)")
+        .select("id,company_name,contact_name,email,phone,employee_count,status,notes,follow_up_at,consent_report,consent_marketing,source,created_at,assessment_runs(id,total_score,risk_level,category_scores,recommendations,created_at)")
         .eq("id", leadId)
         .single();
 
       if (error) {
         toast({ title: "Scan kon niet worden geladen", description: error.message, variant: "destructive" });
       } else {
-        setLead(data as ScanDetail);
+        const result = data as ScanDetail;
+        setLead(result);
+        setNotes(result.notes ?? "");
+        setFollowUpAt(toLocalInputValue(result.follow_up_at));
       }
       setLoading(false);
     };
@@ -85,6 +96,24 @@ export default function AdminScanDetail() {
     toast({ title: "Leadstatus bijgewerkt" });
   };
 
+  const saveFollowUp = async () => {
+    if (!lead) return;
+    setSaving(true);
+    const payload = {
+      notes: notes.trim() || null,
+      follow_up_at: followUpAt ? new Date(followUpAt).toISOString() : null,
+    };
+    const client = supabase as any;
+    const { error } = await client.from("assessment_leads").update(payload).eq("id", lead.id);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Opvolging niet opgeslagen", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLead({ ...lead, ...payload });
+    toast({ title: "Opvolging opgeslagen" });
+  };
+
   if (loading) return <div className="flex min-h-[320px] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" /></div>;
   if (!lead) return <div className="space-y-4"><p>Deze scanlead kon niet worden gevonden.</p><Link to="/admin/scans" className="text-primary hover:underline">Terug naar scans</Link></div>;
 
@@ -102,10 +131,14 @@ export default function AdminScanDetail() {
           <h1 className="text-3xl font-heading font-bold">{lead.company_name}</h1>
           <p className="mt-1 text-muted-foreground">Ingediend op {new Intl.DateTimeFormat("nl-NL", { dateStyle: "long", timeStyle: "short" }).format(new Date(lead.created_at))}</p>
         </div>
-        <Select value={lead.status} onValueChange={(value) => void updateStatus(value as LeadStatus)}>
-          <SelectTrigger className="w-full sm:w-52"><SelectValue /></SelectTrigger>
-          <SelectContent>{statuses.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent>
-        </Select>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <a href={`mailto:${lead.email}?subject=Uw%20IT%20Quick%20Scan`} className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium"><Mail className="h-4 w-4" /> E-mail</a>
+          {lead.phone ? <a href={`tel:${lead.phone}`} className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium"><Phone className="h-4 w-4" /> Bellen</a> : null}
+          <Select value={lead.status} onValueChange={(value) => void updateStatus(value as LeadStatus)}>
+            <SelectTrigger className="w-full sm:w-52"><SelectValue /></SelectTrigger>
+            <SelectContent>{statuses.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -116,15 +149,26 @@ export default function AdminScanDetail() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <Card>
-          <CardHeader><CardTitle>Scanresultaat</CardTitle></CardHeader>
-          <CardContent className="space-y-5">
-            <div><p className="text-sm text-muted-foreground">Totaalscore</p><p className="text-5xl font-bold">{run?.total_score ?? 0}<span className="text-xl text-muted-foreground">/100</span></p></div>
-            <div><p className="text-sm text-muted-foreground">Risiconiveau</p><p className="mt-1 inline-flex items-center gap-2 font-semibold"><ShieldAlert className="h-4 w-4 text-primary" />{riskLabel(run?.risk_level)}</p></div>
-            <div><p className="text-sm text-muted-foreground">Rapportverwerking</p><p className="font-medium">{lead.consent_report ? "Toegestaan" : "Niet toegestaan"}</p></div>
-            <div><p className="text-sm text-muted-foreground">Commerciële opvolging</p><p className="font-medium">{lead.consent_marketing ? "Toegestaan" : "Niet toegestaan"}</p></div>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Scanresultaat</CardTitle></CardHeader>
+            <CardContent className="space-y-5">
+              <div><p className="text-sm text-muted-foreground">Totaalscore</p><p className="text-5xl font-bold">{run?.total_score ?? 0}<span className="text-xl text-muted-foreground">/100</span></p></div>
+              <div><p className="text-sm text-muted-foreground">Risiconiveau</p><p className="mt-1 inline-flex items-center gap-2 font-semibold"><ShieldAlert className="h-4 w-4 text-primary" />{riskLabel(run?.risk_level)}</p></div>
+              <div><p className="text-sm text-muted-foreground">Rapportverwerking</p><p className="font-medium">{lead.consent_report ? "Toegestaan" : "Niet toegestaan"}</p></div>
+              <div><p className="text-sm text-muted-foreground">Commerciële opvolging</p><p className="font-medium">{lead.consent_marketing ? "Toegestaan" : "Niet toegestaan"}</p></div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><CalendarClock className="h-5 w-5" /> Opvolging</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2"><Label htmlFor="followUpAt">Opvolgdatum</Label><Input id="followUpAt" type="datetime-local" value={followUpAt} onChange={(event) => setFollowUpAt(event.target.value)} /></div>
+              <div className="space-y-2"><Label htmlFor="notes">Interne notities</Label><textarea id="notes" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={5000} rows={7} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring" placeholder="Gesprek, behoefte, afgesproken vervolgstappen..." /></div>
+              <button type="button" disabled={saving} onClick={() => void saveFollowUp()} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"><Save className="h-4 w-4" />{saving ? "Opslaan..." : "Opvolging opslaan"}</button>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="space-y-6">
           <Card>
