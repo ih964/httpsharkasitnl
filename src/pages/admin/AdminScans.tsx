@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Search, ShieldCheck } from "lucide-react";
+import { Eye, Search, ShieldCheck } from "lucide-react";
 
 interface ScanLead {
   id: string;
@@ -105,7 +106,7 @@ export default function AdminScans() {
             <div className="flex flex-col items-center gap-3 p-12 text-center text-muted-foreground"><ShieldCheck className="h-10 w-10" /><p>Nog geen scanleads gevonden.</p></div>
           ) : (
             <Table>
-              <TableHeader><TableRow><TableHead>Bedrijf</TableHead><TableHead>Contact</TableHead><TableHead>Score</TableHead><TableHead>Risico</TableHead><TableHead>Toestemming</TableHead><TableHead>Datum</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Bedrijf</TableHead><TableHead>Contact</TableHead><TableHead>Score</TableHead><TableHead>Risico</TableHead><TableHead>Toestemming</TableHead><TableHead>Datum</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Details</TableHead></TableRow></TableHeader>
               <TableBody>{filtered.map((lead) => {
                 const run = lead.assessment_runs?.[0];
                 return <TableRow key={lead.id}>
@@ -116,6 +117,7 @@ export default function AdminScans() {
                   <TableCell>{lead.consent_marketing ? "Opvolging toegestaan" : "Alleen rapport"}</TableCell>
                   <TableCell>{new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lead.created_at))}</TableCell>
                   <TableCell><Select value={lead.status} onValueChange={(value) => void updateStatus(lead.id, value as ScanLead["status"])}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent>{statuses.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent></Select></TableCell>
+                  <TableCell className="text-right"><Link to={`/admin/scans/${lead.id}`} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted"><Eye className="h-4 w-4" /> Bekijk</Link></TableCell>
                 </TableRow>;
               })}</TableBody>
             </Table>
