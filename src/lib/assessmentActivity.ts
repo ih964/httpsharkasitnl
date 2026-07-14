@@ -33,6 +33,12 @@ export const formatAssessmentActivity = (event: AssessmentActivityEvent): string
     return "Opvolging bijgewerkt";
   }
 
+  if (event.event_type === "converted_to_customer") {
+    return metadata.reused_existing_customer === true
+      ? "Lead gekoppeld aan bestaande klant"
+      : "Lead omgezet naar nieuwe klant";
+  }
+
   if (event.event_type === "lead_updated") return "Leadgegevens bijgewerkt";
   return "Activiteit geregistreerd";
 };
