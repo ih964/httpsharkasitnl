@@ -188,7 +188,7 @@ export default function AdminProposals() {
             <div className="flex flex-col items-center gap-3 p-12 text-center text-muted-foreground"><FileText className="h-10 w-10" /><p>Geen offertes gevonden voor deze filters.</p></div>
           ) : (
             <Table>
-              <TableHeader><TableRow><TableHead>Bedrijf</TableHead><TableHead>Offerte</TableHead><TableHead>Bedrag</TableHead><TableHead>Geldigheid</TableHead><TableHead>Bijgewerkt</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Bron</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Bedrijf</TableHead><TableHead>Offerte</TableHead><TableHead>Bedrag</TableHead><TableHead>Geldigheid</TableHead><TableHead>Bijgewerkt</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Acties</TableHead></TableRow></TableHeader>
               <TableBody>{filtered.map((proposal) => {
                 const lead = getLead(proposal);
                 const validity = classifyProposalValidity(proposal.valid_until);
@@ -199,7 +199,7 @@ export default function AdminProposals() {
                   <TableCell>{proposal.valid_until ? <div className="inline-flex items-start gap-2"><CalendarClock className="mt-0.5 h-4 w-4 text-primary" /><div><div>{new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium" }).format(new Date(`${proposal.valid_until}T00:00:00`))}</div><div className={`text-xs ${validity === "expired" ? "font-semibold text-destructive" : "text-muted-foreground"}`}>{formatProposalValidity(proposal.valid_until)}</div></div></div> : <span className="text-sm text-muted-foreground">Geen datum</span>}</TableCell>
                   <TableCell>{new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(proposal.updated_at))}</TableCell>
                   <TableCell><Select disabled={updatingId === proposal.id} value={proposal.status} onValueChange={(value) => void updateStatus(proposal, value as ProposalStatus)}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent>{proposalStatuses.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></TableCell>
-                  <TableCell className="text-right"><Link to={`/admin/scans/${proposal.lead_id}`} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"><Eye className="h-4 w-4" /> Open lead</Link></TableCell>
+                  <TableCell className="text-right"><div className="flex justify-end gap-2"><Link to={`/admin/offertes/${proposal.id}`} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"><Eye className="h-4 w-4" /> Open offerte</Link><Link to={`/admin/scans/${proposal.lead_id}`} className="inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted">Bronlead</Link></div></TableCell>
                 </TableRow>;
               })}</TableBody>
             </Table>
