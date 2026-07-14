@@ -8,6 +8,40 @@ alter table public.assessment_proposal_drafts
 create index if not exists assessment_proposal_drafts_status_idx
 on public.assessment_proposal_drafts(status, updated_at desc);
 
+create or replace function public.reset_assessment_proposal_approval_on_content_change()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if old.status <> 'draft' and (
+    old.customer_id is distinct from new.customer_id
+    or old.title is distinct from new.title
+    or old.introduction is distinct from new.introduction
+    or old.line_items is distinct from new.line_items
+    or old.notes is distinct from new.notes
+    or old.valid_until is distinct from new.valid_until
+    or old.subtotal is distinct from new.subtotal
+    or old.vat_total is distinct from new.vat_total
+    or old.total is distinct from new.total
+  ) then
+    new.status := 'draft';
+    new.reviewed_at := null;
+    new.reviewed_by := null;
+    new.approved_at := null;
+    new.approved_by := null;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists assessment_proposal_reset_approval on public.assessment_proposal_drafts;
+create trigger assessment_proposal_reset_approval
+before update on public.assessment_proposal_drafts
+for each row execute function public.reset_assessment_proposal_approval_on_content_change();
+
 create or replace function public.update_assessment_proposal_status(
   p_proposal_id uuid,
   p_status text
