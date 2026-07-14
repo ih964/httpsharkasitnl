@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import AssessmentProposalCard from "@/components/admin/AssessmentProposalCard";
 import { useToast } from "@/hooks/use-toast";
 import { formatAssessmentActivity, type AssessmentActivityEvent } from "@/lib/assessmentActivity";
 
@@ -255,6 +256,15 @@ export default function AdminScanDetail() {
               {recommendations.length === 0 ? <p className="text-muted-foreground">Geen aanbevelingen opgeslagen.</p> : recommendations.map((item, index) => <div key={`${item.question_id}-${index}`} className="rounded-xl bg-muted/50 p-4"><div className="flex items-start gap-3"><span className="font-bold text-primary">{index + 1}</span><div><p className="font-semibold">{item.category} · score {item.answer_score}/100</p><p className="mt-1 text-muted-foreground">{item.recommendation}</p></div></div></div>)}
             </CardContent>
           </Card>
+
+          <AssessmentProposalCard
+            companyName={lead.company_name}
+            contactName={lead.contact_name}
+            email={lead.email}
+            totalScore={run?.total_score ?? 0}
+            employeeCount={lead.employee_count}
+            recommendations={recommendations}
+          />
 
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5" /> Activiteiten</CardTitle></CardHeader>
