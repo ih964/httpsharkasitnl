@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FileText, Plus, Save, Trash2 } from "lucide-react";
+import { Download, Eye, FileText, Plus, Save, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,9 @@ import {
   validateQuoteLines,
   type AssessmentQuoteLine,
 } from "@/lib/assessmentQuote";
+import { downloadAssessmentQuotePdf, previewAssessmentQuotePdf } from "@/lib/assessmentQuotePdf";
 
-type Recommendation = {
+ type Recommendation = {
   question_id?: string;
   recommendation: string;
 };
@@ -40,6 +41,8 @@ type StoredDraft = {
 type Props = {
   leadId: string;
   companyName: string;
+  contactName: string;
+  email: string;
   recommendations: Recommendation[];
   onSaved?: () => void | Promise<void>;
 };
@@ -63,7 +66,14 @@ const newLine = (): AssessmentQuoteLine => ({
   vatPercentage: 21,
 });
 
-export default function AssessmentQuoteDraftCard({ leadId, companyName, recommendations, onSaved }: Props) {
+export default function AssessmentQuoteDraftCard({
+  leadId,
+  companyName,
+  contactName,
+  email,
+  recommendations,
+  onSaved,
+}: Props) {
   const [title, setTitle] = useState(`Conceptvoorstel voor ${companyName}`);
   const [introduction, setIntroduction] = useState("Onderstaand voorstel is een concept en wordt na een technische intake definitief gemaakt.");
   const [notes, setNotes] = useState("");
@@ -87,7 +97,8 @@ export default function AssessmentQuoteDraftCard({ leadId, companyName, recommen
 
       if (error) {
         setStorageAvailable(false);
-        setLines(createSuggestedQuoteLines(recommendations));
+        const suggestions = createSuggestedQuoteLines(recommendations);
+        setLines(suggestions.length ? suggestions : [newLine()]);
       } else if (data) {
         const draft = data as StoredDraft;
         setTitle(draft.title);
@@ -116,6 +127,30 @@ export default function AssessmentQuoteDraftCard({ leadId, companyName, recommen
 
   const updateLine = <K extends keyof AssessmentQuoteLine>(id: string, key: K, value: AssessmentQuoteLine[K]) => {
     setLines((current) => current.map((line) => line.id === id ? { ...line, [key]: value } : line));
+  };
+
+  const getPdfInput = () => ({
+    companyName,
+    contactName,
+    email,
+    title,
+    introduction,
+    validUntil,
+    notes: "",
+    lines,
+  });
+
+  const openPdf = (mode: "preview" | "download") => {
+    try {
+      if (mode === "preview") previewAssessmentQuotePdf(getPdfInput());
+      else downloadAssessmentQuotePdf(getPdfInput());
+    } catch (error) {
+      toast({
+        title: "PDF kon niet worden gemaakt",
+        description: error instanceof Error ? error.message : "Controleer de conceptofferte.",
+        variant: "destructive",
+      });
+    }
   };
 
   const saveDraft = async () => {
@@ -161,19 +196,19 @@ export default function AssessmentQuoteDraftCard({ leadId, companyName, recommen
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="rounded-xl border bg-muted/30 p-4 text-sm text-muted-foreground">
-          Bedragen worden uitsluitend handmatig ingevuld. Opslaan verstuurt niets naar de klant en maakt geen factuur of betaling aan.
+          Bedragen worden uitsluitend handmatig ingevuld. Opslaan of een PDF maken verstuurt niets naar de klant en maakt geen factuur of betaling aan.
         </div>
 
         {!storageAvailable ? (
           <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-            De conceptopslag is nog niet beschikbaar in de gekoppelde database. De editor werkt wel, maar opslaan vereist eerst de nieuwe migratie.
+            De conceptopslag is nog niet beschikbaar in de gekoppelde database. De editor en PDF werken wel, maar opslaan vereist eerst de nieuwe migratie.
           </div>
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2"><Label htmlFor="proposalTitle">Titel</Label><Input id="proposalTitle" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={180} /></div>
           <div className="space-y-2"><Label htmlFor="validUntil">Geldig tot</Label><Input id="validUntil" type="date" value={validUntil} onChange={(event) => setValidUntil(event.target.value)} /></div>
-          <div className="space-y-2 md:col-span-2"><Label htmlFor="proposalIntroduction">Inleiding</Label><textarea id="proposalIntroduction" value={introduction} onChange={(event) => setIntroduction(event.target.value)} maxLength={3000} rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
+          <div className="space-y-2 md:col-span-2"><Label htmlFor="proposalIntroduction">Inleiding voor de klant</Label><textarea id="proposalIntroduction" value={introduction} onChange={(event) => setIntroduction(event.target.value)} maxLength={3000} rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
         </div>
 
         <div className="space-y-3">
@@ -189,7 +224,11 @@ export default function AssessmentQuoteDraftCard({ leadId, companyName, recommen
           <button type="button" onClick={() => setLines((current) => [...current, newLine()])} disabled={lines.length >= 20} className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-50"><Plus className="h-4 w-4" /> Regel toevoegen</button>
         </div>
 
-        <div className="space-y-2"><Label htmlFor="proposalNotes">Interne offertenotities</Label><textarea id="proposalNotes" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={5000} rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
+        <div className="space-y-2">
+          <Label htmlFor="proposalNotes">Interne offertenotities</Label>
+          <textarea id="proposalNotes" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={5000} rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+          <p className="text-xs text-muted-foreground">Deze interne notities worden bewust niet opgenomen in de PDF.</p>
+        </div>
 
         <div className="ml-auto max-w-sm space-y-2 rounded-xl bg-muted/40 p-4 text-sm">
           <div className="flex justify-between"><span>Subtotaal</span><strong>{formatCurrency(totals.subtotal)}</strong></div>
@@ -197,9 +236,13 @@ export default function AssessmentQuoteDraftCard({ leadId, companyName, recommen
           <div className="flex justify-between border-t pt-2 text-base"><span>Totaal</span><strong>{formatCurrency(totals.total)}</strong></div>
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <p className="text-xs text-muted-foreground">{savedAt ? `Laatst opgeslagen: ${new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(savedAt))}` : "Nog niet opgeslagen"}</p>
-          <button type="button" disabled={saving || loading} onClick={() => void saveDraft()} className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"><Save className="h-4 w-4" />{saving ? "Opslaan..." : "Opslaan als concept"}</button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button type="button" disabled={loading} onClick={() => openPdf("preview")} className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-60"><Eye className="h-4 w-4" /> Bekijk PDF</button>
+            <button type="button" disabled={loading} onClick={() => openPdf("download")} className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-60"><Download className="h-4 w-4" /> Download PDF</button>
+            <button type="button" disabled={saving || loading} onClick={() => void saveDraft()} className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"><Save className="h-4 w-4" />{saving ? "Opslaan..." : "Opslaan als concept"}</button>
+          </div>
         </div>
       </CardContent>
     </Card>
