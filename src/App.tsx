@@ -23,6 +23,7 @@ import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminScans from "./pages/admin/AdminScans";
 import AdminScanDetail from "./pages/admin/AdminScanDetail";
 import AdminProposals from "./pages/admin/AdminProposals";
+import AdminProposalDetail from "./pages/admin/AdminProposalDetail";
 import AdminInvoicesWithStatus from "./pages/admin/AdminInvoicesWithStatus";
 import InvoiceMakerForceLeftRight from "./pages/admin/InvoiceMakerForceLeftRight";
 import "./pages/admin/invoice-maker-preview.css";
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="scans" element={<AdminScans />} />
               <Route path="scans/:leadId" element={<AdminScanDetail />} />
               <Route path="offertes" element={<AdminProposals />} />
+              <Route path="offertes/:proposalId" element={<AdminProposalDetail />} />
               <Route path="invoices" element={<AdminInvoicesWithStatus />} />
               <Route path="factuur-maker" element={<InvoiceMakerForceLeftRight />} />
               <Route path="customers" element={<AdminCustomers />} />
