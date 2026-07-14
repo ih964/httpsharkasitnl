@@ -33,3 +33,15 @@ test("formats a saved proposal draft with totals", () => {
   assert.match(text, /Conceptofferte opgeslagen met 3 regels/);
   assert.match(text, /1\.210,00/);
 });
+
+test("formats proposal status changes", () => {
+  assert.equal(
+    formatAssessmentActivity({
+      id: "7",
+      event_type: "proposal_status_updated",
+      metadata: { status_from: "draft", status_to: "approved" },
+      created_at: "2026-07-14T20:00:00Z",
+    }),
+    "Offertestatus gewijzigd van Concept naar Goedgekeurd",
+  );
+});
