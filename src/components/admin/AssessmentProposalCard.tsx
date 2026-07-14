@@ -94,6 +94,8 @@ export default function AssessmentProposalCard({
         <AssessmentQuoteDraftCard
           leadId={leadId}
           companyName={companyName}
+          contactName={contactName}
+          email={email}
           recommendations={recommendations}
         />
       ) : null}
