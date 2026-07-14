@@ -11,9 +11,28 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { applyPageSeo } from "@/lib/pageSeo";
+import {
+  calculateCategoryScores,
+  calculateTotalScore,
+  getPriorities,
+  getRiskLevel,
+  getScoreLabel,
+  type AssessmentAnswerMap,
+} from "@/lib/assessmentScoring";
+import { validateAssessmentLead, type AssessmentLeadInput } from "@/lib/assessmentLeadValidation";
+import { buildItQuickScanSubmission, type SubmitItQuickScanArgs } from "@/lib/assessmentSubmission";
 
 type Category = "Beveiliging" | "Back-up" | "Werkplekken" | "Microsoft 365";
-type Question = { id: string; category: Category; question: string; explanation: string; recommendation: string; };
+type Question = {
+  id: string;
+  category: Category;
+  question: string;
+  explanation: string;
+  recommendation: string;
+};
+
+type RpcResult = { error: { message?: string } | null };
+type SubmitRpc = (functionName: "submit_it_quick_scan", args: SubmitItQuickScanArgs) => Promise<RpcResult>;
 
 const questions: Question[] = [
   { id: "mfa", category: "Beveiliging", question: "Is multifactorauthenticatie verplicht voor alle zakelijke accounts?", explanation: "MFA beperkt de impact van gestolen wachtwoorden.", recommendation: "Maak MFA verplicht voor alle gebruikers en beheerders." },
@@ -31,89 +50,143 @@ const options = [
   { label: "Gedeeltelijk geregeld", value: 50 },
   { label: "Nee of onbekend", value: 0 },
 ];
+
 const categories: Category[] = ["Beveiliging", "Back-up", "Werkplekken", "Microsoft 365"];
-const emptyLead = { companyName: "", contactName: "", email: "", phone: "", employeeCount: "", consentReport: false, consentMarketing: false };
+const emptyLead: AssessmentLeadInput = {
+  companyName: "",
+  contactName: "",
+  email: "",
+  phone: "",
+  employeeCount: "",
+  consentReport: false,
+  consentMarketing: false,
+};
 
 export default function ITQuickScan() {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<AssessmentAnswerMap>({});
   const [finished, setFinished] = useState(false);
-  const [lead, setLead] = useState(emptyLead);
+  const [lead, setLead] = useState<AssessmentLeadInput>(emptyLead);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => { applyPageSeo({ title: "Gratis IT Quick Scan | Harkas IT", description: "Ontvang direct een indicatieve IT-score met concrete verbeterpunten." }); }, []);
+  useEffect(() => {
+    applyPageSeo({
+      title: "Gratis IT Quick Scan | Harkas IT",
+      description: "Ontvang direct een indicatieve IT-score met concrete verbeterpunten.",
+    });
+  }, []);
 
   const current = questions[step];
   const answered = Object.keys(answers).length;
-  const score = useMemo(() => Math.round(questions.reduce((sum, q) => sum + (answers[q.id] ?? 0), 0) / questions.length), [answers]);
-  const categoryScores = useMemo(() => categories.map((category) => {
-    const items = questions.filter((q) => q.category === category);
-    return { category, value: Math.round(items.reduce((sum, q) => sum + (answers[q.id] ?? 0), 0) / items.length) };
-  }), [answers]);
-  const priorities = useMemo(() => questions.filter((q) => (answers[q.id] ?? 0) < 100).sort((a, b) => (answers[a.id] ?? 0) - (answers[b.id] ?? 0)).slice(0, 5), [answers]);
-  const label = score >= 80 ? "Goed op weg" : score >= 60 ? "Aandacht nodig" : "Verhoogd risico";
-  const riskLevel = score >= 80 ? "low" : score >= 60 ? "medium" : "high";
+  const score = useMemo(() => calculateTotalScore(questions, answers), [answers]);
+  const categoryScores = useMemo(() => calculateCategoryScores(questions, answers, categories), [answers]);
+  const priorities = useMemo(() => getPriorities(questions, answers, 5), [answers]);
+  const label = getScoreLabel(score);
+  const riskLevel = getRiskLevel(score);
   const progress = finished ? 100 : Math.round((answered / questions.length) * 100);
 
   const next = () => {
     if (answers[current.id] === undefined) return;
-    if (step === questions.length - 1) { setFinished(true); window.scrollTo({ top: 0, behavior: "smooth" }); }
-    else setStep((value) => value + 1);
+    if (step === questions.length - 1) {
+      setFinished(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      setStep((value) => value + 1);
+    }
   };
 
   const download = () => {
     const pdf = new jsPDF();
     let y = 20;
-    pdf.setFontSize(20); pdf.text("Harkas IT - IT Quick Scan", 20, y); y += 12;
-    if (lead.companyName) { pdf.setFontSize(11); pdf.text(`Bedrijf: ${lead.companyName}`, 20, y); y += 8; }
-    pdf.setFontSize(12); pdf.text(`Indicatieve score: ${score}/100 - ${label}`, 20, y); y += 10;
-    pdf.setFontSize(9); pdf.text("Deze quick scan is een indicatie en geen technische audit of penetratietest.", 20, y); y += 14;
-    pdf.setFontSize(14); pdf.text("Scores per onderdeel", 20, y); y += 9;
-    pdf.setFontSize(11); categoryScores.forEach((item) => { pdf.text(`${item.category}: ${item.value}/100`, 24, y); y += 7; });
-    y += 6; pdf.setFontSize(14); pdf.text("Belangrijkste verbeterpunten", 20, y); y += 9; pdf.setFontSize(10);
-    priorities.forEach((item, index) => { const lines = pdf.splitTextToSize(`${index + 1}. ${item.recommendation}`, 165); pdf.text(lines, 24, y); y += lines.length * 6 + 3; });
+    pdf.setFontSize(20);
+    pdf.text("Harkas IT - IT Quick Scan", 20, y);
+    y += 12;
+    if (lead.companyName.trim()) {
+      pdf.setFontSize(11);
+      pdf.text(`Bedrijf: ${lead.companyName.trim()}`, 20, y);
+      y += 8;
+    }
+    pdf.setFontSize(12);
+    pdf.text(`Indicatieve score: ${score}/100 - ${label}`, 20, y);
+    y += 10;
+    pdf.setFontSize(9);
+    pdf.text("Deze quick scan is een indicatie en geen technische audit of penetratietest.", 20, y);
+    y += 14;
+    pdf.setFontSize(14);
+    pdf.text("Scores per onderdeel", 20, y);
+    y += 9;
+    pdf.setFontSize(11);
+    categoryScores.forEach((item) => {
+      pdf.text(`${item.category}: ${item.value}/100`, 24, y);
+      y += 7;
+    });
+    y += 6;
+    pdf.setFontSize(14);
+    pdf.text("Belangrijkste verbeterpunten", 20, y);
+    y += 9;
+    pdf.setFontSize(10);
+    priorities.forEach((item, index) => {
+      const lines = pdf.splitTextToSize(`${index + 1}. ${item.recommendation}`, 165);
+      pdf.text(lines, 24, y);
+      y += lines.length * 6 + 3;
+    });
     pdf.text("Bespreek de uitslag via info@harkasit.nl of 085 124 9091.", 20, y + 5);
     pdf.save("Harkas-IT-Quick-Scan.pdf");
   };
 
   const submitLead = async (event: FormEvent) => {
     event.preventDefault();
-    if (!lead.companyName.trim() || !lead.contactName.trim() || !lead.email.trim() || !lead.consentReport) {
-      toast({ title: "Vul de verplichte velden in", description: "Bedrijf, naam, e-mail en toestemming voor rapportlevering zijn verplicht.", variant: "destructive" });
+    const validation = validateAssessmentLead(lead);
+
+    if (!validation.valid || !validation.normalized) {
+      const firstError = Object.values(validation.errors)[0] ?? "Controleer de ingevulde gegevens.";
+      toast({ title: "Gegevens niet compleet", description: firstError, variant: "destructive" });
       return;
     }
 
-    setSubmitting(true);
-    const client = supabase as any;
-    const { error } = await client.rpc("submit_it_quick_scan", {
-      p_company_name: lead.companyName.trim(),
-      p_contact_name: lead.contactName.trim(),
-      p_email: lead.email.trim(),
-      p_phone: lead.phone.trim() || null,
-      p_employee_count: lead.employeeCount ? Number(lead.employeeCount) : null,
-      p_consent_report: lead.consentReport,
-      p_consent_marketing: lead.consentMarketing,
-      p_total_score: score,
-      p_risk_level: riskLevel,
-      p_answers: answers,
-      p_category_scores: Object.fromEntries(categoryScores.map((item) => [item.category, item.value])),
-      p_recommendations: priorities.map((item) => ({ category: item.category, question_id: item.id, recommendation: item.recommendation, answer_score: answers[item.id] ?? 0 })),
+    const payload = buildItQuickScanSubmission({
+      normalizedLead: validation.normalized,
+      totalScore: score,
+      riskLevel,
+      answers,
+      categoryScores,
+      recommendations: priorities,
     });
+
+    setSubmitting(true);
+    const submitRpc = supabase.rpc.bind(supabase) as unknown as SubmitRpc;
+    const { error } = await submitRpc("submit_it_quick_scan", payload);
     setSubmitting(false);
 
     if (error) {
-      toast({ title: "Opslaan is niet gelukt", description: "Probeer het later opnieuw of neem contact op via info@harkasit.nl.", variant: "destructive" });
+      toast({
+        title: "Opslaan is niet gelukt",
+        description: "Probeer het later opnieuw of neem contact op via info@harkasit.nl.",
+        variant: "destructive",
+      });
       return;
     }
 
+    setLead({
+      ...lead,
+      companyName: validation.normalized.companyName,
+      contactName: validation.normalized.contactName,
+      email: validation.normalized.email,
+      phone: validation.normalized.phone ?? "",
+      employeeCount: validation.normalized.employeeCount ?? "",
+    });
     setSubmitted(true);
     toast({ title: "Rapportaanvraag ontvangen", description: "De scan is veilig opgeslagen voor opvolging." });
   };
 
   const restart = () => {
-    setAnswers({}); setStep(0); setFinished(false); setLead(emptyLead); setSubmitted(false);
+    setAnswers({});
+    setStep(0);
+    setFinished(false);
+    setLead(emptyLead);
+    setSubmitted(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -159,7 +232,7 @@ export default function ITQuickScan() {
 
                 <div className="rounded-3xl border bg-card p-6 md:p-8">
                   <h2 className="text-2xl font-bold">Belangrijkste verbeterpunten</h2>
-                  <div className="mt-5 space-y-4">{priorities.length ? priorities.map((item, index) => <div key={item.id} className="flex gap-4 rounded-2xl bg-muted/50 p-4"><span className="font-bold text-primary">{index + 1}</span><div><p className="font-semibold">{item.category}</p><p className="text-muted-foreground">{item.recommendation}</p></div></div>) : <p className="text-muted-foreground">Alle onderdelen zijn positief beantwoord. Laat de instellingen periodiek technisch controleren.</p>}</div>
+                  <div className="mt-5 space-y-4">{priorities.length ? priorities.map((item, index) => <div key={item.questionId} className="flex gap-4 rounded-2xl bg-muted/50 p-4"><span className="font-bold text-primary">{index + 1}</span><div><p className="font-semibold">{item.category}</p><p className="text-muted-foreground">{item.recommendation}</p></div></div>) : <p className="text-muted-foreground">Alle onderdelen zijn positief beantwoord. Laat de instellingen periodiek technisch controleren.</p>}</div>
                 </div>
 
                 {!submitted ? (
@@ -170,8 +243,8 @@ export default function ITQuickScan() {
                       <div className="space-y-2"><Label htmlFor="companyName">Bedrijfsnaam *</Label><Input id="companyName" value={lead.companyName} onChange={(e) => setLead({ ...lead, companyName: e.target.value })} maxLength={120} /></div>
                       <div className="space-y-2"><Label htmlFor="contactName">Naam *</Label><Input id="contactName" value={lead.contactName} onChange={(e) => setLead({ ...lead, contactName: e.target.value })} maxLength={120} /></div>
                       <div className="space-y-2"><Label htmlFor="email">Zakelijk e-mailadres *</Label><Input id="email" type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} maxLength={180} /></div>
-                      <div className="space-y-2"><Label htmlFor="phone">Telefoonnummer</Label><Input id="phone" type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} maxLength={40} /></div>
-                      <div className="space-y-2"><Label htmlFor="employeeCount">Aantal medewerkers</Label><Input id="employeeCount" type="number" min="1" max="10000" value={lead.employeeCount} onChange={(e) => setLead({ ...lead, employeeCount: e.target.value })} /></div>
+                      <div className="space-y-2"><Label htmlFor="phone">Telefoonnummer</Label><Input id="phone" type="tel" value={lead.phone ?? ""} onChange={(e) => setLead({ ...lead, phone: e.target.value })} maxLength={40} /></div>
+                      <div className="space-y-2"><Label htmlFor="employeeCount">Aantal medewerkers</Label><Input id="employeeCount" type="number" min="1" max="10000" value={lead.employeeCount ?? ""} onChange={(e) => setLead({ ...lead, employeeCount: e.target.value })} /></div>
                     </div>
                     <div className="mt-6 space-y-4">
                       <label className="flex items-start gap-3 text-sm"><Checkbox checked={lead.consentReport} onCheckedChange={(checked) => setLead({ ...lead, consentReport: checked === true })} /><span>Ik geef toestemming om mijn gegevens en scanresultaat te verwerken voor het leveren en bespreken van dit rapport. *</span></label>
