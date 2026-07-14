@@ -21,3 +21,15 @@ test("formats conversion to a new customer", () => {
 test("formats linking to an existing customer", () => {
   assert.equal(formatAssessmentActivity({ id: "5", event_type: "converted_to_customer", metadata: { reused_existing_customer: true }, created_at: "2026-07-14T20:00:00Z" }), "Lead gekoppeld aan bestaande klant");
 });
+
+test("formats a saved proposal draft with totals", () => {
+  const text = formatAssessmentActivity({
+    id: "6",
+    event_type: "proposal_draft_saved",
+    metadata: { line_count: 3, total: 1210 },
+    created_at: "2026-07-14T20:00:00Z",
+  });
+
+  assert.match(text, /Conceptofferte opgeslagen met 3 regels/);
+  assert.match(text, /1\.210,00/);
+});
