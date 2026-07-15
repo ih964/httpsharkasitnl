@@ -16,8 +16,9 @@ declare
   v_customer_id uuid;
   v_existing_customer_id uuid;
 begin
-  if auth.uid() is null then
-    raise exception 'authentication required';
+  if auth.uid() is null
+     or not public.has_role(auth.uid(), 'admin'::public.app_role) then
+    raise exception 'administrator role required' using errcode = '42501';
   end if;
 
   select * into v_lead
