@@ -7,6 +7,7 @@
     "skipLibCheck": true
   },
   "include": [
+    "src/vite-env.d.ts",
     "src/contexts/AuthContext.tsx",
     "src/integrations/supabase/assessmentClient.ts",
     "src/lib/assessment*.ts",
