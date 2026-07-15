@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, CalendarClock, Eye, FileText, MailCheck, Search, ThumbsDown, ThumbsUp } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { assessmentSupabase } from "@/integrations/supabase/assessmentClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -87,8 +87,7 @@ export default function AdminProposals() {
   const load = async () => {
     setLoading(true);
     setLoadError(null);
-    const client = supabase as any;
-    const { data, error } = await client
+    const { data, error } = await assessmentSupabase
       .from("assessment_proposal_drafts")
       .select("id,lead_id,customer_id,title,status,subtotal,vat_total,total,valid_until,reviewed_at,approved_at,sent_at,sent_to,follow_up_at,responded_at,updated_at,assessment_leads(company_name,contact_name,email,status,customer_id)")
       .order("updated_at", { ascending: false });
@@ -97,7 +96,7 @@ export default function AdminProposals() {
       setLoadError(error.message);
       setProposals([]);
     } else {
-      setProposals((data ?? []) as ProposalRow[]);
+      setProposals((data ?? []) as unknown as ProposalRow[]);
     }
     setLoading(false);
   };
@@ -107,8 +106,7 @@ export default function AdminProposals() {
   const updateInternalStatus = async (proposal: ProposalRow, status: ProposalStatus) => {
     if (proposal.status === status || !internalStatusValues.includes(status)) return;
     setUpdatingId(proposal.id);
-    const client = supabase as any;
-    const { data, error } = await client.rpc("update_assessment_proposal_lifecycle", {
+    const { data, error } = await assessmentSupabase.rpc("update_assessment_proposal_lifecycle", {
       p_proposal_id: proposal.id,
       p_status: status,
       p_sent_to: null,
@@ -122,7 +120,7 @@ export default function AdminProposals() {
       return;
     }
 
-    const result = (Array.isArray(data) ? data[0] : data) as Partial<ProposalRow> | null;
+    const result = data as unknown as Partial<ProposalRow> | null;
     setProposals((current) => current.map((item) => item.id === proposal.id ? {
       ...item,
       ...result,
