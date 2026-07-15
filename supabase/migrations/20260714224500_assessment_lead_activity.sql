@@ -20,8 +20,9 @@ declare
   v_after public.assessment_leads;
   v_metadata jsonb := '{}'::jsonb;
 begin
-  if auth.uid() is null then
-    raise exception 'authentication required';
+  if auth.uid() is null
+     or not public.has_role(auth.uid(), 'admin'::public.app_role) then
+    raise exception 'administrator role required' using errcode = '42501';
   end if;
 
   select * into v_before
@@ -49,7 +50,9 @@ begin
     v_metadata := v_metadata || jsonb_build_object('status_from', v_before.status, 'status_to', v_after.status);
   end if;
 
-  if p_update_follow_up then
+  if p_update_follow_up
+     and (v_before.notes is distinct from v_after.notes
+          or v_before.follow_up_at is distinct from v_after.follow_up_at) then
     v_metadata := v_metadata || jsonb_build_object(
       'notes_changed', v_before.notes is distinct from v_after.notes,
       'follow_up_from', v_before.follow_up_at,
