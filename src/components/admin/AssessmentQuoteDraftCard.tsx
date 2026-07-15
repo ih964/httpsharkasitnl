@@ -3,7 +3,7 @@ import { Download, Eye, FileText, Plus, Save, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { assessmentSupabase, type AssessmentProposalDraftRow } from "@/integrations/supabase/assessmentClient";
 import { useToast } from "@/hooks/use-toast";
 import {
   calculateQuoteTotals,
@@ -14,17 +14,14 @@ import {
 } from "@/lib/assessmentQuote";
 import { downloadAssessmentQuotePdf, previewAssessmentQuotePdf } from "@/lib/assessmentQuotePdf";
 
- type Recommendation = {
+type Recommendation = {
   question_id?: string;
   recommendation: string;
 };
 
-type StoredDraft = {
-  id: string;
-  title: string;
-  introduction: string | null;
-  notes: string | null;
-  valid_until: string | null;
+type StoredDraft = Pick<AssessmentProposalDraftRow,
+  "id" | "title" | "introduction" | "notes" | "valid_until" | "subtotal" | "vat_total" | "total" | "updated_at"
+> & {
   line_items: Array<{
     id?: string;
     description: string;
@@ -32,10 +29,6 @@ type StoredDraft = {
     unit_price: number;
     vat_percentage: 0 | 9 | 21;
   }>;
-  subtotal: number;
-  vat_total: number;
-  total: number;
-  updated_at: string;
 };
 
 type Props = {
@@ -88,8 +81,7 @@ export default function AssessmentQuoteDraftCard({
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const client = supabase as any;
-      const { data, error } = await client
+      const { data, error } = await assessmentSupabase
         .from("assessment_proposal_drafts")
         .select("id,title,introduction,notes,valid_until,line_items,subtotal,vat_total,total,updated_at")
         .eq("lead_id", leadId)
@@ -100,7 +92,7 @@ export default function AssessmentQuoteDraftCard({
         const suggestions = createSuggestedQuoteLines(recommendations);
         setLines(suggestions.length ? suggestions : [newLine()]);
       } else if (data) {
-        const draft = data as StoredDraft;
+        const draft = data as unknown as StoredDraft;
         setTitle(draft.title);
         setIntroduction(draft.introduction ?? "");
         setNotes(draft.notes ?? "");
@@ -165,8 +157,7 @@ export default function AssessmentQuoteDraftCard({
     }
 
     setSaving(true);
-    const client = supabase as any;
-    const { data, error } = await client.rpc("save_assessment_proposal_draft", {
+    const { data, error } = await assessmentSupabase.rpc("save_assessment_proposal_draft", {
       p_lead_id: leadId,
       p_title: title.trim(),
       p_introduction: introduction.trim() || null,
@@ -181,10 +172,9 @@ export default function AssessmentQuoteDraftCard({
       return;
     }
 
-    const stored = (Array.isArray(data) ? data[0] : data) as StoredDraft | null;
     setLines(validation.lines);
     setStorageAvailable(true);
-    setSavedAt(stored?.updated_at ?? new Date().toISOString());
+    setSavedAt(data?.updated_at ?? new Date().toISOString());
     await onSaved?.();
     toast({ title: "Conceptofferte opgeslagen", description: "Er is niets verstuurd en de bedragen blijven intern concept." });
   };
