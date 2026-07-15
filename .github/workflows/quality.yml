@@ -30,6 +30,16 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Refresh dependency lock
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Upload refreshed lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: refreshed-package-lock
+          path: package-lock.json
+          retention-days: 1
+
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
 
