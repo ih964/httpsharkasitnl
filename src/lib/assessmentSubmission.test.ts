@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildItQuickScanSubmission } from "./assessmentSubmission.ts";
 
-test("builds normalized RPC arguments", () => {
+test("builds normalized and security-hardened RPC arguments", () => {
   const payload = buildItQuickScanSubmission({
+    submissionKey: "11111111-1111-4111-8111-111111111111",
+    honeypot: "",
+    privacyNoticeVersion: "2026-07-15",
     normalizedLead: {
       companyName: "Voorbeeld BV",
       contactName: "Ilias Harkati",
@@ -26,6 +29,9 @@ test("builds normalized RPC arguments", () => {
   });
 
   assert.deepEqual(payload, {
+    p_submission_key: "11111111-1111-4111-8111-111111111111",
+    p_honeypot: "",
+    p_privacy_notice_version: "2026-07-15",
     p_company_name: "Voorbeeld BV",
     p_contact_name: "Ilias Harkati",
     p_email: "info@voorbeeld.nl",
