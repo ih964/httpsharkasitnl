@@ -193,3 +193,6 @@ $$;
 
 revoke all on function public.update_assessment_proposal_lifecycle(uuid,text,text,timestamptz,text) from public;
 grant execute on function public.update_assessment_proposal_lifecycle(uuid,text,text,timestamptz,text) to authenticated;
+
+-- The earlier three-state RPC is no longer allowed to bypass lifecycle validation.
+revoke all on function public.update_assessment_proposal_status(uuid,text) from authenticated;
