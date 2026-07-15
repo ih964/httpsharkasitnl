@@ -21,6 +21,11 @@ import {
 } from "@/lib/assessmentScoring";
 import { validateAssessmentLead, type AssessmentLeadInput } from "@/lib/assessmentLeadValidation";
 import { buildItQuickScanSubmission, type SubmitItQuickScanArgs } from "@/lib/assessmentSubmission";
+import {
+  IT_QUICK_SCAN_PRIVACY_VERSION,
+  createAssessmentSubmissionKey,
+  getAssessmentSubmissionErrorMessage,
+} from "@/lib/assessmentSecurity";
 
 type Category = "Beveiliging" | "Back-up" | "Werkplekken" | "Microsoft 365";
 type Question = {
@@ -67,6 +72,8 @@ export default function ITQuickScan() {
   const [answers, setAnswers] = useState<AssessmentAnswerMap>({});
   const [finished, setFinished] = useState(false);
   const [lead, setLead] = useState<AssessmentLeadInput>(emptyLead);
+  const [submissionKey, setSubmissionKey] = useState(createAssessmentSubmissionKey);
+  const [honeypot, setHoneypot] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
@@ -138,8 +145,9 @@ export default function ITQuickScan() {
 
   const submitLead = async (event: FormEvent) => {
     event.preventDefault();
-    const validation = validateAssessmentLead(lead);
+    if (submitting || submitted) return;
 
+    const validation = validateAssessmentLead(lead);
     if (!validation.valid || !validation.normalized) {
       const firstError = Object.values(validation.errors)[0] ?? "Controleer de ingevulde gegevens.";
       toast({ title: "Gegevens niet compleet", description: firstError, variant: "destructive" });
@@ -147,6 +155,9 @@ export default function ITQuickScan() {
     }
 
     const payload = buildItQuickScanSubmission({
+      submissionKey,
+      honeypot,
+      privacyNoticeVersion: IT_QUICK_SCAN_PRIVACY_VERSION,
       normalizedLead: validation.normalized,
       totalScore: score,
       riskLevel,
@@ -163,7 +174,7 @@ export default function ITQuickScan() {
     if (error) {
       toast({
         title: "Opslaan is niet gelukt",
-        description: "Probeer het later opnieuw of neem contact op via info@harkasit.nl.",
+        description: getAssessmentSubmissionErrorMessage(error.message),
         variant: "destructive",
       });
       return;
@@ -178,7 +189,7 @@ export default function ITQuickScan() {
       employeeCount: validation.normalized.employeeCount ?? "",
     });
     setSubmitted(true);
-    toast({ title: "Rapportaanvraag ontvangen", description: "De scan is veilig opgeslagen voor opvolging." });
+    toast({ title: "Rapportaanvraag ontvangen", description: "De scan en toestemmingen zijn veilig opgeslagen voor opvolging." });
   };
 
   const restart = () => {
@@ -186,6 +197,9 @@ export default function ITQuickScan() {
     setStep(0);
     setFinished(false);
     setLead(emptyLead);
+    setSubmissionKey(createAssessmentSubmissionKey());
+    setHoneypot("");
+    setSubmitting(false);
     setSubmitted(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -236,7 +250,11 @@ export default function ITQuickScan() {
                 </div>
 
                 {!submitted ? (
-                  <form onSubmit={submitLead} className="rounded-3xl border bg-card p-6 md:p-8">
+                  <form onSubmit={submitLead} className="relative rounded-3xl border bg-card p-6 md:p-8">
+                    <div aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
+                      <label htmlFor="website">Website</label>
+                      <input id="website" name="website" value={honeypot} onChange={(event) => setHoneypot(event.target.value)} tabIndex={-1} autoComplete="off" />
+                    </div>
                     <h2 className="text-2xl font-bold">Bewaar je rapport en ontvang persoonlijk advies</h2>
                     <p className="mt-2 text-muted-foreground">Laat je gegevens achter zodat Harkas IT de uitslag kan bewaren en met je kan bespreken.</p>
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -247,10 +265,11 @@ export default function ITQuickScan() {
                       <div className="space-y-2"><Label htmlFor="employeeCount">Aantal medewerkers</Label><Input id="employeeCount" type="number" min="1" max="10000" value={lead.employeeCount ?? ""} onChange={(e) => setLead({ ...lead, employeeCount: e.target.value })} /></div>
                     </div>
                     <div className="mt-6 space-y-4">
-                      <label className="flex items-start gap-3 text-sm"><Checkbox checked={lead.consentReport} onCheckedChange={(checked) => setLead({ ...lead, consentReport: checked === true })} /><span>Ik geef toestemming om mijn gegevens en scanresultaat te verwerken voor het leveren en bespreken van dit rapport. *</span></label>
+                      <label className="flex items-start gap-3 text-sm"><Checkbox checked={lead.consentReport} onCheckedChange={(checked) => setLead({ ...lead, consentReport: checked === true })} /><span>Ik geef toestemming om mijn gegevens en scanresultaat te verwerken voor het leveren en bespreken van dit rapport. Lees het <a href="/privacy" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">privacybeleid</a>. *</span></label>
                       <label className="flex items-start gap-3 text-sm"><Checkbox checked={lead.consentMarketing} onCheckedChange={(checked) => setLead({ ...lead, consentMarketing: checked === true })} /><span>Harkas IT mag mij benaderen over passende IT-diensten. Dit is optioneel.</span></label>
                     </div>
-                    <button disabled={submitting} type="submit" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-60">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{submitting ? "Bezig met opslaan..." : "Bewaar scan en vraag advies aan"}</button>
+                    <p className="mt-4 text-xs text-muted-foreground">Toestemming en privacyversie {IT_QUICK_SCAN_PRIVACY_VERSION} worden als bewijs geregistreerd. Scanleads worden standaard maximaal 24 maanden bewaard, tenzij een klantrelatie of wettelijke verplichting een andere termijn vereist.</p>
+                    <button disabled={submitting} type="submit" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-60">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{submitting ? "Bezig met veilig opslaan..." : "Bewaar scan en vraag advies aan"}</button>
                   </form>
                 ) : (
                   <div className="rounded-3xl border bg-card p-7 text-center"><CheckCircle2 className="mx-auto h-12 w-12 text-primary" /><h2 className="mt-4 text-2xl font-bold">Je scan is ontvangen</h2><p className="mt-2 text-muted-foreground">De uitslag staat klaar voor Harkas IT. Je kunt het rapport hieronder direct downloaden.</p></div>
