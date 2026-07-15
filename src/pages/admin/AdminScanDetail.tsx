@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Activity, ArrowLeft, Building2, CalendarClock, CheckCircle2, Mail, Phone, Save, ShieldAlert, UserPlus, Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { assessmentSupabase } from "@/integrations/supabase/assessmentClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,23 +65,21 @@ export default function AdminScanDetail() {
   const { toast } = useToast();
 
   const loadActivities = async (id: string) => {
-    const client = supabase as any;
-    const { data, error } = await client
+    const { data, error } = await assessmentSupabase
       .from("assessment_audit_events")
       .select("id,event_type,metadata,created_at")
       .eq("lead_id", id)
       .order("created_at", { ascending: false })
       .limit(50);
 
-    if (!error) setActivities((data ?? []) as AssessmentActivityEvent[]);
+    if (!error) setActivities((data ?? []) as unknown as AssessmentActivityEvent[]);
   };
 
   useEffect(() => {
     const load = async () => {
       if (!leadId) return;
       setLoading(true);
-      const client = supabase as any;
-      const { data, error } = await client
+      const { data, error } = await assessmentSupabase
         .from("assessment_leads")
         .select("id,customer_id,company_name,contact_name,email,phone,employee_count,status,notes,follow_up_at,consent_report,consent_marketing,source,created_at,assessment_runs(id,total_score,risk_level,category_scores,recommendations,created_at)")
         .eq("id", leadId)
@@ -90,7 +88,7 @@ export default function AdminScanDetail() {
       if (error) {
         toast({ title: "Scan kon niet worden geladen", description: error.message, variant: "destructive" });
       } else {
-        const result = data as ScanDetail;
+        const result = data as unknown as ScanDetail;
         setLead(result);
         setNotes(result.notes ?? "");
         setFollowUpAt(toLocalInputValue(result.follow_up_at));
@@ -105,8 +103,7 @@ export default function AdminScanDetail() {
   const updateStatus = async (status: LeadStatus) => {
     if (!lead) return;
     setSaving(true);
-    const client = supabase as any;
-    const { data, error } = await client.rpc("update_assessment_lead", {
+    const { data, error } = await assessmentSupabase.rpc("update_assessment_lead", {
       p_lead_id: lead.id,
       p_status: status,
       p_notes: null,
@@ -121,8 +118,7 @@ export default function AdminScanDetail() {
       return;
     }
 
-    const updated = (Array.isArray(data) ? data[0] : data) as ScanDetail | null;
-    setLead(updated ? { ...lead, status: updated.status } : { ...lead, status });
+    setLead({ ...lead, status: data?.status ?? status });
     await loadActivities(lead.id);
     toast({ title: "Leadstatus bijgewerkt" });
   };
@@ -132,8 +128,7 @@ export default function AdminScanDetail() {
     setSaving(true);
     const normalizedNotes = notes.trim() || null;
     const normalizedFollowUp = followUpAt ? new Date(followUpAt).toISOString() : null;
-    const client = supabase as any;
-    const { data, error } = await client.rpc("update_assessment_lead", {
+    const { data, error } = await assessmentSupabase.rpc("update_assessment_lead", {
       p_lead_id: lead.id,
       p_status: null,
       p_notes: normalizedNotes,
@@ -148,11 +143,10 @@ export default function AdminScanDetail() {
       return;
     }
 
-    const updated = (Array.isArray(data) ? data[0] : data) as ScanDetail | null;
     setLead({
       ...lead,
-      notes: updated?.notes ?? normalizedNotes,
-      follow_up_at: updated?.follow_up_at ?? normalizedFollowUp,
+      notes: data?.notes ?? normalizedNotes,
+      follow_up_at: data?.follow_up_at ?? normalizedFollowUp,
     });
     await loadActivities(lead.id);
     toast({ title: "Opvolging opgeslagen" });
@@ -163,8 +157,7 @@ export default function AdminScanDetail() {
     if (!window.confirm(`Zet ${lead.company_name} om naar een klant? Bij een bestaand klantrecord met hetzelfde e-mailadres wordt die klant hergebruikt.`)) return;
 
     setConverting(true);
-    const client = supabase as any;
-    const { data, error } = await client.rpc("convert_assessment_lead_to_customer", {
+    const { data, error } = await assessmentSupabase.rpc("convert_assessment_lead_to_customer", {
       p_lead_id: lead.id,
     });
     setConverting(false);
@@ -174,8 +167,7 @@ export default function AdminScanDetail() {
       return;
     }
 
-    const customerId = typeof data === "string" ? data : String(Array.isArray(data) ? data[0] : data ?? "");
-    setLead({ ...lead, customer_id: customerId || null, status: "won" });
+    setLead({ ...lead, customer_id: data || null, status: "won" });
     await loadActivities(lead.id);
     toast({ title: "Lead omgezet naar klant", description: "Het klantrecord staat nu in het klantenoverzicht." });
   };
