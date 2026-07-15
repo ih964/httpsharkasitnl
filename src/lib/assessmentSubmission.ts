@@ -2,6 +2,9 @@ import type { AssessmentAnswerMap, AssessmentRecommendation, CategoryScore } fro
 import type { AssessmentLeadValidationResult } from "./assessmentLeadValidation";
 
 export type SubmitItQuickScanArgs = {
+  p_submission_key: string;
+  p_honeypot: string;
+  p_privacy_notice_version: string;
   p_company_name: string;
   p_contact_name: string;
   p_email: string;
@@ -22,6 +25,9 @@ export type SubmitItQuickScanArgs = {
 };
 
 type BuildSubmissionInput = {
+  submissionKey: string;
+  honeypot: string;
+  privacyNoticeVersion: string;
   normalizedLead: NonNullable<AssessmentLeadValidationResult["normalized"]>;
   totalScore: number;
   riskLevel: "low" | "medium" | "high";
@@ -31,6 +37,9 @@ type BuildSubmissionInput = {
 };
 
 export const buildItQuickScanSubmission = ({
+  submissionKey,
+  honeypot,
+  privacyNoticeVersion,
   normalizedLead,
   totalScore,
   riskLevel,
@@ -38,6 +47,9 @@ export const buildItQuickScanSubmission = ({
   categoryScores,
   recommendations,
 }: BuildSubmissionInput): SubmitItQuickScanArgs => ({
+  p_submission_key: submissionKey,
+  p_honeypot: honeypot,
+  p_privacy_notice_version: privacyNoticeVersion,
   p_company_name: normalizedLead.companyName,
   p_contact_name: normalizedLead.contactName,
   p_email: normalizedLead.email,
