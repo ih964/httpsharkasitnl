@@ -1,13 +1,36 @@
-export type ProposalStatus = "draft" | "reviewed" | "approved";
+export type ProposalStatus = "draft" | "reviewed" | "approved" | "sent" | "accepted" | "rejected";
 export type ProposalValidity = "expired" | "expiring" | "valid" | "no-date";
 
 const statusLabels: Record<ProposalStatus, string> = {
   draft: "Concept",
   reviewed: "Gecontroleerd",
   approved: "Goedgekeurd",
+  sent: "Verzonden",
+  accepted: "Geaccepteerd",
+  rejected: "Geweigerd",
+};
+
+const allowedTransitions: Record<ProposalStatus, ProposalStatus[]> = {
+  draft: ["reviewed"],
+  reviewed: ["draft", "approved"],
+  approved: ["draft", "reviewed", "sent"],
+  sent: ["draft", "accepted", "rejected"],
+  accepted: ["draft"],
+  rejected: ["draft"],
 };
 
 export const formatProposalStatus = (status: ProposalStatus): string => statusLabels[status];
+
+export const getAllowedProposalTransitions = (status: ProposalStatus): ProposalStatus[] => [
+  status,
+  ...allowedTransitions[status],
+];
+
+export const canTransitionProposalStatus = (from: ProposalStatus, to: ProposalStatus): boolean =>
+  from === to || allowedTransitions[from].includes(to);
+
+export const isProposalOutcomeStatus = (status: ProposalStatus): boolean =>
+  status === "accepted" || status === "rejected";
 
 const startOfDay = (value: Date): Date => {
   const result = new Date(value);
@@ -45,4 +68,4 @@ export const formatProposalValidity = (
 };
 
 export const isProposalStatus = (value: string): value is ProposalStatus =>
-  value === "draft" || value === "reviewed" || value === "approved";
+  ["draft", "reviewed", "approved", "sent", "accepted", "rejected"].includes(value);
