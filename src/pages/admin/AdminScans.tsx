@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { assessmentSupabase } from "@/integrations/supabase/assessmentClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -60,13 +60,12 @@ export default function AdminScans() {
 
   const load = async () => {
     setLoading(true);
-    const client = supabase as any;
-    const { data, error } = await client
+    const { data, error } = await assessmentSupabase
       .from("assessment_leads")
       .select("id,customer_id,company_name,contact_name,email,phone,employee_count,status,consent_marketing,follow_up_at,created_at,assessment_runs(id,total_score,risk_level,category_scores,created_at)")
       .order("created_at", { ascending: false });
     if (error) toast({ title: "Scans konden niet worden geladen", description: error.message, variant: "destructive" });
-    else setLeads((data ?? []) as ScanLead[]);
+    else setLeads((data ?? []) as unknown as ScanLead[]);
     setLoading(false);
   };
 
@@ -74,8 +73,7 @@ export default function AdminScans() {
 
   const updateStatus = async (id: string, status: ScanLead["status"]) => {
     setUpdatingId(id);
-    const client = supabase as any;
-    const { error } = await client.rpc("update_assessment_lead", {
+    const { error } = await assessmentSupabase.rpc("update_assessment_lead", {
       p_lead_id: id,
       p_status: status,
       p_notes: null,
