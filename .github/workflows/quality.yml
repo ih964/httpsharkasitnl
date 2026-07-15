@@ -18,7 +18,7 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -30,13 +30,22 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Release 1 static security gate
+        run: npm run release:gate
+
+      - name: Release 1 typecheck
+        run: npm run typecheck:release1
+
+      - name: Release 1 blocking lint
+        run: npm run lint:release1
 
       - name: Run assessment tests
         run: npm test
 
-      - name: Lint (non-blocking until existing lint debt is resolved)
+      - name: Full repository lint debt report
         continue-on-error: true
         run: npm run lint
 
