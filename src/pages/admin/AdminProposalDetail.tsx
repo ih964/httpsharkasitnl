@@ -14,7 +14,7 @@ import {
   ThumbsDown,
   ThumbsUp,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { assessmentSupabase } from "@/integrations/supabase/assessmentClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -123,8 +123,7 @@ export default function AdminProposalDetail() {
     const load = async () => {
       if (!proposalId) return;
       setLoading(true);
-      const client = supabase as any;
-      const { data, error } = await client
+      const { data, error } = await assessmentSupabase
         .from("assessment_proposal_drafts")
         .select("id,lead_id,customer_id,title,introduction,notes,line_items,valid_until,status,subtotal,vat_total,total,reviewed_at,approved_at,sent_at,sent_to,follow_up_at,responded_at,response_note,created_at,updated_at,assessment_leads(company_name,contact_name,email,customer_id)")
         .eq("id", proposalId)
@@ -134,7 +133,7 @@ export default function AdminProposalDetail() {
         toast({ title: "Offerte kon niet worden geladen", description: error.message, variant: "destructive" });
         setProposal(null);
       } else {
-        const result = data as ProposalDetail;
+        const result = data as unknown as ProposalDetail;
         const lead = getLead(result);
         setProposal(result);
         setSentTo(result.sent_to ?? lead?.email ?? "");
@@ -186,8 +185,7 @@ export default function AdminProposalDetail() {
   ) => {
     if (!proposal || proposal.status === status) return;
     setUpdating(true);
-    const client = supabase as any;
-    const { data, error } = await client.rpc("update_assessment_proposal_lifecycle", {
+    const { data, error } = await assessmentSupabase.rpc("update_assessment_proposal_lifecycle", {
       p_proposal_id: proposal.id,
       p_status: status,
       p_sent_to: options?.recipient ?? null,
@@ -201,7 +199,7 @@ export default function AdminProposalDetail() {
       return;
     }
 
-    const updated = (Array.isArray(data) ? data[0] : data) as Partial<ProposalDetail> | null;
+    const updated = data as unknown as Partial<ProposalDetail> | null;
     setProposal({
       ...proposal,
       ...updated,
