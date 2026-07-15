@@ -80,7 +80,12 @@ begin
   if not public.is_harkas_admin() then
     raise exception 'administrator role required' using errcode = '42501';
   end if;
-  return case when tg_op = 'DELETE' then old else new end;
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+
+  return new;
 end;
 $$;
 
