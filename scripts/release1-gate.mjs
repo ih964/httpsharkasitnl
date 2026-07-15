@@ -5,6 +5,7 @@ const root = process.cwd();
 const errors = [];
 const expectedMigrations = [
   "20260714213000_assessment_lead_engine.sql",
+  "20260714220000_text_role_compatibility.sql",
   "20260714224500_assessment_lead_activity.sql",
   "20260714231500_convert_assessment_lead_to_customer.sql",
   "20260715001000_assessment_proposal_drafts.sql",
@@ -25,6 +26,12 @@ const requireText = (path, tokens) => {
     if (!content.includes(token)) errors.push(`${path} mist vereiste marker: ${token}`);
   }
 };
+
+requireText("supabase/migrations/20260714220000_text_role_compatibility.sql", [
+  "public.has_role(uuid,text)",
+  "create domain public.app_role as text",
+  "select public.has_role(uid, role_name::text)",
+]);
 
 requireText("supabase/migrations/20260715010000_release1_security_hardening.sql", [
   "create or replace function public.is_harkas_admin()",
