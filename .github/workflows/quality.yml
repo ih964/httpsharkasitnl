@@ -31,7 +31,7 @@ jobs:
           cat > release1-production.sql <<'SQL'
           -- Harkas One Release 1 production migration bundle
           -- Target: Supabase project harkas-admin (uqkrxzlkvjdmebsbdrmb)
-          -- Generated from the seven reviewed migrations in repository order.
+          -- Generated from the reviewed migrations in repository order.
           -- Any SQL error before COMMIT prevents the release changes from being committed.
 
           begin;
@@ -46,17 +46,8 @@ jobs:
               raise exception 'Release 1 preflight failed: public.user_roles is missing';
             end if;
 
-            if to_regtype('public.app_role') is null then
-              raise exception 'Release 1 preflight failed: public.app_role is missing';
-            end if;
-
-            if not exists (
-              select 1
-              from pg_proc p
-              join pg_namespace n on n.oid = p.pronamespace
-              where n.nspname = 'public' and p.proname = 'has_role'
-            ) then
-              raise exception 'Release 1 preflight failed: public.has_role is missing';
+            if to_regprocedure('public.has_role(uuid,text)') is null then
+              raise exception 'Release 1 preflight failed: public.has_role(uuid,text) is missing';
             end if;
           end;
           $release1_preflight$;
@@ -64,6 +55,7 @@ jobs:
 
           migrations=(
             supabase/migrations/20260714213000_assessment_lead_engine.sql
+            supabase/migrations/20260714220000_text_role_compatibility.sql
             supabase/migrations/20260714224500_assessment_lead_activity.sql
             supabase/migrations/20260714231500_convert_assessment_lead_to_customer.sql
             supabase/migrations/20260715001000_assessment_proposal_drafts.sql
@@ -88,6 +80,10 @@ jobs:
                or to_regclass('public.assessment_proposal_drafts') is null
                or to_regclass('public.assessment_submission_rate_limits') is null then
               raise exception 'Release 1 verification failed: one or more tables are missing';
+            end if;
+
+            if to_regprocedure('public.has_role(uuid,public.app_role)') is null then
+              raise exception 'Release 1 verification failed: role compatibility overload is missing';
             end if;
 
             if not exists (
