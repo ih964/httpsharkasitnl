@@ -55,8 +55,9 @@ declare
   v_before public.assessment_proposal_drafts;
   v_after public.assessment_proposal_drafts;
 begin
-  if auth.uid() is null then
-    raise exception 'authentication required';
+  if auth.uid() is null
+     or not public.has_role(auth.uid(), 'admin'::public.app_role) then
+    raise exception 'administrator role required' using errcode = '42501';
   end if;
 
   if p_status not in ('draft', 'reviewed', 'approved') then
