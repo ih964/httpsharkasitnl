@@ -12,6 +12,7 @@ const expectedMigrations = [
   "20260715003000_assessment_proposal_status.sql",
   "20260715005000_assessment_proposal_lifecycle.sql",
   "20260715010000_release1_security_hardening.sql",
+  "20260715132000_fix_assessment_pgcrypto_search_path.sql",
 ];
 
 const migrationDir = join(root, "supabase", "migrations");
@@ -44,6 +45,13 @@ requireText("supabase/migrations/20260715010000_release1_security_hardening.sql"
   "p_honeypot text",
   "p_privacy_notice_version text",
   "grant execute on function public.submit_it_quick_scan",
+]);
+
+requireText("supabase/migrations/20260715132000_fix_assessment_pgcrypto_search_path.sql", [
+  "pg_extension",
+  "pgcrypto",
+  "alter function public.submit_it_quick_scan",
+  "set search_path to public",
 ]);
 
 const internalMigrations = [
