@@ -47,8 +47,9 @@ declare
   v_vat_total numeric(12,2);
   v_total numeric(12,2);
 begin
-  if auth.uid() is null then
-    raise exception 'authentication required';
+  if auth.uid() is null
+     or not public.has_role(auth.uid(), 'admin'::public.app_role) then
+    raise exception 'administrator role required' using errcode = '42501';
   end if;
 
   select * into v_lead
