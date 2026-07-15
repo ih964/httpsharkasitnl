@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { assessmentSupabase } from "@/integrations/supabase/assessmentClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,7 +58,7 @@ export default function AdminScans() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await assessmentSupabase
       .from("assessment_leads")
@@ -67,9 +67,9 @@ export default function AdminScans() {
     if (error) toast({ title: "Scans konden niet worden geladen", description: error.message, variant: "destructive" });
     else setLeads((data ?? []) as unknown as ScanLead[]);
     setLoading(false);
-  };
+  }, [toast]);
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [load]);
 
   const updateStatus = async (id: string, status: ScanLead["status"]) => {
     setUpdatingId(id);
