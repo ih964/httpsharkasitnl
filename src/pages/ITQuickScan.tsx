@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { assessmentSupabase } from "@/integrations/supabase/assessmentClient";
 import { applyPageSeo } from "@/lib/pageSeo";
 import {
   calculateCategoryScores,
@@ -20,7 +20,7 @@ import {
   type AssessmentAnswerMap,
 } from "@/lib/assessmentScoring";
 import { validateAssessmentLead, type AssessmentLeadInput } from "@/lib/assessmentLeadValidation";
-import { buildItQuickScanSubmission, type SubmitItQuickScanArgs } from "@/lib/assessmentSubmission";
+import { buildItQuickScanSubmission } from "@/lib/assessmentSubmission";
 import {
   IT_QUICK_SCAN_PRIVACY_VERSION,
   createAssessmentSubmissionKey,
@@ -35,9 +35,6 @@ type Question = {
   explanation: string;
   recommendation: string;
 };
-
-type RpcResult = { error: { message?: string } | null };
-type SubmitRpc = (functionName: "submit_it_quick_scan", args: SubmitItQuickScanArgs) => Promise<RpcResult>;
 
 const questions: Question[] = [
   { id: "mfa", category: "Beveiliging", question: "Is multifactorauthenticatie verplicht voor alle zakelijke accounts?", explanation: "MFA beperkt de impact van gestolen wachtwoorden.", recommendation: "Maak MFA verplicht voor alle gebruikers en beheerders." },
@@ -167,8 +164,7 @@ export default function ITQuickScan() {
     });
 
     setSubmitting(true);
-    const submitRpc = supabase.rpc.bind(supabase) as unknown as SubmitRpc;
-    const { error } = await submitRpc("submit_it_quick_scan", payload);
+    const { error } = await assessmentSupabase.rpc("submit_it_quick_scan", payload);
     setSubmitting(false);
 
     if (error) {
@@ -258,11 +254,11 @@ export default function ITQuickScan() {
                     <h2 className="text-2xl font-bold">Bewaar je rapport en ontvang persoonlijk advies</h2>
                     <p className="mt-2 text-muted-foreground">Laat je gegevens achter zodat Harkas IT de uitslag kan bewaren en met je kan bespreken.</p>
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2"><Label htmlFor="companyName">Bedrijfsnaam *</Label><Input id="companyName" value={lead.companyName} onChange={(e) => setLead({ ...lead, companyName: e.target.value })} maxLength={120} /></div>
-                      <div className="space-y-2"><Label htmlFor="contactName">Naam *</Label><Input id="contactName" value={lead.contactName} onChange={(e) => setLead({ ...lead, contactName: e.target.value })} maxLength={120} /></div>
-                      <div className="space-y-2"><Label htmlFor="email">Zakelijk e-mailadres *</Label><Input id="email" type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} maxLength={180} /></div>
-                      <div className="space-y-2"><Label htmlFor="phone">Telefoonnummer</Label><Input id="phone" type="tel" value={lead.phone ?? ""} onChange={(e) => setLead({ ...lead, phone: e.target.value })} maxLength={40} /></div>
-                      <div className="space-y-2"><Label htmlFor="employeeCount">Aantal medewerkers</Label><Input id="employeeCount" type="number" min="1" max="10000" value={lead.employeeCount ?? ""} onChange={(e) => setLead({ ...lead, employeeCount: e.target.value })} /></div>
+                      <div className="space-y-2"><Label htmlFor="companyName">Bedrijfsnaam *</Label><Input id="companyName" value={lead.companyName} onChange={(event) => setLead({ ...lead, companyName: event.target.value })} maxLength={120} /></div>
+                      <div className="space-y-2"><Label htmlFor="contactName">Naam *</Label><Input id="contactName" value={lead.contactName} onChange={(event) => setLead({ ...lead, contactName: event.target.value })} maxLength={120} /></div>
+                      <div className="space-y-2"><Label htmlFor="email">Zakelijk e-mailadres *</Label><Input id="email" type="email" value={lead.email} onChange={(event) => setLead({ ...lead, email: event.target.value })} maxLength={180} /></div>
+                      <div className="space-y-2"><Label htmlFor="phone">Telefoonnummer</Label><Input id="phone" type="tel" value={lead.phone ?? ""} onChange={(event) => setLead({ ...lead, phone: event.target.value })} maxLength={40} /></div>
+                      <div className="space-y-2"><Label htmlFor="employeeCount">Aantal medewerkers</Label><Input id="employeeCount" type="number" min="1" max="10000" value={lead.employeeCount ?? ""} onChange={(event) => setLead({ ...lead, employeeCount: event.target.value })} /></div>
                     </div>
                     <div className="mt-6 space-y-4">
                       <label className="flex items-start gap-3 text-sm"><Checkbox checked={lead.consentReport} onCheckedChange={(checked) => setLead({ ...lead, consentReport: checked === true })} /><span>Ik geef toestemming om mijn gegevens en scanresultaat te verwerken voor het leveren en bespreken van dit rapport. Lees het <a href="/privacy" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">privacybeleid</a>. *</span></label>
