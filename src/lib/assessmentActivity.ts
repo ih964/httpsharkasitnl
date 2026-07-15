@@ -17,12 +17,28 @@ const proposalStatusLabels: Record<string, string> = {
   draft: "Concept",
   reviewed: "Gecontroleerd",
   approved: "Goedgekeurd",
+  sent: "Verzonden",
+  accepted: "Geaccepteerd",
+  rejected: "Geweigerd",
 };
 
 const formatCurrency = (value: unknown): string | null => {
   const amount = Number(value);
   if (!Number.isFinite(amount)) return null;
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(amount);
+};
+
+const formatProposalTransition = (metadata: Record<string, unknown>): string => {
+  const from = proposalStatusLabels[String(metadata.status_from)] ?? String(metadata.status_from ?? "onbekend");
+  const to = proposalStatusLabels[String(metadata.status_to)] ?? String(metadata.status_to ?? "onbekend");
+  const recipient = String(metadata.sent_to ?? "").trim();
+
+  if (metadata.status_to === "sent") {
+    return recipient ? `Offerte handmatig verzonden naar ${recipient}` : "Offerte handmatig verzonden";
+  }
+  if (metadata.status_to === "accepted") return "Offerte door klant geaccepteerd";
+  if (metadata.status_to === "rejected") return "Offerte door klant geweigerd";
+  return `Offertestatus gewijzigd van ${from} naar ${to}`;
 };
 
 export const formatAssessmentActivity = (event: AssessmentActivityEvent): string => {
@@ -58,10 +74,8 @@ export const formatAssessmentActivity = (event: AssessmentActivityEvent): string
     return total ? `Conceptofferte opgeslagen${lines} · ${total}` : `Conceptofferte opgeslagen${lines}`;
   }
 
-  if (event.event_type === "proposal_status_updated") {
-    const from = proposalStatusLabels[String(metadata.status_from)] ?? String(metadata.status_from ?? "onbekend");
-    const to = proposalStatusLabels[String(metadata.status_to)] ?? String(metadata.status_to ?? "onbekend");
-    return `Offertestatus gewijzigd van ${from} naar ${to}`;
+  if (event.event_type === "proposal_status_updated" || event.event_type === "proposal_lifecycle_updated") {
+    return formatProposalTransition(metadata);
   }
 
   if (event.event_type === "lead_updated") return "Leadgegevens bijgewerkt";
