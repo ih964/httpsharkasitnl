@@ -62,6 +62,7 @@ jobs:
             supabase/migrations/20260715003000_assessment_proposal_status.sql
             supabase/migrations/20260715005000_assessment_proposal_lifecycle.sql
             supabase/migrations/20260715010000_release1_security_hardening.sql
+            supabase/migrations/20260715132000_fix_assessment_pgcrypto_search_path.sql
           )
 
           for migration in "${migrations[@]}"; do
