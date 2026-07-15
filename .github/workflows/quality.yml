@@ -47,10 +47,36 @@ jobs:
         run: npm run release:gate
 
       - name: Release 1 typecheck
-        run: npm run typecheck:release1
+        id: release_typecheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run typecheck:release1 2>&1 | tee release1-typecheck.log
+
+      - name: Upload typecheck diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release1-typecheck-log
+          path: release1-typecheck.log
+          retention-days: 1
 
       - name: Release 1 blocking lint
-        run: npm run lint:release1
+        id: release_lint
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint:release1 2>&1 | tee release1-lint.log
+
+      - name: Upload lint diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release1-lint-log
+          path: release1-lint.log
+          retention-days: 1
 
       - name: Run assessment tests
         run: npm test
@@ -61,3 +87,10 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      - name: Enforce Release 1 blocking checks
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.release_typecheck.outcome }}" = "success"
+          test "${{ steps.release_lint.outcome }}" = "success"
