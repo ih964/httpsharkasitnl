@@ -45,3 +45,33 @@ test("formats proposal status changes", () => {
     "Offertestatus gewijzigd van Concept naar Goedgekeurd",
   );
 });
+
+test("formats manual sending and customer outcomes", () => {
+  assert.equal(
+    formatAssessmentActivity({
+      id: "8",
+      event_type: "proposal_lifecycle_updated",
+      metadata: { status_from: "approved", status_to: "sent", sent_to: "klant@example.nl" },
+      created_at: "2026-07-15T09:00:00Z",
+    }),
+    "Offerte handmatig verzonden naar klant@example.nl",
+  );
+  assert.equal(
+    formatAssessmentActivity({
+      id: "9",
+      event_type: "proposal_lifecycle_updated",
+      metadata: { status_from: "sent", status_to: "accepted" },
+      created_at: "2026-07-16T09:00:00Z",
+    }),
+    "Offerte door klant geaccepteerd",
+  );
+  assert.equal(
+    formatAssessmentActivity({
+      id: "10",
+      event_type: "proposal_lifecycle_updated",
+      metadata: { status_from: "sent", status_to: "rejected" },
+      created_at: "2026-07-16T09:00:00Z",
+    }),
+    "Offerte door klant geweigerd",
+  );
+});
