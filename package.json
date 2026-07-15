@@ -8,6 +8,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "lint:release1": "eslint src/contexts/AuthContext.tsx src/integrations/supabase/assessmentClient.ts src/lib/assessment*.ts src/pages/ITQuickScan.tsx src/pages/PrivacyPolicy.tsx src/pages/admin/AdminScan*.tsx src/pages/admin/AdminProposal*.tsx src/components/admin/Assessment*.tsx --max-warnings=0",
+    "typecheck:release1": "tsc --noEmit -p tsconfig.release1.json",
+    "release:gate": "node scripts/release1-gate.mjs",
     "test": "node --experimental-strip-types --test src/lib/*.test.ts",
     "preview": "vite preview"
   },
