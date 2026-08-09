@@ -1,5 +1,6 @@
 import { ShieldCheck, ArrowRight, Phone, MonitorCog, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const trustBullets = [
@@ -13,11 +14,11 @@ const Hero = () => {
     <section className="relative min-h-screen w-full max-w-full flex items-center justify-center overflow-hidden gradient-hero pt-20">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[320px] h-[320px] sm:w-[600px] sm:h-[600px] rounded-full bg-primary/5 blur-[100px] sm:blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[260px] h-[260px] sm:w-[400px] sm:h-[400px] rounded-full bg-primary/10 blur-[90px] sm:blur-[100px] pointer-events-none" />
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
           backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px'
+          backgroundSize: "60px 60px",
         }}
       />
 
@@ -33,28 +34,28 @@ const Hero = () => {
             <span className="truncate">IT-partner voor ondernemers in heel Nederland</span>
           </motion.div>
 
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-[2.35rem] xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] mb-6 break-words"
           >
-            Zorgeloos IT-beheer,
+            IT die werkt.
             <br className="hidden sm:block" />
-            <span className="text-gradient block sm:inline">Microsoft 365 en slimme websites</span>
+            <span className="text-gradient block sm:inline">Zonder gedoe, losse tools of vaag advies.</span>
           </motion.h1>
 
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-7 px-1"
           >
-            Harkas IT helpt ondernemers en organisaties in heel Nederland met veilige werkplekken, snelle remote support,
-            Microsoft 365-beheer, moderne websites en automatisering zonder gedoe.
+            Harkas IT helpt ondernemers en organisaties met IT-beheer, Microsoft 365, werkplekken, remote support,
+            websites, webapps en automatisering. Praktisch geregeld, duidelijk uitgelegd en afgestemd op je bedrijf.
           </motion.p>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -68,23 +69,23 @@ const Hero = () => {
             ))}
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
             className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 max-w-sm sm:max-w-none mx-auto"
           >
             <Button variant="hero" size="lg" asChild className="w-full sm:w-auto">
-              <a href="#contact" className="gap-3">
-                Plan gratis IT-check
+              <Link to="/it-check" className="gap-3">
+                Start gratis IT-check
                 <ArrowRight className="w-5 h-5" />
-              </a>
+              </Link>
             </Button>
             <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-              <a href="/diensten/support" className="gap-3">
+              <Link to="/diensten/remote-support" className="gap-3">
                 <LifeBuoy className="w-5 h-5" />
                 Direct support aanvragen
-              </a>
+              </Link>
             </Button>
             <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
               <a href="tel:+31851249091" className="gap-3">
