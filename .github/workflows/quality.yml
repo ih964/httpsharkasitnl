@@ -1,0 +1,204 @@
+name: Quality checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - main
+      - agent/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Release 1 SQL bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > release1-production.sql <<'SQL'
+          -- Harkas One Release 1 production migration bundle
+          -- Target: Supabase project harkas-admin (uqkrxzlkvjdmebsbdrmb)
+          -- Generated from the reviewed migrations in repository order.
+          -- Any SQL error before COMMIT prevents the release changes from being committed.
+
+          begin;
+
+          do $release1_preflight$
+          begin
+            if to_regclass('public.customers') is null then
+              raise exception 'Release 1 preflight failed: public.customers is missing';
+            end if;
+
+            if to_regclass('public.user_roles') is null then
+              raise exception 'Release 1 preflight failed: public.user_roles is missing';
+            end if;
+
+            if to_regprocedure('public.has_role(uuid,text)') is null then
+              raise exception 'Release 1 preflight failed: public.has_role(uuid,text) is missing';
+            end if;
+          end;
+          $release1_preflight$;
+          SQL
+
+          migrations=(
+            supabase/migrations/20260714213000_assessment_lead_engine.sql
+            supabase/migrations/20260714220000_text_role_compatibility.sql
+            supabase/migrations/20260714224500_assessment_lead_activity.sql
+            supabase/migrations/20260714231500_convert_assessment_lead_to_customer.sql
+            supabase/migrations/20260715001000_assessment_proposal_drafts.sql
+            supabase/migrations/20260715003000_assessment_proposal_status.sql
+            supabase/migrations/20260715005000_assessment_proposal_lifecycle.sql
+            supabase/migrations/20260715010000_release1_security_hardening.sql
+            supabase/migrations/20260715132000_fix_assessment_pgcrypto_search_path.sql
+          )
+
+          for migration in "${migrations[@]}"; do
+            printf '\n\n-- BEGIN %s\n' "$migration" >> release1-production.sql
+            cat "$migration" >> release1-production.sql
+            printf '\n-- END %s\n' "$migration" >> release1-production.sql
+          done
+
+          cat >> release1-production.sql <<'SQL'
+
+          do $release1_verify$
+          begin
+            if to_regclass('public.assessment_leads') is null
+               or to_regclass('public.assessment_runs') is null
+               or to_regclass('public.assessment_audit_events') is null
+               or to_regclass('public.assessment_proposal_drafts') is null
+               or to_regclass('public.assessment_submission_rate_limits') is null then
+              raise exception 'Release 1 verification failed: one or more tables are missing';
+            end if;
+
+            if to_regprocedure('public.has_role(uuid,public.app_role)') is null then
+              raise exception 'Release 1 verification failed: role compatibility overload is missing';
+            end if;
+
+            if not exists (
+              select 1 from pg_policies
+              where schemaname = 'public'
+                and tablename = 'assessment_leads'
+                and policyname = 'admin read assessment leads'
+            ) then
+              raise exception 'Release 1 verification failed: admin lead policy is missing';
+            end if;
+
+            if not exists (
+              select 1 from pg_proc p
+              join pg_namespace n on n.oid = p.pronamespace
+              where n.nspname = 'public'
+                and p.proname = 'submit_it_quick_scan'
+                and p.pronargs = 15
+            ) then
+              raise exception 'Release 1 verification failed: hardened public submit RPC is missing';
+            end if;
+
+            if not exists (
+              select 1 from pg_proc p
+              join pg_namespace n on n.oid = p.pronamespace
+              where n.nspname = 'public'
+                and p.proname = 'update_assessment_proposal_lifecycle'
+            ) then
+              raise exception 'Release 1 verification failed: proposal lifecycle RPC is missing';
+            end if;
+          end;
+          $release1_verify$;
+
+          commit;
+
+          select
+            'HARKAS_ONE_RELEASE1_OK'::text as release_status,
+            current_database() as database_name,
+            now() as completed_at;
+          SQL
+
+      - name: Upload Release 1 SQL bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: harkas-one-release1-production-sql
+          path: release1-production.sql
+          retention-days: 3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Refresh dependency lock
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Upload refreshed lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: refreshed-package-lock
+          path: package-lock.json
+          retention-days: 1
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Release 1 static security gate
+        run: npm run release:gate
+
+      - name: Release 1 typecheck
+        id: release_typecheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run typecheck:release1 2>&1 | tee release1-typecheck.log
+
+      - name: Upload typecheck diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release1-typecheck-log
+          path: release1-typecheck.log
+          retention-days: 1
+
+      - name: Release 1 blocking lint
+        id: release_lint
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint:release1 2>&1 | tee release1-lint.log
+
+      - name: Upload lint diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release1-lint-log
+          path: release1-lint.log
+          retention-days: 1
+
+      - name: Run assessment tests
+        run: npm test
+
+      - name: Full repository lint debt report
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Enforce Release 1 blocking checks
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.release_typecheck.outcome }}" = "success"
+          test "${{ steps.release_lint.outcome }}" = "success"
