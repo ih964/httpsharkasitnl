@@ -34,7 +34,7 @@ const examples = [
     title: "Minder handmatig werk met slimme flows",
     description: "Formulieren, klantvragen, e-mails of interne stappen slimmer laten verlopen met praktische automatisering.",
     points: ["Formulieren", "Werkflows", "Klantportalen"],
-    link: "/diensten/marketing",
+    link: "/diensten/automatisering",
   },
 ];
 
