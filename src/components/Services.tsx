@@ -9,21 +9,21 @@ const mainServices = [
     title: "IT Beheer & Support",
     description: "Voor bedrijven in heel Nederland die hun dagelijkse IT professioneel willen regelen zonder eigen IT-afdeling.",
     bullets: ["Gebruikersbeheer", "Remote support", "Werkplekbeheer", "Storingen oplossen", "Onboarding en offboarding", "Proactief meedenken"],
-    link: "/diensten/support",
+    link: "/diensten/it-beheer",
   },
   {
     icon: KeyRound,
     title: "Microsoft 365 & Security",
     description: "Een veilige Microsoft-basis met accounts, mail, Teams, SharePoint, MFA en apparaatbeheer.",
     bullets: ["Exchange Online", "Teams en SharePoint", "OneDrive", "MFA en rechten", "Intune basis", "Licentieadvies"],
-    link: "/diensten/support",
+    link: "/diensten/microsoft-365-beheer",
   },
   {
     icon: LifeBuoy,
     title: "Werkplekbeheer & Remote Support",
     description: "Snel hulp op afstand bij laptops, accounts, e-mail, printers, scanners, werkplekproblemen en dagelijkse supportvragen.",
     bullets: ["Nieuwe werkplekken", "Remote meekijken", "Printer/scanner hulp", "Apparaatinstellingen", "Supporttickets", "Duidelijke opvolging"],
-    link: "/diensten/support",
+    link: "/diensten/remote-support",
   },
   {
     icon: Globe,
@@ -79,9 +79,9 @@ const Services = () => {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
-              <Button variant="hero" asChild><Link to="/diensten/support">Support aanvragen</Link></Button>
-              <Button variant="outline" asChild><Link to="/diensten/support">Remote support starten</Link></Button>
-              <Button variant="outline" asChild><Link to="/#contact">Contact opnemen</Link></Button>
+              <Button variant="hero" asChild><Link to="/diensten/remote-support">Remote support aanvragen</Link></Button>
+              <Button variant="outline" asChild><Link to="/diensten/it-beheer">IT-beheer bekijken</Link></Button>
+              <Button variant="outline" asChild><Link to="/it-check">Gratis IT-check starten</Link></Button>
             </div>
           </div>
         </motion.div>
@@ -117,7 +117,7 @@ const Services = () => {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }} className="text-center mt-16">
-          <Button variant="hero" size="lg" asChild><a href="#contact" className="gap-3">Plan gratis IT-check<ArrowRight className="w-5 h-5" /></a></Button>
+          <Button variant="hero" size="lg" asChild><Link to="/it-check" className="gap-3">Plan gratis IT-check<ArrowRight className="w-5 h-5" /></Link></Button>
         </motion.div>
       </div>
     </section>
