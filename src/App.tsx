@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import ITQuickScan from "./pages/ITQuickScan";
@@ -46,7 +46,8 @@ const App = () => (
             <Route path="/over-ons" element={<About />} />
             <Route path="/diensten/branding" element={<Branding />} />
             <Route path="/diensten/websites" element={<Websites />} />
-            <Route path="/diensten/marketing" element={<Marketing />} />
+            <Route path="/diensten/automatisering" element={<Marketing />} />
+            <Route path="/diensten/marketing" element={<Navigate to="/diensten/automatisering" replace />} />
             <Route path="/diensten/seo" element={<SEO />} />
             <Route path="/diensten/social-media" element={<SocialMedia />} />
             <Route path="/diensten/support" element={<Support />} />
