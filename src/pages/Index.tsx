@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Services from "@/components/Services";
+import ITCheckCTA from "@/components/ITCheckCTA";
 import Process from "@/components/Process";
 import Certifications from "@/components/Certifications";
 import Portfolio from "@/components/Portfolio";
@@ -18,7 +19,7 @@ const Index = () => {
   useEffect(() => {
     applyPageSeo({
       title: "Harkas IT | IT-beheer, Microsoft 365 & Support",
-      description: "Harkas IT helpt ondernemers met IT-beheer, Microsoft 365, werkplekbeheer, remote support, websites, webapps en automatisering.",
+      description: "Harkas IT helpt ondernemers in Nederland met IT-beheer, Microsoft 365, werkplekbeheer, remote support, websites, webapps en automatisering.",
     });
   }, []);
 
@@ -28,6 +29,7 @@ const Index = () => {
       <main>
         <Hero />
         <Services />
+        <ITCheckCTA />
         <Process />
         <Certifications />
         <Portfolio />
