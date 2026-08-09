@@ -10,6 +10,13 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/diensten/marketing",
+      "destination": "/diensten/automatisering",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/favicon.ico",
