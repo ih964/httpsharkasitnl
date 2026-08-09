@@ -9,7 +9,7 @@ const serviceLinks = [
   { name: "Remote Support", href: "/diensten/remote-support" },
   { name: "IT Support MKB", href: "/diensten/it-support-mkb" },
   { name: "Websites & Webapps", href: "/diensten/websites" },
-  { name: "Automatisering", href: "/diensten/marketing" },
+  { name: "Automatisering", href: "/diensten/automatisering" },
 ];
 
 const mainLinks = [
