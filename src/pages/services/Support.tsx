@@ -43,21 +43,21 @@ const setupSteps = [
 const serviceBlocks = [
   {
     icon: Users,
-    title: "Eenmalige IT-check",
-    text: "Voor bedrijven die hun huidige Microsoft 365, werkplekken, rechten en basisbeveiliging willen laten controleren.",
-    points: ["Korte inventarisatie", "Microsoft 365 basiscontrole", "Werkplek- en supportadvies", "Duidelijke verbeterpunten"],
+    title: "Microsoft 365 & Werkplek Check",
+    text: "Betaalde technische controle vanaf €349 eenmalig, exclusief btw. Omvang en prijs spreken we vooraf af; het uitvoeren van verbeteringen is niet automatisch inbegrepen.",
+    points: ["Microsoft 365-basiscontrole", "Afgesproken werkplekken en accounts", "MFA, rechten en basisbeveiliging", "Overzicht van bevindingen en verbeterpunten"],
   },
   {
     icon: ShieldCheck,
-    title: "Maandelijks IT-beheer",
-    text: "Voor bedrijven die geen eigen IT-afdeling hebben, maar wel een vaste IT-partner willen voor beheer en support.",
-    points: ["Gebruikersbeheer", "Remote support", "Werkplekbeheer", "Maandelijkse controle"],
+    title: "IT-beheer & support",
+    text: "Basisaanbod vanaf €499 per maand, exclusief btw. Welke gebruikers, apparaten en werkzaamheden onder beheer vallen, plus bereikbaarheid en serviceafspraken, leggen we vooraf vast.",
+    points: ["Microsoft 365-basisbeheer", "Gebruikersbeheer en remote ondersteuning", "4 supporturen per maand volgens afspraak", "MFA- en basisbeveiligingscheck"],
   },
   {
     icon: Laptop,
-    title: "Werkplek & remote support",
-    text: "Voor praktische hulp bij laptops, accounts, e-mail, printers, scanners en dagelijkse werkplekproblemen.",
-    points: ["Remote meekijken", "Nieuwe werkplekken", "Printer/scanner hulp", "Heldere opvolging"],
+    title: "Uitgebreid beheer & projecten",
+    text: "Aanvullend werkplekbeheer, migraties, websitebeheer en automatisering bieden we op maat aan. Je ontvangt vooraf een voorstel voor jouw omgeving en werkzaamheden.",
+    points: ["Werkplekbeheer", "Migraties en inrichting", "Websitebeheer", "Praktische automatisering"],
   },
 ];
 
@@ -90,12 +90,12 @@ const Support = () => {
                 <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
                   Harkas IT helpt ondernemers met dagelijkse IT-support, veilige Microsoft 365-inrichting, werkplekbeheer en duidelijke opvolging zonder onnodig gedoe.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button variant="hero" size="lg" asChild>
-                    <Link to="/#contact" className="gap-3">
-                      Plan gratis IT-check
-                      <ArrowRight className="w-5 h-5" />
-                    </Link>
+                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
+                  <Button variant="hero" size="lg" className="h-auto min-h-12 whitespace-normal text-center" asChild>
+                    <a href="/?aanvraag=kennismaking#contact" className="gap-3">
+                      Vraag een gratis kennismaking aan
+                      <ArrowRight className="w-5 h-5 flex-shrink-0" />
+                    </a>
                   </Button>
                   <Button variant="outline" size="lg" asChild>
                     <a href="tel:+31851249091">Bel 085 124 9091</a>
@@ -146,32 +146,34 @@ const Support = () => {
           <div className="container px-6">
             <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
               {serviceBlocks.map((block) => (
-                <div key={block.title} className="p-8 rounded-2xl gradient-card border border-border/50">
+                <div key={block.title} className="min-w-0 p-6 sm:p-8 rounded-2xl gradient-card border border-border/50">
                   <block.icon className="w-8 h-8 text-primary mb-5" />
                   <h2 className="text-2xl font-bold mb-4">{block.title}</h2>
                   <p className="text-muted-foreground mb-6 leading-relaxed">{block.text}</p>
                   <ul className="space-y-3 text-sm text-muted-foreground">
-                    {block.points.map((point) => (
-                      <li key={point}>• {point}</li>
-                    ))}
+                    {block.points.map((point) => <li key={point}>• {point}</li>)}
                   </ul>
                 </div>
               ))}
+            </div>
+            <div className="max-w-4xl mx-auto mt-8 text-sm text-muted-foreground leading-relaxed text-center">
+              <p>Het basisbedrag omvat geen Microsoft 365- of andere softwarelicenties, hardware, initiële inrichting, migraties, locatiebezoeken of extra uren. Deze kosten spreken we vooraf apart af. Support is niet onbeperkt.</p>
+              <a href="/#prijzen" className="inline-flex items-center gap-2 mt-4 font-medium text-primary">Bekijk het basisaanbod en de prijsafspraken<ArrowRight className="w-4 h-4" /></a>
             </div>
           </div>
         </section>
 
         <section className="py-20 bg-secondary/30">
           <div className="container px-6 text-center">
-            <h2 className="text-3xl font-bold mb-4">Wil je weten waar jouw IT beter kan?</h2>
+            <h2 className="text-3xl font-bold mb-4">Wil je weten welke ondersteuning past?</h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Plan een gratis IT-check. We kijken naar je huidige situatie en geven eerlijk advies over wat beter, veiliger of slimmer kan.
+              Een kennismaking is gratis. We bespreken je situatie en hulpvraag; een technische controle of verdere uitvoering bieden we apart aan.
             </p>
-            <Button variant="hero" size="lg" asChild>
-              <Link to="/#contact" className="gap-3">
-                Plan gratis IT-check
-                <ArrowRight className="w-5 h-5" />
-              </Link>
+            <Button variant="hero" size="lg" className="h-auto min-h-12 whitespace-normal text-center" asChild>
+              <a href="/?aanvraag=kennismaking#contact" className="gap-3">
+                Vraag een gratis kennismaking aan
+                <ArrowRight className="w-5 h-5 flex-shrink-0" />
+              </a>
             </Button>
           </div>
         </section>

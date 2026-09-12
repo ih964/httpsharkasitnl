@@ -6,12 +6,12 @@ const steps = [
   {
     icon: ClipboardCheck,
     title: "1. Korte inventarisatie",
-    text: "We kijken naar je huidige situatie: gebruikers, Microsoft 365, werkplekken, supportvragen, website en processen.",
+    text: "We bespreken je huidige situatie: gebruikers, Microsoft 365, werkplekken, supportvragen, website en processen.",
   },
   {
     icon: Lightbulb,
-    title: "2. Duidelijk advies",
-    text: "Je krijgt eerlijk advies over wat beter, veiliger of slimmer kan. Geen onnodige oplossingen, maar wat echt past.",
+    title: "2. Duidelijk voorstel",
+    text: "We stellen een passende aanpak voor. Omvang, prijs en serviceafspraken leggen we vooraf vast; technische controle en uitvoering zijn betaalde diensten.",
   },
   {
     icon: Settings,
@@ -72,22 +72,22 @@ const Process = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="max-w-4xl mx-auto mt-12 p-8 rounded-3xl gradient-card border border-primary/30"
+          className="max-w-4xl mx-auto mt-12 p-6 sm:p-8 rounded-3xl gradient-card border border-primary/30"
         >
           <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-3 mb-3">
-                <CheckCircle2 className="w-6 h-6 text-primary" />
-                <h3 className="text-2xl font-bold">Begin laagdrempelig met een IT-check</h3>
+                <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0" />
+                <h3 className="text-2xl font-bold">Begin met een gratis kennismaking</h3>
               </div>
               <p className="text-muted-foreground leading-relaxed">
-                Je hoeft niet direct een groot pakket te kiezen. We starten met inzicht en adviseren daarna pas wat logisch is.
+                Je hoeft niet direct beheer af te nemen. We bespreken eerst je hulpvraag. Een technische controle of verdere uitvoering bieden we apart aan.
               </p>
             </div>
-            <Button variant="hero" size="lg" asChild>
-              <a href="#contact" className="gap-3">
-                Plan gratis IT-check
-                <ArrowRight className="w-5 h-5" />
+            <Button variant="hero" size="lg" className="h-auto min-h-12 whitespace-normal text-center" asChild>
+              <a href="/?aanvraag=kennismaking#contact" className="gap-3">
+                Vraag een kennismaking aan
+                <ArrowRight className="w-5 h-5 flex-shrink-0" />
               </a>
             </Button>
           </div>

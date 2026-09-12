@@ -15,7 +15,7 @@ const serviceLinks = [
 const mainLinks = [
   { name: "Home", href: "/" },
   { name: "Praktijkvoorbeelden", href: "/#portfolio" },
-  { name: "Pakketten", href: "/#prijzen" },
+  { name: "Prijzen", href: "/#prijzen" },
   { name: "Over ons", href: "/over-ons" },
   { name: "Contact", href: "/#contact" },
 ];
@@ -49,7 +49,7 @@ const Navbar = () => {
               {mainLinks.map((link) => <a key={link.name} href={link.href} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">{link.name}</a>)}
             </div>
 
-            <div className="hidden xl:block"><Button variant="hero" asChild><a href="/#contact">Plan gratis IT-check</a></Button></div>
+            <div className="hidden xl:block"><Button variant="hero" asChild><a href="/?aanvraag=kennismaking#contact">Gratis kennismaken</a></Button></div>
             <button className="xl:hidden p-2 rounded-xl hover:bg-secondary transition-colors" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">{isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}</button>
           </div>
         </div>
@@ -60,7 +60,7 @@ const Navbar = () => {
           <div className="container px-6 py-6 space-y-6">
             <div className="space-y-2"><p className="text-xs font-semibold uppercase tracking-wider text-primary">Diensten</p>{serviceLinks.map((link) => <a key={link.name} href={link.href} className="block rounded-xl px-4 py-3 text-base font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>{link.name}</a>)}</div>
             <div className="space-y-2 border-t border-border/40 pt-5">{mainLinks.map((link) => <a key={link.name} href={link.href} className="block rounded-xl px-4 py-3 text-base font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>{link.name}</a>)}</div>
-            <Button variant="hero" className="w-full" asChild><a href="/#contact" onClick={() => setIsOpen(false)}>Plan gratis IT-check</a></Button>
+            <Button variant="hero" className="w-full" asChild><a href="/?aanvraag=kennismaking#contact" onClick={() => setIsOpen(false)}>Gratis kennismaken</a></Button>
           </div>
         </div>
       )}

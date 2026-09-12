@@ -29,7 +29,7 @@ const Footer = () => {
               IT-partner voor ondernemers in Nederland. Hulp bij Microsoft 365, werkplekken, remote support, websites, webapps en automatisering.
             </p>
             <Link to="/it-check" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:gap-3 transition-all">
-              Start gratis IT-check
+              Start gratis online zelfcheck
               <span aria-hidden="true">→</span>
             </Link>
           </div>
@@ -48,8 +48,8 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Snel naar</h3>
             <div className="space-y-3">
-              <Link to="/it-check" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Gratis IT-check</Link>
-              <Link to="/#prijzen" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Pakketten</Link>
+              <Link to="/it-check" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Gratis online IT-zelfcheck</Link>
+              <a href="/#prijzen" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Prijzen</a>
               <Link to="/#portfolio" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Praktijkvoorbeelden</Link>
               <Link to="/over-ons" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Over Harkas IT</Link>
               <Link to="/#contact" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
