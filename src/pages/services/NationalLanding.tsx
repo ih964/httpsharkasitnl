@@ -70,7 +70,7 @@ const NationalLanding = () => {
                 <span className="inline-flex items-center gap-2 text-primary text-sm font-semibold tracking-wider uppercase mb-5"><Globe2 className="w-4 h-4" /> Landelijke IT-dienst</span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">{page.title} <span className="text-gradient">{page.accent}</span></h1>
                 <p className="text-xl text-muted-foreground mb-8 leading-relaxed">{page.intro}</p>
-                <Button variant="hero" size="lg" asChild><Link to="/#contact" className="gap-3">Plan gratis IT-check<ArrowRight className="w-5 h-5" /></Link></Button>
+                <Button variant="hero" size="lg" className="h-auto min-h-12 whitespace-normal text-center" asChild><a href="/?aanvraag=kennismaking#contact" className="gap-3">Vraag een gratis kennismaking aan<ArrowRight className="w-5 h-5 flex-shrink-0" /></a></Button>
               </div>
               <div className="gradient-card rounded-3xl p-8 border border-border/50">
                 <h2 className="text-2xl font-semibold mb-6">Waarmee Harkas IT helpt</h2>

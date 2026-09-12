@@ -73,12 +73,12 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 max-w-sm sm:max-w-none mx-auto"
+            className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-center gap-4 max-w-sm sm:max-w-none mx-auto"
           >
-            <Button variant="hero" size="lg" asChild className="w-full sm:w-auto">
+            <Button variant="hero" size="lg" asChild className="w-full sm:w-auto h-auto min-h-12 whitespace-normal text-center">
               <Link to="/it-check" className="gap-3">
-                Start gratis IT-check
-                <ArrowRight className="w-5 h-5" />
+                Start gratis online zelfcheck
+                <ArrowRight className="w-5 h-5 flex-shrink-0" />
               </Link>
             </Button>
             <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
