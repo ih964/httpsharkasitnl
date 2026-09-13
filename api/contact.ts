@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const resend = new Resend(resendApiKey);
 
   try {
-    await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: fromEmail,
       to: [toEmail],
       replyTo: cleanEmail,
@@ -68,8 +68,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `,
     });
 
+    if (error) {
+      console.error('Resend rejected contact email', {
+        name: error.name,
+        message: error.message,
+      });
+      return res.status(502).json({ error: 'Email provider rejected message' });
+    }
+
+    if (!data?.id) {
+      console.error('Resend returned no message id for contact email');
+      return res.status(502).json({ error: 'Email provider returned no message id' });
+    }
+
     return res.status(200).json({ ok: true });
   } catch (error) {
+    console.error('Unexpected contact email error', error);
     return res.status(500).json({ error: 'Email could not be sent' });
   }
 }
