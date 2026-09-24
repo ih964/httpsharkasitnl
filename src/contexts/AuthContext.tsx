@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- De provider en bijbehorende hook vormen bewust één contextmodule. */
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,22 +22,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAdminRole = async (userId: string): Promise<boolean> => {
     try {
-      console.log("[Auth] admin check started for", userId);
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .maybeSingle();
-      if (error) {
-        console.error("[Auth] user_roles query error:", error);
-        return false;
-      }
-      const result = !!data;
-      console.log("[Auth] admin check result:", result);
-      return result;
-    } catch (err) {
-      console.error("[Auth] admin check exception:", err);
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+
+      if (error) return false;
+      return data === true;
+    } catch {
       return false;
     }
   };
@@ -44,55 +37,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Set up listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
-        console.log("[Auth] onAuthStateChange:", _event);
-        if (!mounted) return;
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
+    const applySession = async (nextSession: Session | null) => {
+      if (!mounted) return;
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
 
-        if (newSession?.user) {
-          // Use setTimeout to avoid potential deadlock with Supabase client
-          setTimeout(async () => {
-            if (!mounted) return;
-            const admin = await checkAdminRole(newSession.user.id);
-            if (mounted) {
-              setIsAdmin(admin);
-              setIsLoading(false);
-            }
-          }, 0);
-        } else {
-          setIsAdmin(false);
-          setIsLoading(false);
-        }
+      if (!nextSession?.user) {
+        setIsAdmin(false);
+        setIsLoading(false);
+        return;
       }
-    );
 
-    // Then get initial session
+      const admin = await checkAdminRole(nextSession.user.id);
+      if (!mounted) return;
+      setIsAdmin(admin);
+      setIsLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      window.setTimeout(() => {
+        void applySession(nextSession);
+      }, 0);
+    });
+
     const initSession = async () => {
+      setIsLoading(true);
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("[Auth] getSession error:", error);
+          await applySession(null);
+          return;
         }
-        if (!mounted) return;
-        console.log("[Auth] session loaded:", !!currentSession);
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-
-        if (currentSession?.user) {
-          const admin = await checkAdminRole(currentSession.user.id);
-          if (mounted) setIsAdmin(admin);
-        }
-      } catch (err) {
-        console.error("[Auth] getSession exception:", err);
-      } finally {
-        if (mounted) setIsLoading(false);
+        await applySession(currentSession);
+      } catch {
+        await applySession(null);
       }
     };
 
-    initSession();
+    void initSession();
 
     return () => {
       mounted = false;
@@ -103,15 +85,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        console.error("[Auth] signIn error:", error);
-        return { error: error as Error };
-      }
-      console.log("[Auth] signIn success");
-      return { error: null };
-    } catch (err) {
-      console.error("[Auth] signIn exception:", err);
-      return { error: err as Error };
+      return { error: error ? error as Error : null };
+    } catch (error) {
+      return { error: error as Error };
     }
   };
 
