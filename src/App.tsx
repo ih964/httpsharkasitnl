@@ -14,6 +14,8 @@ import SEO from "./pages/services/SEO";
 import SocialMedia from "./pages/services/SocialMedia";
 import Support from "./pages/services/Support";
 import NationalLanding from "./pages/services/NationalLanding";
+import InstallationFieldServices from "./pages/services/InstallationFieldServices";
+import CareTechnology from "./pages/services/CareTechnology";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import About from "./pages/About";
@@ -51,6 +53,8 @@ const App = () => (
             <Route path="/diensten/seo" element={<SEO />} />
             <Route path="/diensten/social-media" element={<SocialMedia />} />
             <Route path="/diensten/support" element={<Support />} />
+            <Route path="/diensten/installatie-field-services" element={<InstallationFieldServices />} />
+            <Route path="/diensten/zorgtechnologie" element={<CareTechnology />} />
             <Route path="/diensten/it-beheer" element={<NationalLanding />} />
             <Route path="/diensten/microsoft-365-beheer" element={<NationalLanding />} />
             <Route path="/diensten/werkplekbeheer" element={<NationalLanding />} />
