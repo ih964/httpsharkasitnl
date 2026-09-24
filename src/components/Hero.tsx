@@ -1,103 +1,132 @@
-import { ShieldCheck, ArrowRight, Phone, MonitorCog, LifeBuoy } from "lucide-react";
+import { ArrowRight, CloudCog, Code2, HeartPulse, MapPin, Network, ShieldCheck, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const trustBullets = [
-  "Microsoft 365 beheer",
-  "Werkplekken en remote support",
-  "Websites, webapps en automatisering",
+const capabilityItems = [
+  { icon: CloudCog, label: "IT & Cloud", detail: "Microsoft 365 · Werkplekken" },
+  { icon: Network, label: "Infrastructuur", detail: "Netwerk · Security" },
+  { icon: Wrench, label: "Field Services", detail: "Installatie · Roll-outs" },
+  { icon: Code2, label: "Software & Digital", detail: "Web · Apps · Automatisering" },
+  { icon: HeartPulse, label: "Zorgtechnologie", detail: "Medische techniek · Domotica" },
 ];
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen w-full max-w-full flex items-center justify-center overflow-hidden gradient-hero pt-20">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[320px] h-[320px] sm:w-[600px] sm:h-[600px] rounded-full bg-primary/5 blur-[100px] sm:blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[260px] h-[260px] sm:w-[400px] sm:h-[400px] rounded-full bg-primary/10 blur-[90px] sm:blur-[100px] pointer-events-none" />
+    <section className="relative min-h-[92vh] flex items-center overflow-hidden pt-20 border-b border-border/40">
+      <div className="absolute inset-0 gradient-hero" />
+      <div className="absolute -top-24 right-[-10%] w-[680px] h-[680px] rounded-full bg-primary/10 blur-[180px] pointer-events-none" />
       <div
-        className="absolute inset-0 opacity-[0.02]"
+        className="absolute inset-0 opacity-[0.025]"
         style={{
-          backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
+          backgroundImage: "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
+          backgroundSize: "72px 72px",
         }}
       />
 
-      <div className="container relative z-10 w-full max-w-full px-4 sm:px-6 py-14 md:py-20">
-        <div className="max-w-5xl mx-auto text-center">
+      <div className="container relative z-10 px-5 sm:px-6 py-20 md:py-28">
+        <div className="grid lg:grid-cols-[1.12fr_0.88fr] gap-14 xl:gap-20 items-center">
+          <div className="max-w-4xl">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
+              className="inline-flex items-center gap-2 text-primary text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] mb-6"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              IT, technologie & digitale oplossingen
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.08 }}
+              className="text-[2.7rem] sm:text-5xl md:text-6xl xl:text-7xl font-bold leading-[1.02] tracking-[-0.03em] mb-7"
+            >
+              Technologie die jouw organisatie <span className="text-gradient">vooruitbrengt.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.16 }}
+              className="text-lg md:text-xl text-muted-foreground max-w-3xl leading-relaxed mb-9"
+            >
+              Van IT-beheer, cloud en security tot installaties op locatie, websites, automatisering en zorgtechnologie.
+              Harkas IT realiseert en ondersteunt oplossingen die passen bij de dagelijkse praktijk van jouw organisatie.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.24 }}
+              className="flex flex-col sm:flex-row gap-3 mb-10"
+            >
+              <Button variant="hero" size="lg" asChild>
+                <a href="/#diensten" className="gap-2">
+                  Ontdek onze expertises <ArrowRight className="w-5 h-5" />
+                </a>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <a href="/?aanvraag=kennismaking#contact">Plan een kennismaking</a>
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.34 }}
+              className="flex flex-wrap gap-x-7 gap-y-3 text-sm text-muted-foreground"
+            >
+              <span className="inline-flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Remote én op locatie</span>
+              <span className="inline-flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-primary" /> Eén technisch aanspreekpunt</span>
+              <span className="inline-flex items-center gap-2"><Network className="w-4 h-4 text-primary" /> Voor meerdere sectoren</span>
+            </motion.div>
+          </div>
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="inline-flex max-w-full items-center gap-2 glass px-3 sm:px-4 py-2 rounded-full mb-5 text-xs sm:text-sm font-medium text-primary"
+            initial={{ opacity: 0, x: 32 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.65, delay: 0.16 }}
+            className="relative"
           >
-            <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">IT-partner voor ondernemers in heel Nederland</span>
-          </motion.div>
+            <div className="absolute -inset-8 bg-primary/5 blur-3xl rounded-full pointer-events-none" />
+            <div className="relative rounded-[2rem] border border-border/60 bg-card/70 backdrop-blur-xl p-4 sm:p-5 shadow-2xl">
+              <div className="flex items-center justify-between px-3 py-3 border-b border-border/50 mb-2">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold">Harkas IT</p>
+                  <p className="font-semibold mt-1">Technology capabilities</p>
+                </div>
+                <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-glow" />
+              </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-[2.35rem] xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] mb-6 break-words"
-          >
-            IT die werkt.
-            <br className="hidden sm:block" />
-            <span className="text-gradient block sm:inline">Zonder gedoe, losse tools of vaag advies.</span>
-          </motion.h1>
+              <div className="space-y-2">
+                {capabilityItems.map((item, index) => (
+                  <div
+                    key={item.label}
+                    className="group flex items-center gap-4 rounded-2xl border border-transparent hover:border-border/60 hover:bg-background/50 px-4 py-4 transition-all"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <item.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">{item.label}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{item.detail}</p>
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground tabular-nums">0{index + 1}</span>
+                  </div>
+                ))}
+              </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-7 px-1"
-          >
-            Harkas IT helpt ondernemers en organisaties met IT-beheer, Microsoft 365, werkplekken, remote support,
-            websites, webapps en automatisering. Praktisch geregeld, duidelijk uitgelegd en afgestemd op je bedrijf.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex w-full flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-center gap-3 mb-8"
-          >
-            {trustBullets.map((item) => (
-              <span key={item} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 glass px-4 py-2 rounded-xl text-sm text-muted-foreground">
-                <MonitorCog className="w-4 h-4 text-primary flex-shrink-0" />
-                <span>{item}</span>
-              </span>
-            ))}
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-center gap-4 max-w-sm sm:max-w-none mx-auto"
-          >
-            <Button variant="hero" size="lg" asChild className="w-full sm:w-auto h-auto min-h-12 whitespace-normal text-center">
-              <Link to="/it-check" className="gap-3">
-                Start gratis online zelfcheck
-                <ArrowRight className="w-5 h-5 flex-shrink-0" />
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-              <Link to="/diensten/remote-support" className="gap-3">
-                <LifeBuoy className="w-5 h-5" />
-                Direct support aanvragen
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-              <a href="tel:+31851249091" className="gap-3">
-                <Phone className="w-5 h-5" />
-                085 124 9091
-              </a>
-            </Button>
+              <div className="mt-3 rounded-2xl bg-primary/10 border border-primary/20 p-4">
+                <p className="text-sm font-semibold mb-1">Van strategie tot uitvoering</p>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Advies, implementatie, beheer en ondersteuning in één technische lijn.
+                </p>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>
-
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
     </section>
   );
 };
