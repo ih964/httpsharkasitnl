@@ -2,42 +2,41 @@ import { Instagram, Linkedin, Mail, MessageSquareText, Phone } from "lucide-reac
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
-const serviceLinks = [
-  { label: "IT Beheer", href: "/diensten/it-beheer" },
-  { label: "Microsoft 365 beheer", href: "/diensten/microsoft-365-beheer" },
-  { label: "Werkplekbeheer", href: "/diensten/werkplekbeheer" },
-  { label: "Remote Support", href: "/diensten/remote-support" },
-  { label: "IT Support MKB", href: "/diensten/it-support-mkb" },
-  { label: "Websites & Webapps", href: "/diensten/websites" },
-  { label: "Automatisering", href: "/diensten/automatisering" },
+const expertiseLinks = [
+  { label: "IT & Cloud", href: "/diensten/microsoft-365-beheer" },
+  { label: "Managed IT & Support", href: "/diensten/it-beheer" },
+  { label: "Netwerk & Security", href: "/diensten/werkplekbeheer" },
+  { label: "Installatie & Field Services", href: "/diensten/installatie-field-services" },
+  { label: "Software & Digital", href: "/diensten/websites" },
+  { label: "Zorgtechnologie", href: "/diensten/zorgtechnologie" },
+  { label: "Online Marketing", href: "/diensten/seo" },
 ];
 
 const Footer = () => {
   return (
-    <footer className="py-14 border-t border-border/50">
+    <footer className="py-16 border-t border-border/50 bg-card/20">
       <div className="container px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr] gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.35fr_1fr_0.8fr_1fr] gap-10 xl:gap-14">
           <div>
             <div className="flex items-center gap-4 mb-5">
-              <img src={logo} alt="Harkas IT logo" className="h-10" />
+              <img src={logo} alt="Harkas IT logo" className="h-10 max-w-[150px] object-contain object-left" />
               <div>
                 <p className="font-semibold">Harkas IT</p>
-                <p className="text-xs text-muted-foreground">IT-beheer, support en digitale oplossingen</p>
+                <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">IT · Technology · Digital</p>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-md mb-5">
-              IT-partner voor ondernemers in Nederland. Hulp bij Microsoft 365, werkplekken, remote support, websites, webapps en automatisering.
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-md mb-6">
+              Technologiepartner voor organisaties. Van IT en cloud tot installaties, software, automatisering en specialistische zorgtechnologie.
             </p>
-            <Link to="/it-check" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:gap-3 transition-all">
-              Start gratis online zelfcheck
-              <span aria-hidden="true">→</span>
-            </Link>
+            <a href="/?aanvraag=kennismaking#contact" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all">
+              Praat met een specialist <span aria-hidden="true">→</span>
+            </a>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Diensten</h3>
+            <h3 className="font-semibold mb-5">Expertises</h3>
             <div className="space-y-3">
-              {serviceLinks.map((link) => (
+              {expertiseLinks.map((link) => (
                 <Link key={link.label} to={link.href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {link.label}
                 </Link>
@@ -46,19 +45,19 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Snel naar</h3>
+            <h3 className="font-semibold mb-5">Harkas IT</h3>
             <div className="space-y-3">
-              <Link to="/it-check" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Gratis online IT-zelfcheck</Link>
+              <a href="/#sectoren" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Sectoren</a>
+              <a href="/#portfolio" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Cases</a>
+              <Link to="/over-ons" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Over ons</Link>
               <a href="/#prijzen" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Prijzen</a>
-              <Link to="/#portfolio" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Praktijkvoorbeelden</Link>
-              <Link to="/over-ons" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Over Harkas IT</Link>
-              <Link to="/#contact" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
+              <Link to="/it-check" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">IT-zelfcheck</Link>
             </div>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Contact</h3>
-            <div className="space-y-3 mb-5">
+            <h3 className="font-semibold mb-5">Contact</h3>
+            <div className="space-y-3 mb-6">
               <a href="mailto:info@harkasit.nl" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <Mail className="w-4 h-4" /> info@harkasit.nl
               </a>
@@ -80,7 +79,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-6 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">© 2026 Harkas IT. Alle rechten voorbehouden.</p>
           <div className="flex items-center gap-5">
             <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacyverklaring</Link>
