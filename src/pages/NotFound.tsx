@@ -25,7 +25,7 @@ const NotFound = () => {
         <div className="text-center max-w-lg">
           {/* 404 number */}
           <div className="relative mb-8">
-            <h1 className="text-[150px] md:text-[200px] font-bold text-gradient leading-none">
+            <h1 className="text-[96px] sm:text-[130px] md:text-[180px] font-bold text-gradient leading-none">
               404
             </h1>
             <div className="absolute inset-0 bg-primary/10 blur-[100px] pointer-events-none" />
@@ -62,7 +62,7 @@ const NotFound = () => {
               <span className="text-muted-foreground">•</span>
               <Link to="/#portfolio" className="text-sm text-primary hover:underline">Portfolio</Link>
               <span className="text-muted-foreground">•</span>
-              <Link to="/#prijzen" className="text-sm text-primary hover:underline">Prijzen</Link>
+              <Link to="/#prijzen" className="text-sm text-primary hover:underline">Offerte</Link>
               <span className="text-muted-foreground">•</span>
               <Link to="/#contact" className="text-sm text-primary hover:underline">Contact</Link>
               <span className="text-muted-foreground">•</span>

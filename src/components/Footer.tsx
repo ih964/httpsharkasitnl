@@ -50,7 +50,7 @@ const Footer = () => {
               <a href="/#sectoren" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Sectoren</a>
               <a href="/#portfolio" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Cases</a>
               <Link to="/over-ons" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Over ons</Link>
-              <a href="/#prijzen" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Prijzen</a>
+              <a href="/#prijzen" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Offerte & werkwijze</a>
               <Link to="/it-check" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">IT-zelfcheck</Link>
             </div>
           </div>

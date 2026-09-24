@@ -43,21 +43,21 @@ const setupSteps = [
 const serviceBlocks = [
   {
     icon: Users,
-    title: "Microsoft 365 & Werkplek Check",
-    text: "Betaalde technische controle vanaf €349 eenmalig, exclusief btw. Omvang en prijs spreken we vooraf af; het uitvoeren van verbeteringen is niet automatisch inbegrepen.",
-    points: ["Microsoft 365-basiscontrole", "Afgesproken werkplekken en accounts", "MFA, rechten en basisbeveiliging", "Overzicht van bevindingen en verbeterpunten"],
+    title: "Inventarisatie & advies",
+    text: "We brengen de huidige Microsoft 365-omgeving, werkplekken, gebruikers en belangrijkste knelpunten gericht in beeld. De omvang stemmen we vooraf af.",
+    points: ["Microsoft 365 en werkplekken", "Accounts, MFA en rechten", "Knelpunten en risico's", "Praktische vervolgstappen"],
   },
   {
     icon: ShieldCheck,
     title: "IT-beheer & support",
-    text: "Basisaanbod vanaf €499 per maand, exclusief btw. Welke gebruikers, apparaten en werkzaamheden onder beheer vallen, plus bereikbaarheid en serviceafspraken, leggen we vooraf vast.",
-    points: ["Microsoft 365-basisbeheer", "Gebruikersbeheer en remote ondersteuning", "4 supporturen per maand volgens afspraak", "MFA- en basisbeveiligingscheck"],
+    text: "Voor terugkerend beheer maken we een voorstel op basis van gebruikers, apparaten, omgeving, gewenste bereikbaarheid en de supportscope.",
+    points: ["Microsoft 365-beheer", "Gebruikers- en werkplekbeheer", "Remote support", "Serviceafspraken op maat"],
   },
   {
     icon: Laptop,
-    title: "Uitgebreid beheer & projecten",
-    text: "Aanvullend werkplekbeheer, migraties, websitebeheer en automatisering bieden we op maat aan. Je ontvangt vooraf een voorstel voor jouw omgeving en werkzaamheden.",
-    points: ["Werkplekbeheer", "Migraties en inrichting", "Websitebeheer", "Praktische automatisering"],
+    title: "Projecten & uitbreiding",
+    text: "Migraties, extra werkplekbeheer, securityverbeteringen, installaties en andere projecten worden vooraf afgebakend en geoffreerd.",
+    points: ["Migraties en inrichting", "Werkplek- en deviceprojecten", "Securityverbeteringen", "Installatie en nazorg"],
   },
 ];
 
@@ -88,7 +88,7 @@ const Support = () => {
                   IT-beheer, Microsoft 365 & <span className="text-gradient">remote support</span>
                 </h1>
                 <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-                  Harkas IT helpt ondernemers met dagelijkse IT-support, veilige Microsoft 365-inrichting, werkplekbeheer en duidelijke opvolging zonder onnodig gedoe.
+                  Harkas IT helpt organisaties met dagelijkse IT-support, veilige Microsoft 365-inrichting, werkplekbeheer en duidelijke opvolging zonder onnodig gedoe.
                 </p>
                 <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
                   <Button variant="hero" size="lg" className="h-auto min-h-12 whitespace-normal text-center" asChild>
@@ -125,7 +125,7 @@ const Support = () => {
               <span className="inline-block text-primary text-sm font-semibold tracking-wider uppercase mb-4">Aanpak</span>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">Van losse IT-problemen naar een beheerbare basis</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Veel kleine bedrijven gebruiken Microsoft 365 en losse apparaten, maar missen structuur. Harkas IT helpt met een praktische basis die veilig, duidelijk en beheersbaar blijft.
+                Veel organisaties gebruiken Microsoft 365 en verschillende apparaten, maar missen samenhang in beheer en support. Harkas IT helpt met een praktische basis die veilig, duidelijk en beheersbaar blijft.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -157,8 +157,8 @@ const Support = () => {
               ))}
             </div>
             <div className="max-w-4xl mx-auto mt-8 text-sm text-muted-foreground leading-relaxed text-center">
-              <p>Het basisbedrag omvat geen Microsoft 365- of andere softwarelicenties, hardware, initiële inrichting, migraties, locatiebezoeken of extra uren. Deze kosten spreken we vooraf apart af. Support is niet onbeperkt.</p>
-              <a href="/#prijzen" className="inline-flex items-center gap-2 mt-4 font-medium text-primary">Bekijk het basisaanbod en de prijsafspraken<ArrowRight className="w-4 h-4" /></a>
+              <p>In het voorstel leggen we duidelijk vast welke werkzaamheden, bereikbaarheid en serviceafspraken zijn inbegrepen en hoe we omgaan met licenties, hardware, locatiebezoeken en aanvullende inzet.</p>
+              <a href="/#prijzen" className="inline-flex items-center gap-2 mt-4 font-medium text-primary">Bekijk hoe onze offertes zijn opgebouwd<ArrowRight className="w-4 h-4" /></a>
             </div>
           </div>
         </section>
