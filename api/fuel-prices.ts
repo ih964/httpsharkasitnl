@@ -5,6 +5,7 @@ export const config = { maxDuration: 30 };
 type CountryCode = "NL" | "DE" | "BE";
 type FuelType = "e10" | "e5" | "diesel" | "lpg";
 type SearchMode = "nearby" | "country";
+type PriceOrder = "cheapest" | "expensive";
 type LatLng = { lat: number; lng: number };
 
 type FuelStation = {
@@ -30,6 +31,7 @@ type RequestBody = {
   fuel?: FuelType;
   countries?: CountryCode[];
   bestPerCountry?: boolean;
+  order?: PriceOrder;
 };
 
 type AnwbStation = {
@@ -251,6 +253,7 @@ async function fetchTankPulsBox(
   origin?: LatLng,
   radiusKm?: number,
   limit = 50,
+  offset = 0,
 ): Promise<FuelStation[]> {
   const params = new URLSearchParams({
     minLat: searchBox.south.toFixed(6),
@@ -258,7 +261,8 @@ async function fetchTankPulsBox(
     maxLat: searchBox.north.toFixed(6),
     maxLng: searchBox.east.toFixed(6),
     fuel,
-    limit: String(Math.max(1, Math.min(limit, 50))),
+    limit: String(Math.max(1, Math.min(limit, 500))),
+    offset: String(Math.max(0, Math.floor(offset))),
   });
 
   const payload = await fetchCachedJson(`${TANKPULS_SEARCH_URL}?${params.toString()}`, "tankpuls");
@@ -306,6 +310,49 @@ async function fetchTankPulsBox(
     });
 }
 
+async function fetchTankPulsMostExpensiveBox(
+  searchBox: BoundingBox,
+  fuel: Exclude<FuelType, "lpg">,
+  origin?: LatLng,
+  radiusKm?: number,
+): Promise<FuelStation[]> {
+  const existsAt = async (offset: number) =>
+    (await fetchTankPulsBox(searchBox, fuel, undefined, undefined, 1, offset)).length > 0;
+
+  if (!(await existsAt(0))) return [];
+
+  let low = 0;
+  let high = 20_000;
+  if (await existsAt(high)) {
+    low = high;
+    high = 40_000;
+    while (high < 160_000 && (await existsAt(high))) {
+      low = high;
+      high *= 2;
+    }
+  }
+
+  while (low + 1 < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (await existsAt(mid)) low = mid;
+    else high = mid;
+  }
+
+  let cursor = low;
+  const collected: FuelStation[] = [];
+
+  while (cursor >= 0 && collected.length < 50) {
+    const start = Math.max(0, cursor - 199);
+    const pageSize = cursor - start + 1;
+    const page = await fetchTankPulsBox(searchBox, fuel, origin, radiusKm, pageSize, start);
+    collected.push(...page);
+    if (start === 0) break;
+    cursor = start - 1;
+  }
+
+  return sortStations(dedupe(collected), "expensive").slice(0, 50);
+}
+
 function dedupe(stations: FuelStation[]) {
   const byKey = new Map<string, FuelStation>();
   for (const station of stations) {
@@ -315,11 +362,12 @@ function dedupe(stations: FuelStation[]) {
   return [...byKey.values()];
 }
 
-function sortStations(stations: FuelStation[]) {
+function sortStations(stations: FuelStation[], order: PriceOrder = "cheapest") {
   return [...stations].sort((a, b) => {
-    const ap = typeof a.price === "number" ? a.price : Number.POSITIVE_INFINITY;
-    const bp = typeof b.price === "number" ? b.price : Number.POSITIVE_INFINITY;
-    if (ap !== bp) return ap - bp;
+    const missingPrice = order === "cheapest" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+    const ap = typeof a.price === "number" ? a.price : missingPrice;
+    const bp = typeof b.price === "number" ? b.price : missingPrice;
+    if (ap !== bp) return order === "cheapest" ? ap - bp : bp - ap;
     return (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999);
   });
 }
@@ -350,6 +398,7 @@ export default async function handler(req: any, res: any) {
     const radiusKm = Math.max(1, Math.min(Number(body.radiusKm ?? 30), 50));
     const countries = (body.countries ?? ["NL", "DE", "BE"]).filter(isCountryCode);
     const bestPerCountry = Boolean(body.bestPerCountry);
+    const order: PriceOrder = body.order === "expensive" ? "expensive" : "cheapest";
 
     if (countries.length === 0) {
       return res.status(400).json({ error: "Selecteer minimaal één land." });
@@ -368,17 +417,21 @@ export default async function handler(req: any, res: any) {
               continue;
             }
 
-            const rows = await fetchTankPulsBox(COUNTRY_BOUNDS.DE, fuel, undefined, undefined, 50);
+            const rows =
+              order === "expensive"
+                ? await fetchTankPulsMostExpensiveBox(COUNTRY_BOUNDS.DE, fuel)
+                : await fetchTankPulsBox(COUNTRY_BOUNDS.DE, fuel, undefined, undefined, 50);
+            const orderedRows = sortStations(rows, order);
             if (bestPerCountry) {
-              if (rows[0]) stations.push(rows[0]);
+              if (orderedRows[0]) stations.push(orderedRows[0]);
             } else {
-              stations.push(...rows);
+              stations.push(...orderedRows);
             }
             if (rows.length > 0) sources.add("TankPuls · MTS-K");
             continue;
           }
 
-          const rows = sortStations(await fetchAnwbCountry(country, fuel));
+          const rows = sortStations(await fetchAnwbCountry(country, fuel), order);
           if (bestPerCountry) {
             if (rows[0]) stations.push(rows[0]);
           } else {
@@ -405,7 +458,10 @@ export default async function handler(req: any, res: any) {
               continue;
             }
             const localBox = boundingBoxAround(center, radiusKm);
-            const rows = await fetchTankPulsBox(localBox, fuel, center, radiusKm, 50);
+            const rows =
+              order === "expensive"
+                ? await fetchTankPulsMostExpensiveBox(localBox, fuel, center, radiusKm)
+                : await fetchTankPulsBox(localBox, fuel, center, radiusKm, 300);
             stations.push(...rows);
             if (rows.length > 0) sources.add("TankPuls · MTS-K");
           } else {
@@ -424,7 +480,7 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    stations = sortStations(dedupe(stations));
+    stations = sortStations(dedupe(stations), order);
     if (mode === "country" && !bestPerCountry) stations = stations.slice(0, 100);
     else if (mode !== "country") stations = stations.slice(0, 300);
 
