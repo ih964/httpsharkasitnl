@@ -68,6 +68,14 @@ const COUNTRY_META = {
   BE: { south: 49.5, west: 2.5, north: 51.5, east: 6.5, iso3: "BEL" },
 } satisfies Record<"NL" | "BE", { south: number; west: number; north: number; east: number; iso3: string }>;
 
+type BoundingBox = { south: number; west: number; north: number; east: number };
+
+const COUNTRY_BOUNDS: Record<CountryCode, BoundingBox> = {
+  NL: { south: 50.7, west: 3.3, north: 53.6, east: 7.3 },
+  BE: { south: 49.5, west: 2.5, north: 51.5, east: 6.5 },
+  DE: { south: 47.2, west: 5.5, north: 55.1, east: 15.6 },
+};
+
 const ANWB_FUEL: Record<FuelType, string> = {
   e10: "EURO95",
   e5: "EURO98",
@@ -95,6 +103,24 @@ const distanceKm = (a: LatLng, b: LatLng) => {
     Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
   return 2 * r * Math.asin(Math.sqrt(x));
 };
+
+const boundingBoxAround = (center: LatLng, radiusKm: number): BoundingBox => {
+  const latDelta = radiusKm / 111;
+  const lonScale = Math.max(111 * Math.cos((center.lat * Math.PI) / 180), 0.1);
+  const lonDelta = radiusKm / lonScale;
+  return {
+    south: center.lat - latDelta,
+    west: center.lng - lonDelta,
+    north: center.lat + latDelta,
+    east: center.lng + lonDelta,
+  };
+};
+
+const boxesIntersect = (a: BoundingBox, b: BoundingBox) =>
+  a.south <= b.north && a.north >= b.south && a.west <= b.east && a.east >= b.west;
+
+const searchIntersectsCountry = (center: LatLng, radiusKm: number, country: CountryCode) =>
+  boxesIntersect(boundingBoxAround(center, radiusKm + 2), COUNTRY_BOUNDS[country]);
 
 const destination = (origin: LatLng, bearingDegrees: number, distance: number): LatLng => {
   const r = 6371;
@@ -171,6 +197,10 @@ async function fetchCachedJson(url: string, source: "tankpuls" | "anwb") {
     Accept: "application/json",
     "User-Agent": "HarkasIT-FuelPrices/1.0 (+https://harkasit.nl)",
   };
+  if (source === "anwb") {
+    headers.Referer = "https://www.anwb.nl/";
+    headers["x-anwb-caller-id"] = "routing/point-of-interest-map-web";
+  }
   const tankPulsKey = process.env.TANKPULS_API_KEY;
   if (source === "tankpuls" && tankPulsKey) {
     headers.Authorization = `Bearer ${tankPulsKey}`;
@@ -198,11 +228,14 @@ async function fetchAnwbCountry(
   country: "NL" | "BE",
   fuel: FuelType,
   origin?: LatLng,
+  searchBox?: BoundingBox,
 ): Promise<FuelStation[]> {
   const bbox = COUNTRY_META[country];
+  const requestBox = searchBox ?? bbox;
   const params = new URLSearchParams({
     "type-filter": "FUEL_STATION",
-    "bounding-box-filter": `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`,
+    "show-all-pois-along-route-filter": "true",
+    "bounding-box-filter": `${requestBox.south},${requestBox.west},${requestBox.north},${requestBox.east}`,
   });
   const payload = await fetchCachedJson(`${ANWB_URL}?${params.toString()}`, "anwb");
   const rows: AnwbStation[] = Array.isArray(payload?.value)
@@ -444,6 +477,8 @@ export default async function handler(req: any, res: any) {
       }
 
       for (const country of countries) {
+        if (!searchIntersectsCountry(center, radiusKm, country)) continue;
+
         try {
           if (country === "DE") {
             if (fuel === "lpg") {
@@ -454,7 +489,8 @@ export default async function handler(req: any, res: any) {
             stations.push(...rows);
             if (rows.length > 0) sources.add("TankPuls · MTS-K");
           } else {
-            const rows = (await fetchAnwbCountry(country, fuel, center)).filter(
+            const localBox = boundingBoxAround(center, radiusKm + 2);
+            const rows = (await fetchAnwbCountry(country, fuel, center, localBox)).filter(
               (station) => (station.distanceKm ?? distanceKm(center, station)) <= radiusKm,
             );
             stations.push(...rows);
