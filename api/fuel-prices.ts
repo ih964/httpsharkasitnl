@@ -237,7 +237,7 @@ async function fetchAnwbCountry(
         lng,
         price,
         distanceKm: origin ? distanceKm(origin, { lat, lng }) : null,
-        updatedAt: new Date().toISOString(),
+        updatedAt: null,
         source: "ANWB brandstofdata",
       };
     })
