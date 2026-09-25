@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
+export const config = { maxDuration: 60 };
+
 type CountryCode = "NL" | "DE" | "BE";
 type FuelType = "e10" | "e5" | "diesel" | "lpg";
 type SearchMode = "nearby" | "country";
@@ -27,6 +29,7 @@ type RequestBody = {
   radiusKm?: number;
   fuel?: FuelType;
   countries?: CountryCode[];
+  bestPerCountry?: boolean;
 };
 
 type AnwbStation = {
@@ -296,6 +299,97 @@ function tankPulsSearchCenters(origin: LatLng, radiusKm: number): Array<{ center
   return centers;
 }
 
+const GERMANY_OUTLINE: LatLng[] = [
+  { lat: 54.983104, lng: 9.921906 }, { lat: 54.596642, lng: 9.93958 },
+  { lat: 54.363607, lng: 10.950112 }, { lat: 54.008693, lng: 10.939467 },
+  { lat: 54.196486, lng: 11.956252 }, { lat: 54.470371, lng: 12.51844 },
+  { lat: 54.075511, lng: 13.647467 }, { lat: 53.757029, lng: 14.119686 },
+  { lat: 53.248171, lng: 14.353315 }, { lat: 52.981263, lng: 14.074521 },
+  { lat: 52.62485, lng: 14.4376 }, { lat: 52.089947, lng: 14.685026 },
+  { lat: 51.745188, lng: 14.607098 }, { lat: 51.106674, lng: 15.016996 },
+  { lat: 51.002339, lng: 14.570718 }, { lat: 51.117268, lng: 14.307013 },
+  { lat: 50.926918, lng: 14.056228 }, { lat: 50.733234, lng: 13.338132 },
+  { lat: 50.484076, lng: 12.966837 }, { lat: 50.266338, lng: 12.240111 },
+  { lat: 49.969121, lng: 12.415191 }, { lat: 49.547415, lng: 12.521024 },
+  { lat: 49.307068, lng: 13.031329 }, { lat: 48.877172, lng: 13.595946 },
+  { lat: 48.416115, lng: 13.243357 }, { lat: 48.289146, lng: 12.884103 },
+  { lat: 47.637584, lng: 13.025851 }, { lat: 47.467646, lng: 12.932627 },
+  { lat: 47.672388, lng: 12.62076 }, { lat: 47.703083, lng: 12.141357 },
+  { lat: 47.523766, lng: 11.426414 }, { lat: 47.566399, lng: 10.544504 },
+  { lat: 47.302488, lng: 10.402084 }, { lat: 47.580197, lng: 9.896068 },
+  { lat: 47.525058, lng: 9.594226 }, { lat: 47.830828, lng: 8.522612 },
+  { lat: 47.61358, lng: 8.317301 }, { lat: 47.620582, lng: 7.466759 },
+  { lat: 48.333019, lng: 7.593676 }, { lat: 49.017784, lng: 8.099279 },
+  { lat: 49.201958, lng: 6.65823 }, { lat: 49.463803, lng: 6.18632 },
+  { lat: 49.902226, lng: 6.242751 }, { lat: 50.128052, lng: 6.043073 },
+  { lat: 50.803721, lng: 6.156658 }, { lat: 51.851616, lng: 5.988658 },
+  { lat: 51.852029, lng: 6.589397 }, { lat: 52.22844, lng: 6.84287 },
+  { lat: 53.144043, lng: 7.092053 }, { lat: 53.482162, lng: 6.90514 },
+  { lat: 53.693932, lng: 7.100425 }, { lat: 53.748296, lng: 7.936239 },
+  { lat: 53.527792, lng: 8.121706 }, { lat: 54.020786, lng: 8.800734 },
+  { lat: 54.395646, lng: 8.572118 }, { lat: 54.962744, lng: 8.526229 },
+  { lat: 54.830865, lng: 9.282049 }, { lat: 54.983104, lng: 9.921906 },
+];
+
+function pointInPolygon(point: LatLng, polygon: LatLng[]) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].lng;
+    const yi = polygon[i].lat;
+    const xj = polygon[j].lng;
+    const yj = polygon[j].lat;
+    const intersects =
+      yi > point.lat !== yj > point.lat &&
+      point.lng < ((xj - xi) * (point.lat - yi)) / (yj - yi) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function distanceToSegmentKm(point: LatLng, a: LatLng, b: LatLng) {
+  const cosLat = Math.cos((point.lat * Math.PI) / 180);
+  const ax = (a.lng - point.lng) * 111 * cosLat;
+  const ay = (a.lat - point.lat) * 111;
+  const bx = (b.lng - point.lng) * 111 * cosLat;
+  const by = (b.lat - point.lat) * 111;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const denom = dx * dx + dy * dy;
+  const t = denom === 0 ? 0 : Math.max(0, Math.min(1, -(ax * dx + ay * dy) / denom));
+  return Math.hypot(ax + t * dx, ay + t * dy);
+}
+
+function withinGermanyScanMargin(point: LatLng, marginKm = 25) {
+  if (pointInPolygon(point, GERMANY_OUTLINE)) return true;
+  for (let i = 0; i < GERMANY_OUTLINE.length - 1; i += 1) {
+    if (distanceToSegmentKm(point, GERMANY_OUTLINE[i], GERMANY_OUTLINE[i + 1]) <= marginKm) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function germanySearchCenters() {
+  const radiusKm = 25;
+  const verticalStepDeg = (1.5 * radiusKm) / 111;
+  const centers: LatLng[] = [];
+  let row = 0;
+
+  for (let lat = 47.1; lat <= 55.1; lat += verticalStepDeg) {
+    const horizontalStepDeg =
+      (Math.sqrt(3) * radiusKm) / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.1));
+    const offset = row % 2 === 0 ? 0 : horizontalStepDeg / 2;
+
+    for (let lng = 5.5 - offset; lng <= 15.6 + horizontalStepDeg / 2; lng += horizontalStepDeg) {
+      const point = { lat, lng };
+      if (withinGermanyScanMargin(point, radiusKm)) centers.push(point);
+    }
+    row += 1;
+  }
+
+  return centers;
+}
+
 function extractCoords(raw: any): LatLng | null {
   const candidates = [
     { lat: raw?.lat, lng: raw?.lng ?? raw?.lon },
@@ -401,6 +495,94 @@ async function fetchTankPulsNearby(
   return detailed.filter((station): station is FuelStation => station !== null);
 }
 
+async function fetchTankPulsCountryCheapest(
+  fuel: Exclude<FuelType, "lpg">,
+): Promise<{ station: FuelStation; failedCenters: number; centerCount: number }> {
+  if (!process.env.TANKPULS_API_KEY) {
+    throw new Error("DE_UNLIMITED_KEY_REQUIRED");
+  }
+
+  const centers = germanySearchCenters();
+  const rawById = new Map<string, TankPulsListStation>();
+  let updatedAt: string | null = null;
+  let failedCenters = 0;
+  const batchSize = 50;
+
+  for (let start = 0; start < centers.length; start += batchSize) {
+    const batch = centers.slice(start, start + batchSize);
+    const responses = await Promise.allSettled(
+      batch.map((center) => {
+        const params = new URLSearchParams({
+          lat: center.lat.toFixed(6),
+          lon: center.lng.toFixed(6),
+          radius: "25",
+          fuel: TANKPULS_FUEL[fuel],
+          sort: "price",
+        });
+        return fetchCachedJson(`${TANKPULS_URL}/stations?${params.toString()}`, "tankpuls");
+      }),
+    );
+
+    for (const response of responses) {
+      if (response.status !== "fulfilled") {
+        failedCenters += 1;
+        continue;
+      }
+      const payload = response.value;
+      if (payload?.updated_at && !updatedAt) updatedAt = String(payload.updated_at);
+      for (const station of payload?.stations ?? []) {
+        if (station?.id) rawById.set(String(station.id), station);
+      }
+    }
+  }
+
+  const candidates = [...rawById.values()]
+    .map((station) => ({ station, price: priceFromTankPuls(station, fuel) }))
+    .filter((item): item is { station: TankPulsListStation; price: number } => item.price !== null)
+    .sort((a, b) => a.price - b.price)
+    .slice(0, 12);
+
+  for (const { station, price } of candidates) {
+    let detail: any = null;
+    let coords = extractCoords(station);
+
+    if (!coords && station.id) {
+      try {
+        detail = await fetchTankPulsStationDetail(String(station.id));
+        coords = extractCoords(detail) || extractCoords(detail?.station);
+      } catch {
+        continue;
+      }
+    }
+    if (!coords) continue;
+
+    const detailStation = detail?.station ?? detail ?? {};
+    const address = String(station.address ?? detailStation.address ?? "").trim();
+
+    return {
+      station: {
+        id: `tankpuls-${station.id}`,
+        name: String(station.name ?? station.brand ?? detailStation.name ?? detailStation.brand ?? "Tankstation"),
+        brand: String(station.brand ?? detailStation.brand ?? "") || null,
+        address: address || null,
+        city: String(detailStation.city ?? "") || null,
+        country: "DE",
+        lat: coords.lat,
+        lng: coords.lng,
+        price,
+        distanceKm: null,
+        isOpen: typeof station.open === "boolean" ? station.open : detailStation.open ?? null,
+        updatedAt: String(station.reported_at ?? detailStation.reported_at ?? updatedAt ?? new Date().toISOString()),
+        source: "TankPuls · MTS-K",
+      },
+      failedCenters,
+      centerCount: centers.length,
+    };
+  }
+
+  throw new Error("Geen landelijke Duitse prijsdata gevonden.");
+}
+
 function dedupe(stations: FuelStation[]) {
   const byKey = new Map<string, FuelStation>();
   for (const station of stations) {
@@ -444,6 +626,7 @@ export default async function handler(req: any, res: any) {
       : "e10";
     const radiusKm = Math.max(1, Math.min(Number(body.radiusKm ?? 30), 50));
     const countries = (body.countries ?? ["NL", "DE", "BE"]).filter(isCountryCode);
+    const bestPerCountry = Boolean(body.bestPerCountry);
 
     if (countries.length === 0) {
       return res.status(400).json({ error: "Selecteer minimaal één land." });
@@ -455,17 +638,41 @@ export default async function handler(req: any, res: any) {
 
     if (mode === "country") {
       for (const country of countries) {
-        if (country === "DE") {
-          warnings.push(
-            "Heel Duitsland doorzoeken wordt door de gratis Duitse live-bron niet als bulk-query toegestaan. Gebruik 'Rond plaats' met maximaal 50 km.",
-          );
-          continue;
-        }
-
         try {
-          const rows = await fetchAnwbCountry(country, fuel);
-          stations.push(...rows);
-          sources.add("ANWB brandstofdata");
+          if (country === "DE") {
+            if (fuel === "lpg") {
+              warnings.push("DE: de Duitse MTS-K-bron bevat E5, E10 en diesel, maar geen LPG.");
+              continue;
+            }
+
+            try {
+              const result = await fetchTankPulsCountryCheapest(fuel);
+              stations.push(result.station);
+              sources.add("TankPuls · MTS-K");
+              if (result.failedCenters > 0) {
+                warnings.push(
+                  `DE: ${result.failedCenters} van ${result.centerCount} deelgebieden konden niet worden geladen; controleer het Duitse resultaat voor vertrek.`,
+                );
+              }
+            } catch (error) {
+              if (error instanceof Error && error.message === "DE_UNLIMITED_KEY_REQUIRED") {
+                warnings.push(
+                  "DE onbeperkt: voeg een gratis TANKPULS_API_KEY toe in Vercel. De anonieme API is beperkt tot 60 aanvragen/minuut en een landelijke scan heeft meer deelgebieden nodig.",
+                );
+              } else {
+                throw error;
+              }
+            }
+            continue;
+          }
+
+          const rows = sortStations(await fetchAnwbCountry(country, fuel));
+          if (bestPerCountry) {
+            if (rows[0]) stations.push(rows[0]);
+          } else {
+            stations.push(...rows);
+          }
+          if (rows.length > 0) sources.add("ANWB brandstofdata");
         } catch (error) {
           warnings.push(error instanceof Error ? `${country}: ${error.message}` : `${country}: bronfout`);
         }
@@ -505,8 +712,8 @@ export default async function handler(req: any, res: any) {
     }
 
     stations = sortStations(dedupe(stations));
-    if (mode === "country") stations = stations.slice(0, 100);
-    else stations = stations.slice(0, 300);
+    if (mode === "country" && !bestPerCountry) stations = stations.slice(0, 100);
+    else if (mode !== "country") stations = stations.slice(0, 300);
 
     return res.status(200).json({
       stations,
