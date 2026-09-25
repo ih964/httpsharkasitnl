@@ -44,47 +44,23 @@ type AnwbStation = {
   prices?: Array<{ fuelType?: string; value?: number; currency?: string }>;
 };
 
-type GermanyNationwideStation = {
-  id?: string | number;
-  name?: string;
-  city?: string;
-  address?: string;
-  postalCode?: string;
-  bundesland?: string;
-  slug?: string;
-  latitude?: number;
-  longitude?: number;
-  diesel?: number | null;
-  super95?: number | null;
-  dieselChangedAt?: string | null;
-  super95ChangedAt?: string | null;
-  lastUpdatedAt?: string | null;
-  priceStale?: boolean | null;
-  dieselFloor?: boolean | null;
-  super95Floor?: boolean | null;
-};
-
-type TankPulsListStation = {
+type TankPulsSearchStation = {
   id?: string;
-  brand?: string;
   name?: string;
-  address?: string;
-  distance?: number;
-  prices?: Record<string, number | null | undefined>;
-  open?: boolean;
-  reported_at?: string;
+  brandName?: string | null;
+  street?: string | null;
+  postcode?: string | null;
+  city?: string | null;
+  status?: string | null;
+  isActive?: boolean | null;
   lat?: number;
-  lon?: number;
   lng?: number;
-  latitude?: number;
-  longitude?: number;
-  coordinates?: Record<string, number>;
-  location?: Record<string, number>;
+  priceCents?: number | null;
+  priceTs?: string | null;
 };
 
 const ANWB_URL = "https://api.anwb.nl/routing/points-of-interest/v3/all";
-const TANKPULS_URL = "https://api.tankpuls.de/v1";
-const GERMANY_NATIONWIDE_PAGE = "https://spritpreisverlauf.at/de/tankstellen";
+const TANKPULS_SEARCH_URL = "https://api.tankpuls.de/api/search/cheapest";
 const CACHE_MS = 10 * 60 * 1000;
 
 const COUNTRY_META = {
@@ -107,17 +83,8 @@ const ANWB_FUEL: Record<FuelType, string> = {
   lpg: "AUTOGAS",
 };
 
-const TANKPULS_FUEL: Record<Exclude<FuelType, "lpg">, string> = {
-  e10: "E10",
-  e5: "E5",
-  diesel: "Diesel",
-};
-
 const anwbCache = new Map<string, { expiresAt: number; stations: AnwbStation[] }>();
 const tankPulsCache = new Map<string, { expiresAt: number; payload: any }>();
-let germanyNationwideCache:
-  | { expiresAt: number; stations: GermanyNationwideStation[] }
-  | null = null;
 
 const distanceKm = (a: LatLng, b: LatLng) => {
   const r = 6371;
@@ -148,27 +115,6 @@ const boxesIntersect = (a: BoundingBox, b: BoundingBox) =>
 
 const searchIntersectsCountry = (center: LatLng, radiusKm: number, country: CountryCode) =>
   boxesIntersect(boundingBoxAround(center, radiusKm + 2), COUNTRY_BOUNDS[country]);
-
-const destination = (origin: LatLng, bearingDegrees: number, distance: number): LatLng => {
-  const r = 6371;
-  const bearing = (bearingDegrees * Math.PI) / 180;
-  const lat1 = (origin.lat * Math.PI) / 180;
-  const lon1 = (origin.lng * Math.PI) / 180;
-  const angular = distance / r;
-
-  const lat2 = Math.asin(
-    Math.sin(lat1) * Math.cos(angular) +
-      Math.cos(lat1) * Math.sin(angular) * Math.cos(bearing),
-  );
-  const lon2 =
-    lon1 +
-    Math.atan2(
-      Math.sin(bearing) * Math.sin(angular) * Math.cos(lat1),
-      Math.cos(angular) - Math.sin(lat1) * Math.sin(lat2),
-    );
-
-  return { lat: (lat2 * 180) / Math.PI, lng: (lon2 * 180) / Math.PI };
-};
 
 const isCountryCode = (value: unknown): value is CountryCode =>
   value === "NL" || value === "BE" || value === "DE";
@@ -228,11 +174,6 @@ async function fetchCachedJson(url: string, source: "tankpuls" | "anwb") {
     headers.Referer = "https://www.anwb.nl/";
     headers["x-anwb-caller-id"] = "routing/point-of-interest-map-web";
   }
-  const tankPulsKey = process.env.TANKPULS_API_KEY;
-  if (source === "tankpuls" && tankPulsKey) {
-    headers.Authorization = `Bearer ${tankPulsKey}`;
-  }
-
   const response = await fetch(url, {
     headers,
     signal: AbortSignal.timeout(source === "tankpuls" ? 20_000 : 45_000),
@@ -304,292 +245,65 @@ async function fetchAnwbCountry(
     .filter((station): station is FuelStation => station !== null);
 }
 
-function tankPulsSearchCenters(origin: LatLng, radiusKm: number): Array<{ center: LatLng; radius: number }> {
-  if (radiusKm <= 25) return [{ center: origin, radius: radiusKm }];
-
-  if (radiusKm <= 30) {
-    const ringDistance = 21.2;
-    return [0, 90, 180, 270].map((bearing) => ({
-      center: destination(origin, bearing, ringDistance),
-      radius: 25,
-    }));
-  }
-
-  const centers: Array<{ center: LatLng; radius: number }> = [{ center: origin, radius: 25 }];
-  const ringDistance = 43.3;
-  for (let bearing = 0; bearing < 360; bearing += 60) {
-    centers.push({ center: destination(origin, bearing, ringDistance), radius: 25 });
-  }
-  return centers;
-}
-
-function extractCoords(raw: any): LatLng | null {
-  const candidates = [
-    { lat: raw?.lat, lng: raw?.lng ?? raw?.lon },
-    { lat: raw?.latitude, lng: raw?.longitude },
-    { lat: raw?.coordinates?.lat ?? raw?.coordinates?.latitude, lng: raw?.coordinates?.lng ?? raw?.coordinates?.lon ?? raw?.coordinates?.longitude },
-    { lat: raw?.location?.lat ?? raw?.location?.latitude, lng: raw?.location?.lng ?? raw?.location?.lon ?? raw?.location?.longitude },
-    { lat: raw?.station?.lat ?? raw?.station?.latitude, lng: raw?.station?.lng ?? raw?.station?.lon ?? raw?.station?.longitude },
-  ];
-
-  for (const candidate of candidates) {
-    const lat = Number(candidate.lat);
-    const lng = Number(candidate.lng);
-    if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
-  }
-  return null;
-}
-
-function priceFromTankPuls(station: TankPulsListStation, fuel: Exclude<FuelType, "lpg">) {
-  const value = station.prices?.[fuel] ?? station.prices?.[fuel.toUpperCase()];
-  const price = Number(value);
-  return Number.isFinite(price) && price > 0 && price < 5 ? price : null;
-}
-
-async function fetchTankPulsStationDetail(id: string) {
-  return fetchCachedJson(`${TANKPULS_URL}/stations/${encodeURIComponent(id)}`, "tankpuls");
-}
-
-async function fetchTankPulsNearby(
-  origin: LatLng,
-  radiusKm: number,
+async function fetchTankPulsBox(
+  searchBox: BoundingBox,
   fuel: Exclude<FuelType, "lpg">,
+  origin?: LatLng,
+  radiusKm?: number,
+  limit = 50,
 ): Promise<FuelStation[]> {
-  const centers = tankPulsSearchCenters(origin, radiusKm);
-  const listResponses = await Promise.all(
-    centers.map(async ({ center, radius }) => {
-      const params = new URLSearchParams({
-        lat: center.lat.toFixed(6),
-        lon: center.lng.toFixed(6),
-        radius: String(Math.min(radius, 25)),
-        fuel: TANKPULS_FUEL[fuel],
-        sort: "price",
-      });
-      return fetchCachedJson(`${TANKPULS_URL}/stations?${params.toString()}`, "tankpuls");
-    }),
-  );
-
-  const rawById = new Map<string, TankPulsListStation>();
-  let updatedAt: string | null = null;
-
-  for (const payload of listResponses) {
-    if (payload?.updated_at && !updatedAt) updatedAt = String(payload.updated_at);
-    for (const station of payload?.stations ?? []) {
-      if (station?.id) rawById.set(String(station.id), station);
-    }
-  }
-
-  const candidates = [...rawById.values()]
-    .map((station) => ({
-      station,
-      price: priceFromTankPuls(station, fuel),
-    }))
-    .filter((item) => item.price !== null)
-    .sort((a, b) => (a.price as number) - (b.price as number))
-    .slice(0, 30);
-
-  const detailed = await Promise.all(
-    candidates.map(async ({ station, price }) => {
-      let detail: any = null;
-      let coords = extractCoords(station);
-
-      if (!coords && station.id) {
-        try {
-          detail = await fetchTankPulsStationDetail(String(station.id));
-          coords = extractCoords(detail) || extractCoords(detail?.station);
-        } catch {
-          // Keep this station out of the map if coordinates are unavailable.
-        }
-      }
-
-      if (!coords || distanceKm(origin, coords) > radiusKm + 0.5) return null;
-
-      const detailStation = detail?.station ?? detail ?? {};
-      const address = String(station.address ?? detailStation.address ?? "").trim();
-
-      return {
-        id: `tankpuls-${station.id}`,
-        name: String(station.name ?? station.brand ?? detailStation.name ?? detailStation.brand ?? "Tankstation"),
-        brand: String(station.brand ?? detailStation.brand ?? "") || null,
-        address: address || null,
-        city: String(detailStation.city ?? "") || null,
-        country: "DE" as const,
-        lat: coords.lat,
-        lng: coords.lng,
-        price: price as number,
-        distanceKm: distanceKm(origin, coords),
-        isOpen: typeof station.open === "boolean" ? station.open : detailStation.open ?? null,
-        updatedAt: String(station.reported_at ?? detailStation.reported_at ?? updatedAt ?? new Date().toISOString()),
-        source: "TankPuls · MTS-K",
-      } satisfies FuelStation;
-    }),
-  );
-
-  return detailed.filter((station): station is FuelStation => station !== null);
-}
-
-const decodeHtmlEntities = (value: string) =>
-  value
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
-
-function decodeNuxtStationPayload(payloadText: string): GermanyNationwideStation[] {
-  const values = JSON.parse(payloadText) as any[];
-  if (!Array.isArray(values) || values.length < 4) {
-    throw new Error("Onverwacht formaat van de Duitse landelijke prijsbron.");
-  }
-
-  const root = values[0];
-  if (!root || typeof root !== "object" || typeof root.data !== "number") {
-    throw new Error("Landelijke Duitse prijsdata bevat geen data-index.");
-  }
-
-  let dataNode = values[root.data];
-  if (
-    Array.isArray(dataNode) &&
-    typeof dataNode[0] === "string" &&
-    ["ShallowReactive", "Reactive", "Ref", "ShallowRef"].includes(dataNode[0])
-  ) {
-    dataNode = values[dataNode[1]];
-  }
-
-  if (!dataNode || typeof dataNode !== "object" || typeof dataNode["all-stations"] !== "number") {
-    throw new Error("Landelijke Duitse tankstations ontbreken in de prijsdata.");
-  }
-
-  const stationRefs = values[dataNode["all-stations"]];
-  if (!Array.isArray(stationRefs)) {
-    throw new Error("Landelijke Duitse tankstationlijst heeft een onverwacht formaat.");
-  }
-
-  const memo = new Map<number, any>();
-  const resolveRef = (ref: any): any => {
-    if (typeof ref !== "number" || !Number.isInteger(ref)) return ref;
-    if (ref < 0) return null;
-    if (memo.has(ref)) return memo.get(ref);
-
-    const node = values[ref];
-    if (Array.isArray(node)) {
-      if (
-        node.length >= 2 &&
-        typeof node[0] === "string" &&
-        ["ShallowReactive", "Reactive", "Ref", "ShallowRef"].includes(node[0])
-      ) {
-        const resolved = resolveRef(node[1]);
-        memo.set(ref, resolved);
-        return resolved;
-      }
-
-      const resolved: any[] = [];
-      memo.set(ref, resolved);
-      for (const item of node) resolved.push(resolveRef(item));
-      return resolved;
-    }
-
-    if (node && typeof node === "object") {
-      const resolved: Record<string, any> = {};
-      memo.set(ref, resolved);
-      for (const [key, value] of Object.entries(node)) {
-        resolved[key] = resolveRef(value);
-      }
-      return resolved;
-    }
-
-    memo.set(ref, node);
-    return node;
-  };
-
-  return stationRefs
-    .map((ref) => resolveRef(ref))
-    .filter((station): station is GermanyNationwideStation => Boolean(station && typeof station === "object"));
-}
-
-async function fetchGermanyNationwideData(): Promise<GermanyNationwideStation[]> {
-  if (germanyNationwideCache && germanyNationwideCache.expiresAt > Date.now()) {
-    return germanyNationwideCache.stations;
-  }
-
-  const headers = {
-    Accept: "text/html,application/json",
-    "User-Agent": "Mozilla/5.0 (compatible; HarkasIT-FuelPrices/1.0; +https://harkasit.nl)",
-  };
-
-  const pageResponse = await fetch(GERMANY_NATIONWIDE_PAGE, {
-    headers,
-    signal: AbortSignal.timeout(15_000),
+  const params = new URLSearchParams({
+    minLat: searchBox.south.toFixed(6),
+    minLng: searchBox.west.toFixed(6),
+    maxLat: searchBox.north.toFixed(6),
+    maxLng: searchBox.east.toFixed(6),
+    fuel,
+    limit: String(Math.max(1, Math.min(limit, 50))),
   });
-  if (!pageResponse.ok) {
-    throw new Error(`Duitse landelijke bron gaf HTTP ${pageResponse.status}`);
-  }
 
-  const html = await pageResponse.text();
-  const payloadMatch = html.match(/href=["'](\/de\/tankstellen\/_payload\.json[^"']*)["']/i);
-  if (!payloadMatch?.[1]) {
-    throw new Error("Duitse landelijke bron bevat geen actuele tankstationpayload.");
-  }
-
-  const payloadUrl = new URL(payloadMatch[1].replace(/&amp;/g, "&"), GERMANY_NATIONWIDE_PAGE);
-  const payloadResponse = await fetch(payloadUrl, {
-    headers: { Accept: "application/json", "User-Agent": headers["User-Agent"] },
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!payloadResponse.ok) {
-    throw new Error(`Duitse tankstationpayload gaf HTTP ${payloadResponse.status}`);
-  }
-
-  const stations = decodeNuxtStationPayload(await payloadResponse.text());
-  germanyNationwideCache = { expiresAt: Date.now() + CACHE_MS, stations };
-  return stations;
-}
-
-const isRecentGermanFuelPrice = (value?: string | null) => {
-  if (!value) return false;
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return false;
-  return Date.now() - timestamp <= 3 * 24 * 60 * 60 * 1000;
-};
-
-async function fetchGermanyNationwide(fuel: "diesel" | "e5"): Promise<FuelStation[]> {
-  const rows = await fetchGermanyNationwideData();
-  const priceField = fuel === "diesel" ? "diesel" : "super95";
-  const changedField = fuel === "diesel" ? "dieselChangedAt" : "super95ChangedAt";
-  const floorField = fuel === "diesel" ? "dieselFloor" : "super95Floor";
+  const payload = await fetchCachedJson(`${TANKPULS_SEARCH_URL}?${params.toString()}`, "tankpuls");
+  const rows: TankPulsSearchStation[] = Array.isArray(payload?.items) ? payload.items : [];
 
   return rows
     .map((raw): FuelStation | null => {
-      const price = Number(raw[priceField]);
-      const lat = Number(raw.latitude);
-      const lng = Number(raw.longitude);
-      const changedAt = raw[changedField];
-
-      if (!Number.isFinite(price) || price < 1 || price > 5) return null;
+      const lat = Number(raw.lat);
+      const lng = Number(raw.lng);
+      const priceCents = Number(raw.priceCents);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-      if (raw.priceStale === true || raw[floorField] === true) return null;
-      if (!isRecentGermanFuelPrice(changedAt)) return null;
+      if (!Number.isFinite(priceCents) || priceCents <= 0) return null;
+      if (raw.isActive === false) return null;
 
-      const name = decodeHtmlEntities(String(raw.name || "Tankstation"));
-      const address = [raw.address, raw.postalCode].filter(Boolean).join(", ");
+      const point = { lat, lng };
+      const distance = origin ? distanceKm(origin, point) : null;
+      if (typeof radiusKm === "number" && distance !== null && distance > radiusKm + 0.5) {
+        return null;
+      }
+
+      const name = String(raw.name || raw.brandName || "Tankstation").trim();
+      const address = [raw.street, raw.postcode].filter(Boolean).join(", ");
 
       return {
-        id: `de-national-${raw.id ?? raw.slug ?? `${lat}-${lng}`}`,
+        id: `tankpuls-${raw.id ?? `${lat}-${lng}`}`,
         name,
-        brand: name.split(/\s+/)[0] || null,
+        brand: raw.brandName?.trim() || name.split(/\s+/)[0] || null,
         address: address || null,
-        city: raw.city ? decodeHtmlEntities(String(raw.city)) : null,
+        city: raw.city?.trim() || null,
         country: "DE",
         lat,
         lng,
-        price,
-        distanceKm: null,
-        updatedAt: changedAt || raw.lastUpdatedAt || null,
-        source: "Spritpreisverlauf · Tankerkönig/MTS-K",
+        price: priceCents / 1000,
+        distanceKm: distance,
+        isOpen: raw.status === "open" ? true : raw.status === "closed" ? false : null,
+        updatedAt: raw.priceTs || null,
+        source: "TankPuls · MTS-K",
       };
     })
     .filter((station): station is FuelStation => station !== null)
-    .sort((a, b) => (a.price as number) - (b.price as number));
+    .sort((a, b) => {
+      const priceDiff = (a.price ?? Number.POSITIVE_INFINITY) - (b.price ?? Number.POSITIVE_INFINITY);
+      if (priceDiff !== 0) return priceDiff;
+      return (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999);
+    });
 }
 
 function dedupe(stations: FuelStation[]) {
@@ -649,20 +363,18 @@ export default async function handler(req: any, res: any) {
       for (const country of countries) {
         try {
           if (country === "DE") {
-            if (fuel !== "diesel" && fuel !== "e5") {
-              warnings.push(
-                `DE onbeperkt voor ${fuel === "e10" ? "E10" : "LPG"} is nog niet beschikbaar via de landelijke bron. Gebruik voor Duitsland 10, 20, 30 of 50 km.`,
-              );
+            if (fuel === "lpg") {
+              warnings.push("DE: MTS-K bevat E5, E10 en diesel, maar geen LPG.");
               continue;
             }
 
-            const rows = await fetchGermanyNationwide(fuel);
+            const rows = await fetchTankPulsBox(COUNTRY_BOUNDS.DE, fuel, undefined, undefined, 50);
             if (bestPerCountry) {
               if (rows[0]) stations.push(rows[0]);
             } else {
-              stations.push(...rows.slice(0, 100));
+              stations.push(...rows);
             }
-            if (rows.length > 0) sources.add("Spritpreisverlauf · Tankerkönig/MTS-K");
+            if (rows.length > 0) sources.add("TankPuls · MTS-K");
             continue;
           }
 
@@ -692,7 +404,8 @@ export default async function handler(req: any, res: any) {
               warnings.push("De gratis Duitse MTS-K-bron bevat E5, E10 en diesel, maar geen LPG.");
               continue;
             }
-            const rows = await fetchTankPulsNearby(center, radiusKm, fuel);
+            const localBox = boundingBoxAround(center, radiusKm);
+            const rows = await fetchTankPulsBox(localBox, fuel, center, radiusKm, 50);
             stations.push(...rows);
             if (rows.length > 0) sources.add("TankPuls · MTS-K");
           } else {
