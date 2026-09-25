@@ -551,17 +551,27 @@ export default function AdminFuelPrices() {
 
     try {
       const requestCountries = requestedMode === "country" ? [countryModeCountry] : countries;
-      const { data, error } = await supabase.functions.invoke<FuelResponse>("fuel-prices", {
-        body: {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Je adminsessie is verlopen. Log opnieuw in.");
+
+      const response = await fetch("/api/fuel-prices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
           mode: requestedMode,
           center: origin,
           radiusKm: radius,
           fuel,
           countries: requestCountries,
-        },
+        }),
       });
 
-      if (error) throw error;
+      const data = (await response.json()) as FuelResponse & { error?: string };
+      if (!response.ok) throw new Error(data.error || "Tankprijzen konden niet worden geladen.");
 
       const nextStations = data?.stations ?? [];
       setStations(nextStations);
@@ -571,7 +581,7 @@ export default function AdminFuelPrices() {
     } catch (error) {
       if (requestedMode === "country") {
         setStations([]);
-        setWarnings(["Landelijk zoeken is klaar in de interface, maar vereist een landelijke live prijsfeed."]);
+        setWarnings([error instanceof Error ? error.message : "Landelijk zoeken kon niet worden geladen."]);
       } else {
         try {
           const fallback = await fetchOsmStations(origin, radius, countries);
