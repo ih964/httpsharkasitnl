@@ -30,6 +30,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminDomains from "./pages/admin/AdminDomains";
 import AdminTimeEntriesWithPeriod from "./pages/admin/AdminTimeEntriesWithPeriod";
 import AdminPasswords from "./pages/admin/AdminPasswords";
+import AdminFuelPrices from "./pages/admin/AdminFuelPrices";
 import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="domeinen" element={<AdminDomains />} />
               <Route path="uren" element={<AdminTimeEntriesWithPeriod />} />
               <Route path="wachtwoorden" element={<AdminPasswords />} />
+              <Route path="tankprijzen" element={<AdminFuelPrices />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
