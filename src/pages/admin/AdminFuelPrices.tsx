@@ -188,6 +188,21 @@ function FuelMap({
   }, [center.lat, center.lng, radiusKm]);
 
   useEffect(() => {
+    if (!selectedId) return;
+    const map = mapRef.current;
+    if (!map) return;
+
+    const station = stations.find((item) => item.id === selectedId);
+    if (!station) return;
+
+    const targetZoom = Math.max(map.getZoom(), 15);
+    map.flyTo([station.lat, station.lng], targetZoom, {
+      animate: true,
+      duration: 0.55,
+    });
+  }, [selectedId, stations]);
+
+  useEffect(() => {
     const L = window.L;
     const map = mapRef.current;
     const layer = markersRef.current;
@@ -583,7 +598,6 @@ export default function AdminFuelPrices() {
       setStations(nextStations);
       setWarnings(data?.warnings ?? []);
       setSources(data?.sources ?? []);
-      if (nextStations.length > 0) setSelectedId(nextStations[0].id);
     } catch (error) {
       if (requestedMode === "country") {
         setStations([]);
