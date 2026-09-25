@@ -415,7 +415,7 @@ function FilterPanel({
                 </div>
                 {unlimited && (
                   <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                    Zoekt per geselecteerd land naar de goedkoopste tankstationprijs. Plaats/postcode wordt genegeerd.
+                    Zoekt landelijk waar de bron dit ondersteunt. NL en BE: landelijk. DE: gebruik 10, 20, 30 of 50 km.
                   </p>
                 )}
               </div>
