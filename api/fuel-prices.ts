@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
+export const config = { maxDuration: 30 };
+
 type CountryCode = "NL" | "DE" | "BE";
 type FuelType = "e10" | "e5" | "diesel" | "lpg";
 type SearchMode = "nearby" | "country";
@@ -42,6 +44,26 @@ type AnwbStation = {
   prices?: Array<{ fuelType?: string; value?: number; currency?: string }>;
 };
 
+type GermanyNationwideStation = {
+  id?: string | number;
+  name?: string;
+  city?: string;
+  address?: string;
+  postalCode?: string;
+  bundesland?: string;
+  slug?: string;
+  latitude?: number;
+  longitude?: number;
+  diesel?: number | null;
+  super95?: number | null;
+  dieselChangedAt?: string | null;
+  super95ChangedAt?: string | null;
+  lastUpdatedAt?: string | null;
+  priceStale?: boolean | null;
+  dieselFloor?: boolean | null;
+  super95Floor?: boolean | null;
+};
+
 type TankPulsListStation = {
   id?: string;
   brand?: string;
@@ -62,6 +84,7 @@ type TankPulsListStation = {
 
 const ANWB_URL = "https://api.anwb.nl/routing/points-of-interest/v3/all";
 const TANKPULS_URL = "https://api.tankpuls.de/v1";
+const GERMANY_NATIONWIDE_PAGE = "https://spritpreisverlauf.at/de/tankstellen";
 const CACHE_MS = 10 * 60 * 1000;
 
 const COUNTRY_META = {
@@ -92,6 +115,9 @@ const TANKPULS_FUEL: Record<Exclude<FuelType, "lpg">, string> = {
 
 const anwbCache = new Map<string, { expiresAt: number; stations: AnwbStation[] }>();
 const tankPulsCache = new Map<string, { expiresAt: number; payload: any }>();
+let germanyNationwideCache:
+  | { expiresAt: number; stations: GermanyNationwideStation[] }
+  | null = null;
 
 const distanceKm = (a: LatLng, b: LatLng) => {
   const r = 6371;
@@ -402,6 +428,170 @@ async function fetchTankPulsNearby(
   return detailed.filter((station): station is FuelStation => station !== null);
 }
 
+const decodeHtmlEntities = (value: string) =>
+  value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+
+function decodeNuxtStationPayload(payloadText: string): GermanyNationwideStation[] {
+  const values = JSON.parse(payloadText) as any[];
+  if (!Array.isArray(values) || values.length < 4) {
+    throw new Error("Onverwacht formaat van de Duitse landelijke prijsbron.");
+  }
+
+  const root = values[0];
+  if (!root || typeof root !== "object" || typeof root.data !== "number") {
+    throw new Error("Landelijke Duitse prijsdata bevat geen data-index.");
+  }
+
+  let dataNode = values[root.data];
+  if (
+    Array.isArray(dataNode) &&
+    typeof dataNode[0] === "string" &&
+    ["ShallowReactive", "Reactive", "Ref", "ShallowRef"].includes(dataNode[0])
+  ) {
+    dataNode = values[dataNode[1]];
+  }
+
+  if (!dataNode || typeof dataNode !== "object" || typeof dataNode["all-stations"] !== "number") {
+    throw new Error("Landelijke Duitse tankstations ontbreken in de prijsdata.");
+  }
+
+  const stationRefs = values[dataNode["all-stations"]];
+  if (!Array.isArray(stationRefs)) {
+    throw new Error("Landelijke Duitse tankstationlijst heeft een onverwacht formaat.");
+  }
+
+  const memo = new Map<number, any>();
+  const resolveRef = (ref: any): any => {
+    if (typeof ref !== "number" || !Number.isInteger(ref)) return ref;
+    if (ref < 0) return null;
+    if (memo.has(ref)) return memo.get(ref);
+
+    const node = values[ref];
+    if (Array.isArray(node)) {
+      if (
+        node.length >= 2 &&
+        typeof node[0] === "string" &&
+        ["ShallowReactive", "Reactive", "Ref", "ShallowRef"].includes(node[0])
+      ) {
+        const resolved = resolveRef(node[1]);
+        memo.set(ref, resolved);
+        return resolved;
+      }
+
+      const resolved: any[] = [];
+      memo.set(ref, resolved);
+      for (const item of node) resolved.push(resolveRef(item));
+      return resolved;
+    }
+
+    if (node && typeof node === "object") {
+      const resolved: Record<string, any> = {};
+      memo.set(ref, resolved);
+      for (const [key, value] of Object.entries(node)) {
+        resolved[key] = resolveRef(value);
+      }
+      return resolved;
+    }
+
+    memo.set(ref, node);
+    return node;
+  };
+
+  return stationRefs
+    .map((ref) => resolveRef(ref))
+    .filter((station): station is GermanyNationwideStation => Boolean(station && typeof station === "object"));
+}
+
+async function fetchGermanyNationwideData(): Promise<GermanyNationwideStation[]> {
+  if (germanyNationwideCache && germanyNationwideCache.expiresAt > Date.now()) {
+    return germanyNationwideCache.stations;
+  }
+
+  const headers = {
+    Accept: "text/html,application/json",
+    "User-Agent": "Mozilla/5.0 (compatible; HarkasIT-FuelPrices/1.0; +https://harkasit.nl)",
+  };
+
+  const pageResponse = await fetch(GERMANY_NATIONWIDE_PAGE, {
+    headers,
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!pageResponse.ok) {
+    throw new Error(`Duitse landelijke bron gaf HTTP ${pageResponse.status}`);
+  }
+
+  const html = await pageResponse.text();
+  const payloadMatch = html.match(/href=["'](\/de\/tankstellen\/_payload\.json[^"']*)["']/i);
+  if (!payloadMatch?.[1]) {
+    throw new Error("Duitse landelijke bron bevat geen actuele tankstationpayload.");
+  }
+
+  const payloadUrl = new URL(payloadMatch[1].replace(/&amp;/g, "&"), GERMANY_NATIONWIDE_PAGE);
+  const payloadResponse = await fetch(payloadUrl, {
+    headers: { Accept: "application/json", "User-Agent": headers["User-Agent"] },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!payloadResponse.ok) {
+    throw new Error(`Duitse tankstationpayload gaf HTTP ${payloadResponse.status}`);
+  }
+
+  const stations = decodeNuxtStationPayload(await payloadResponse.text());
+  germanyNationwideCache = { expiresAt: Date.now() + CACHE_MS, stations };
+  return stations;
+}
+
+const isRecentGermanFuelPrice = (value?: string | null) => {
+  if (!value) return false;
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return false;
+  return Date.now() - timestamp <= 3 * 24 * 60 * 60 * 1000;
+};
+
+async function fetchGermanyNationwide(fuel: "diesel" | "e5"): Promise<FuelStation[]> {
+  const rows = await fetchGermanyNationwideData();
+  const priceField = fuel === "diesel" ? "diesel" : "super95";
+  const changedField = fuel === "diesel" ? "dieselChangedAt" : "super95ChangedAt";
+  const floorField = fuel === "diesel" ? "dieselFloor" : "super95Floor";
+
+  return rows
+    .map((raw): FuelStation | null => {
+      const price = Number(raw[priceField]);
+      const lat = Number(raw.latitude);
+      const lng = Number(raw.longitude);
+      const changedAt = raw[changedField];
+
+      if (!Number.isFinite(price) || price < 1 || price > 5) return null;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+      if (raw.priceStale === true || raw[floorField] === true) return null;
+      if (!isRecentGermanFuelPrice(changedAt)) return null;
+
+      const name = decodeHtmlEntities(String(raw.name || "Tankstation"));
+      const address = [raw.address, raw.postalCode].filter(Boolean).join(", ");
+
+      return {
+        id: `de-national-${raw.id ?? raw.slug ?? `${lat}-${lng}`}`,
+        name,
+        brand: name.split(/\s+/)[0] || null,
+        address: address || null,
+        city: raw.city ? decodeHtmlEntities(String(raw.city)) : null,
+        country: "DE",
+        lat,
+        lng,
+        price,
+        distanceKm: null,
+        updatedAt: changedAt || raw.lastUpdatedAt || null,
+        source: "Spritpreisverlauf · Tankerkönig/MTS-K",
+      };
+    })
+    .filter((station): station is FuelStation => station !== null)
+    .sort((a, b) => (a.price as number) - (b.price as number));
+}
+
 function dedupe(stations: FuelStation[]) {
   const byKey = new Map<string, FuelStation>();
   for (const station of stations) {
@@ -459,9 +649,20 @@ export default async function handler(req: any, res: any) {
       for (const country of countries) {
         try {
           if (country === "DE") {
-            warnings.push(
-              "DE onbeperkt is niet beschikbaar via de huidige gratis bron: TankPuls ondersteunt maximaal 25 km per zoekopdracht en staat geen landelijke bulk-scan toe. Gebruik voor Duitsland 10, 20, 30 of 50 km.",
-            );
+            if (fuel !== "diesel" && fuel !== "e5") {
+              warnings.push(
+                `DE onbeperkt voor ${fuel === "e10" ? "E10" : "LPG"} is nog niet beschikbaar via de landelijke bron. Gebruik voor Duitsland 10, 20, 30 of 50 km.`,
+              );
+              continue;
+            }
+
+            const rows = await fetchGermanyNationwide(fuel);
+            if (bestPerCountry) {
+              if (rows[0]) stations.push(rows[0]);
+            } else {
+              stations.push(...rows.slice(0, 100));
+            }
+            if (rows.length > 0) sources.add("Spritpreisverlauf · Tankerkönig/MTS-K");
             continue;
           }
 
