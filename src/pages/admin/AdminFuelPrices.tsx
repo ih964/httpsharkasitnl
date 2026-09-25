@@ -19,6 +19,7 @@ import {
 type FuelType = "e10" | "e5" | "diesel" | "lpg";
 type CountryCode = "NL" | "DE" | "BE";
 type SearchMode = "nearby" | "country";
+type PriceOrder = "cheapest" | "expensive";
 
 type LatLng = { lat: number; lng: number };
 
@@ -117,6 +118,7 @@ function FuelMap({
   center,
   zoom,
   radiusKm,
+  priceOrder,
   stations,
   selectedId,
   onSelect,
@@ -125,6 +127,7 @@ function FuelMap({
   center: LatLng;
   zoom: number;
   radiusKm: number;
+  priceOrder: PriceOrder;
   stations: FuelStation[];
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -218,7 +221,12 @@ function FuelMap({
       const selected = station.id === selectedId;
       const priced = price !== null;
       const bg = selected ? "#0284c7" : priced ? "#111827" : "#334155";
-      const border = index === 0 && priced ? "#22c55e" : "#ffffff";
+      const border =
+        index === 0 && priced
+          ? priceOrder === "cheapest"
+            ? "#22c55e"
+            : "#ef4444"
+          : "#ffffff";
       const label = priced ? `€${price}` : "Pomp";
 
       const icon = L.divIcon({
@@ -232,7 +240,7 @@ function FuelMap({
         .addTo(layer)
         .on("click", () => onSelect(station.id));
     });
-  }, [stations, selectedId, onSelect]);
+  }, [stations, selectedId, onSelect, priceOrder]);
 
   return <div ref={nodeRef} className="h-full w-full bg-slate-900" aria-label="Kaart met tankstations" />;
 }
@@ -280,6 +288,8 @@ function FilterPanel({
   setMode,
   fuel,
   setFuel,
+  priceOrder,
+  setPriceOrder,
   query,
   setQuery,
   radius,
@@ -303,6 +313,8 @@ function FilterPanel({
   setMode: (mode: SearchMode) => void;
   fuel: FuelType;
   setFuel: (fuel: FuelType) => void;
+  priceOrder: PriceOrder;
+  setPriceOrder: (order: PriceOrder) => void;
   query: string;
   setQuery: (value: string) => void;
   radius: number;
@@ -371,6 +383,22 @@ function FilterPanel({
             </Select>
           </div>
 
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Prijs</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(["cheapest", "expensive"] as PriceOrder[]).map((value) => (
+                <button
+                  type="button"
+                  key={value}
+                  onClick={() => setPriceOrder(value)}
+                  className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${priceOrder === value ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:bg-muted"}`}
+                >
+                  {value === "cheapest" ? "Goedkoopste" : "Duurste"}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {mode === "nearby" ? (
             <>
               <div>
@@ -415,7 +443,7 @@ function FilterPanel({
                 </div>
                 {unlimited && (
                   <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                    Zoekt per geselecteerd land naar de goedkoopste tankstationprijs. DE ondersteunt E5, E10 en Diesel; LPG niet.
+                    Zoekt per geselecteerd land naar de {priceOrder === "cheapest" ? "goedkoopste" : "duurste"} tankstationprijs. DE ondersteunt E5, E10 en Diesel; LPG niet.
                   </p>
                 )}
               </div>
@@ -456,9 +484,9 @@ function FilterPanel({
               ? "Zoeken..."
               : mode === "nearby"
                 ? unlimited
-                  ? "Zoek goedkoopste per land"
-                  : "Zoek goedkoopste"
-                : "Zoek goedkoopste van land"}
+                  ? `Zoek ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"} per land`
+                  : `Zoek ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"}`
+                : `Zoek ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"} van land`}
           </Button>
         </div>
 
@@ -503,11 +531,15 @@ function FilterPanel({
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {unlimited && price && station.country ? (
-                          <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-green-400">
-                            Goedkoopste {station.country}
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${priceOrder === "cheapest" ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}`}>
+                            {priceOrder === "cheapest" ? "Goedkoopste" : "Duurste"} {station.country}
                           </span>
                         ) : (
-                          index === 0 && price && <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-green-400">Goedkoopste</span>
+                          index === 0 && price && (
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${priceOrder === "cheapest" ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}`}>
+                              {priceOrder === "cheapest" ? "Goedkoopste" : "Duurste"}
+                            </span>
+                          )
                         )}
                         {station.country && <span className="text-[10px] font-bold text-muted-foreground">{station.country}</span>}
                       </div>
@@ -554,6 +586,7 @@ function FilterPanel({
 export default function AdminFuelPrices() {
   const [mode, setMode] = useState<SearchMode>("nearby");
   const [fuel, setFuel] = useState<FuelType>("e10");
+  const [priceOrder, setPriceOrder] = useState<PriceOrder>("cheapest");
   const [query, setQuery] = useState("");
   const [radius, setRadius] = useState(30);
   const [unlimited, setUnlimited] = useState(false);
@@ -571,12 +604,13 @@ export default function AdminFuelPrices() {
   const sortedStations = useMemo(
     () =>
       [...stations].sort((a, b) => {
-        const ap = typeof a.price === "number" ? a.price : Number.POSITIVE_INFINITY;
-        const bp = typeof b.price === "number" ? b.price : Number.POSITIVE_INFINITY;
-        if (ap !== bp) return ap - bp;
+        const missing = priceOrder === "cheapest" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+        const ap = typeof a.price === "number" ? a.price : missing;
+        const bp = typeof b.price === "number" ? b.price : missing;
+        if (ap !== bp) return priceOrder === "cheapest" ? ap - bp : bp - ap;
         return (a.distanceKm ?? 999) - (b.distanceKm ?? 999);
       }),
-    [stations],
+    [stations, priceOrder],
   );
 
   const toggleCountry = (country: CountryCode) => {
@@ -632,6 +666,7 @@ export default function AdminFuelPrices() {
           fuel,
           countries: requestCountries,
           bestPerCountry,
+          order: priceOrder,
         }),
       });
 
@@ -670,7 +705,7 @@ export default function AdminFuelPrices() {
     } finally {
       setLoading(false);
     }
-  }, [mode, countryModeCountry, countries, radius, fuel]);
+  }, [mode, countryModeCountry, countries, radius, fuel, priceOrder]);
 
   const handleSearch = async () => {
     if (mode === "country") {
@@ -754,6 +789,8 @@ export default function AdminFuelPrices() {
     setMode,
     fuel,
     setFuel,
+    priceOrder,
+    setPriceOrder,
     query,
     setQuery,
     radius,
@@ -782,6 +819,7 @@ export default function AdminFuelPrices() {
             center={center}
             zoom={zoom}
             radiusKm={mode === "nearby" && !unlimited ? radius : 0}
+            priceOrder={priceOrder}
             stations={sortedStations}
             selectedId={selectedId}
             onSelect={setSelectedId}
@@ -795,8 +833,8 @@ export default function AdminFuelPrices() {
                 {mode === "country"
                   ? countryCenters[countryModeCountry].label
                   : unlimited
-                    ? `Onbeperkt · ${countries.join(" / ")} · ${fuelLabels[fuel]}`
-                    : `${radius} km · ${fuelLabels[fuel]}`}
+                    ? `Onbeperkt · ${countries.join(" / ")} · ${fuelLabels[fuel]} · ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"}`
+                    : `${radius} km · ${fuelLabels[fuel]} · ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"}`}
               </div>
             </div>
           </div>
