@@ -7,21 +7,20 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe TankPuls active API
+      - name: Probe nationwide TankPuls bbox
         run: |
           python - <<'PY'
-          import re, urllib.request, urllib.error
-          def req(url):
+          import urllib.request, urllib.error, time
+          for fuel in ['e10','e5','diesel']:
+              url=f'https://api.tankpuls.de/api/search/cheapest?minLat=47.2&minLng=5.5&maxLat=55.1&maxLng=15.6&fuel={fuel}&limit=5'
               r=urllib.request.Request(url,headers={'User-Agent':'HarkasIT/1.0','Accept':'application/json'})
               try:
-                  with urllib.request.urlopen(r,timeout=20) as x:
+                  t=time.time()
+                  with urllib.request.urlopen(r,timeout=25) as x:
                       body=x.read().decode('utf-8','replace')
-                      print('STATUS',x.status,'URL',url,'LEN',len(body))
-                      print(body[:6000])
+                      print(fuel,'STATUS',x.status,'SECS',round(time.time()-t,2),'LEN',len(body),body[:5000])
               except urllib.error.HTTPError as e:
-                  print('HTTP',e.code,'URL',url,'BODY',e.read().decode('utf-8','replace')[:3000])
+                  print(fuel,'HTTP',e.code,e.read().decode('utf-8','replace')[:3000])
               except Exception as e:
-                  print('ERR',repr(e),'URL',url)
-          req('https://api.tankpuls.de/api/search/cheapest?minLat=52.47&minLng=13.32&maxLat=52.57&maxLng=13.49&fuel=e10&limit=10')
-          req('https://api.tankpuls.de/api/search/cheapest?minLat=51.0&minLng=6.0&maxLat=51.5&maxLng=7.0&fuel=diesel&limit=10')
+                  print(fuel,'ERR',repr(e))
           PY
