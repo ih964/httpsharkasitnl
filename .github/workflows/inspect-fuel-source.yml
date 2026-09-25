@@ -7,7 +7,7 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Decode nationwide Germany fuel data
+      - name: Inspect nationwide Germany filters
         run: |
           python - <<'PY'
           import re, json, urllib.request
@@ -18,49 +18,27 @@ jobs:
                   return r.read().decode('utf-8','replace')
           html=get('https://spritpreisverlauf.at/de/tankstellen')
           m=re.search(r'href="(/de/tankstellen/_payload\.json[^"]*)"',html)
-          assert m, 'payload url missing'
-          raw=get('https://spritpreisverlauf.at'+m.group(1))
-          vals=json.loads(raw)
+          vals=json.loads(get('https://spritpreisverlauf.at'+m.group(1)))
           memo={}
           def ref(i):
-              if not isinstance(i,int):
-                  return i
-              if i < 0:
-                  return None
-              if i in memo:
-                  return memo[i]
+              if not isinstance(i,int): return i
+              if i < 0: return None
+              if i in memo: return memo[i]
               node=vals[i]
               if isinstance(node,list):
                   if node and isinstance(node[0],str) and node[0] in ('ShallowReactive','Reactive','Ref','ShallowRef'):
-                      out=ref(node[1])
-                      memo[i]=out
-                      return out
-                  out=[]
-                  memo[i]=out
-                  out.extend(ref(x) if isinstance(x,int) else x for x in node)
-                  return out
+                      out=ref(node[1]); memo[i]=out; return out
+                  out=[]; memo[i]=out; out.extend(ref(x) if isinstance(x,int) else x for x in node); return out
               if isinstance(node,dict):
-                  out={}
-                  memo[i]=out
-                  for k,v in node.items():
-                      out[k]=ref(v) if isinstance(v,int) else v
+                  out={}; memo[i]=out
+                  for k,v in node.items(): out[k]=ref(v) if isinstance(v,int) else v
                   return out
-              memo[i]=node
-              return node
-          root=ref(0)
-          stations=root['data']['all-stations']
-          print('COUNT',len(stations))
+              memo[i]=node; return node
+          stations=ref(0)['data']['all-stations']
           for field in ('diesel','super95'):
-              valid=[]
-              for s in stations:
-                  p=s.get(field)
-                  if not isinstance(p,(int,float)) or isinstance(p,bool): continue
-                  if p < 1 or p > 5: continue
-                  if s.get('priceStale') is True: continue
-                  if s.get(field+'Floor') is True: continue
-                  valid.append(s)
+              valid=[s for s in stations if isinstance(s.get(field),(int,float)) and not isinstance(s.get(field),bool) and 1 <= s[field] <= 5]
               valid.sort(key=lambda x:x[field])
-              print('\n',field,'VALID',len(valid))
-              for s in valid[:10]:
-                  print(s.get(field), s.get('name'), s.get('address'), s.get('postalCode'), s.get('city'), s.get('latitude'), s.get('longitude'), s.get('lastUpdatedAt'))
+              print('\nFIELD',field)
+              for s in valid[:15]:
+                  print(json.dumps({k:s.get(k) for k in ['name','address','postalCode','city',field,field+'ChangedAt','lastUpdatedAt','priceStale',field+'Floor','bundesland','slug']},ensure_ascii=False))
           PY
