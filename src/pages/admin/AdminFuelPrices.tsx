@@ -177,6 +177,10 @@ function FuelMap({
     if (!L || !map) return;
 
     if (circleRef.current) circleRef.current.remove();
+    if (radiusKm <= 0) {
+      circleRef.current = null;
+      return;
+    }
     circleRef.current = L.circle([center.lat, center.lng], {
       radius: radiusKm * 1000,
       color: "#0ea5e9",
@@ -280,6 +284,8 @@ function FilterPanel({
   setQuery,
   radius,
   setRadius,
+  unlimited,
+  setUnlimited,
   countries,
   toggleCountry,
   countryModeCountry,
@@ -301,6 +307,8 @@ function FilterPanel({
   setQuery: (value: string) => void;
   radius: number;
   setRadius: (radius: number) => void;
+  unlimited: boolean;
+  setUnlimited: (value: boolean) => void;
   countries: CountryCode[];
   toggleCountry: (country: CountryCode) => void;
   countryModeCountry: CountryCode;
@@ -330,14 +338,20 @@ function FilterPanel({
         <div className="mt-5 grid grid-cols-2 rounded-xl bg-muted/60 p-1">
           <button
             type="button"
-            onClick={() => setMode("nearby")}
+            onClick={() => {
+              setMode("nearby");
+              setUnlimited(false);
+            }}
             className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "nearby" ? "bg-background text-foreground shadow" : "text-muted-foreground"}`}
           >
             Rond plaats
           </button>
           <button
             type="button"
-            onClick={() => setMode("country")}
+            onClick={() => {
+              setMode("country");
+              setUnlimited(false);
+            }}
             className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "country" ? "bg-background text-foreground shadow" : "text-muted-foreground"}`}
           >
             Heel land
@@ -366,9 +380,10 @@ function FilterPanel({
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     onKeyDown={(event) => event.key === "Enter" && onSearch()}
-                    placeholder="Bijv. Venlo, 4101..."
+                    placeholder={unlimited ? "Niet nodig bij onbeperkt" : "Bijv. Venlo, 4101..."}
+                    disabled={unlimited}
                   />
-                  <Button variant="outline" size="icon" onClick={onLocate} title="Mijn locatie">
+                  <Button variant="outline" size="icon" onClick={onLocate} title="Mijn locatie" disabled={unlimited}>
                     <LocateFixed className="h-4 w-4" />
                   </Button>
                 </div>
@@ -376,18 +391,33 @@ function FilterPanel({
 
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Straal</label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {[10, 20, 30, 50].map((value) => (
                     <button
                       type="button"
                       key={value}
-                      onClick={() => setRadius(value)}
-                      className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${radius === value ? "border-primary bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted"}`}
+                      onClick={() => {
+                        setUnlimited(false);
+                        setRadius(value);
+                      }}
+                      className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${!unlimited && radius === value ? "border-primary bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted"}`}
                     >
                       {value} km
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => setUnlimited(true)}
+                    className={`col-span-2 rounded-lg border px-2 py-2 text-sm font-medium transition ${unlimited ? "border-primary bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted"}`}
+                  >
+                    Onbeperkt
+                  </button>
                 </div>
+                {unlimited && (
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                    Zoekt per geselecteerd land naar de goedkoopste tankstationprijs. Plaats/postcode wordt genegeerd.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -422,7 +452,13 @@ function FilterPanel({
 
           <Button onClick={onSearch} className="w-full" disabled={loading || (mode === "nearby" && countries.length === 0)}>
             <Search className="h-4 w-4" />
-            {loading ? "Zoeken..." : mode === "nearby" ? "Zoek goedkoopste" : "Zoek goedkoopste van land"}
+            {loading
+              ? "Zoeken..."
+              : mode === "nearby"
+                ? unlimited
+                  ? "Zoek goedkoopste per land"
+                  : "Zoek goedkoopste"
+                : "Zoek goedkoopste van land"}
           </Button>
         </div>
 
@@ -466,7 +502,13 @@ function FilterPanel({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        {index === 0 && price && <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-green-400">Goedkoopste</span>}
+                        {unlimited && price && station.country ? (
+                          <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-green-400">
+                            Goedkoopste {station.country}
+                          </span>
+                        ) : (
+                          index === 0 && price && <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-green-400">Goedkoopste</span>
+                        )}
                         {station.country && <span className="text-[10px] font-bold text-muted-foreground">{station.country}</span>}
                       </div>
                       <p className="mt-1 truncate font-semibold">{station.brand || station.name}</p>
@@ -514,6 +556,7 @@ export default function AdminFuelPrices() {
   const [fuel, setFuel] = useState<FuelType>("e10");
   const [query, setQuery] = useState("");
   const [radius, setRadius] = useState(30);
+  const [unlimited, setUnlimited] = useState(false);
   const [countries, setCountries] = useState<CountryCode[]>(["NL", "DE", "BE"]);
   const [countryModeCountry, setCountryModeCountry] = useState<CountryCode>("NL");
   const [center, setCenter] = useState<LatLng>(countryCenters.NL.center);
@@ -558,14 +601,20 @@ export default function AdminFuelPrices() {
     return { lat: Number(data[0].lat), lng: Number(data[0].lon) };
   };
 
-  const requestStations = useCallback(async (origin: LatLng, requestedMode: SearchMode = mode) => {
+  const requestStations = useCallback(async (
+    origin: LatLng,
+    requestedMode: SearchMode = mode,
+    requestedCountries?: CountryCode[],
+    bestPerCountry = false,
+  ) => {
     setLoading(true);
     setWarnings([]);
     setSources([]);
     setSelectedId(null);
 
     try {
-      const requestCountries = requestedMode === "country" ? [countryModeCountry] : countries;
+      const requestCountries =
+        requestedCountries ?? (requestedMode === "country" ? [countryModeCountry] : countries);
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Je adminsessie is verlopen. Log opnieuw in.");
@@ -582,6 +631,7 @@ export default function AdminFuelPrices() {
           radiusKm: radius,
           fuel,
           countries: requestCountries,
+          bestPerCountry,
         }),
       });
 
@@ -629,6 +679,25 @@ export default function AdminFuelPrices() {
       setViewportCenter(preset.center);
       setZoom(preset.zoom);
       await requestStations(preset.center, "country");
+      return;
+    }
+
+    if (unlimited) {
+      if (countries.length === 0) {
+        setWarnings(["Selecteer minimaal één land."]);
+        return;
+      }
+
+      const selectedCenter =
+        countries.length === 1
+          ? countryCenters[countries[0]].center
+          : { lat: 51.4, lng: 8.2 };
+      const selectedZoom = countries.length === 1 ? countryCenters[countries[0]].zoom : 5;
+
+      setCenter(selectedCenter);
+      setViewportCenter(selectedCenter);
+      setZoom(selectedZoom);
+      await requestStations(selectedCenter, "country", countries, true);
       return;
     }
 
@@ -689,6 +758,8 @@ export default function AdminFuelPrices() {
     setQuery,
     radius,
     setRadius,
+    unlimited,
+    setUnlimited,
     countries,
     toggleCountry,
     countryModeCountry,
@@ -710,7 +781,7 @@ export default function AdminFuelPrices() {
           <FuelMap
             center={center}
             zoom={zoom}
-            radiusKm={mode === "nearby" ? radius : 0}
+            radiusKm={mode === "nearby" && !unlimited ? radius : 0}
             stations={sortedStations}
             selectedId={selectedId}
             onSelect={setSelectedId}
@@ -721,12 +792,16 @@ export default function AdminFuelPrices() {
             <div className="pointer-events-auto rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2 shadow-xl backdrop-blur">
               <div className="flex items-center gap-2 text-xs font-semibold text-white">
                 <MapPin className="h-3.5 w-3.5 text-sky-400" />
-                {mode === "country" ? countryCenters[countryModeCountry].label : `${radius} km · ${fuelLabels[fuel]}`}
+                {mode === "country"
+                  ? countryCenters[countryModeCountry].label
+                  : unlimited
+                    ? `Onbeperkt · ${countries.join(" / ")} · ${fuelLabels[fuel]}`
+                    : `${radius} km · ${fuelLabels[fuel]}`}
               </div>
             </div>
           </div>
 
-          {moved && mode === "nearby" && (
+          {moved && mode === "nearby" && !unlimited && (
             <div className="absolute left-1/2 top-3 z-[500] hidden -translate-x-1/2 lg:block">
               <Button
                 size="sm"
