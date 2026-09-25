@@ -570,8 +570,14 @@ export default function AdminFuelPrices() {
         }),
       });
 
-      const data = (await response.json()) as FuelResponse & { error?: string };
-      if (!response.ok) throw new Error(data.error || "Tankprijzen konden niet worden geladen.");
+      const rawBody = await response.text();
+      let data: FuelResponse & { error?: string };
+      try {
+        data = JSON.parse(rawBody) as FuelResponse & { error?: string };
+      } catch {
+        throw new Error(`Prijsservice gaf geen JSON terug (HTTP ${response.status}). Controleer de API-route/deployment.`);
+      }
+      if (!response.ok) throw new Error(data.error || `Tankprijzen konden niet worden geladen (HTTP ${response.status}).`);
 
       const nextStations = data?.stations ?? [];
       setStations(nextStations);
@@ -586,8 +592,10 @@ export default function AdminFuelPrices() {
         try {
           const fallback = await fetchOsmStations(origin, radius, countries);
           setStations(fallback);
+          const reason = error instanceof Error ? error.message : "Onbekende fout in de live prijsservice.";
           setWarnings([
-            "Live prijsservice is nog niet beschikbaar. Tankstationlocaties worden tijdelijk via OpenStreetMap getoond; prijzen blijven leeg.",
+            `Live prijsservice fout: ${reason}`,
+            "Tankstationlocaties worden tijdelijk via OpenStreetMap getoond; prijzen blijven leeg.",
           ]);
           setSources(["OpenStreetMap"]);
         } catch {
