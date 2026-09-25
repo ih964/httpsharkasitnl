@@ -1,0 +1,34 @@
+name: Probe TankPuls sort
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-tankpuls-sort.yml'
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe sort modes
+        run: |
+          python - <<'PY'
+          import urllib.request, urllib.parse, json
+          base='https://api.tankpuls.de'
+          bbox='minLat=52.45&minLng=13.25&maxLat=52.60&maxLng=13.55&fuel=e10&limit=5'
+          urls=[
+            f'{base}/api/search/cheapest?{bbox}',
+            f'{base}/api/search/cheapest?{bbox}&sort=desc',
+            f'{base}/api/search/cheapest?{bbox}&order=desc',
+            f'{base}/api/search/cheapest?{bbox}&direction=desc',
+            f'{base}/api/search/expensive?{bbox}',
+            f'{base}/api/search/highest?{bbox}',
+            f'{base}/api/search/priciest?{bbox}',
+          ]
+          for url in urls:
+              r=urllib.request.Request(url,headers={'User-Agent':'HarkasIT/1.0','Accept':'application/json'})
+              try:
+                  with urllib.request.urlopen(r,timeout=20) as x:
+                      data=json.loads(x.read().decode())
+                      prices=[i.get('priceCents') for i in data.get('items',[])]
+                      print('OK',url,'PRICES',prices)
+              except Exception as e:
+                  print('ERR',url,repr(e))
+          PY
