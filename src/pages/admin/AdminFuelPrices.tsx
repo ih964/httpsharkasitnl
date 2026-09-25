@@ -415,7 +415,7 @@ function FilterPanel({
                 </div>
                 {unlimited && (
                   <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                    Zoekt per geselecteerd land naar de goedkoopste tankstationprijs. DE landelijk ondersteunt Diesel en E5; voor E10/LPG gebruik je 10, 20, 30 of 50 km.
+                    Zoekt per geselecteerd land naar de goedkoopste tankstationprijs. DE ondersteunt E5, E10 en Diesel; LPG niet.
                   </p>
                 )}
               </div>
