@@ -1,0 +1,38 @@
+name: Inspect TankPuls web app
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-tankpuls.yml'
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect TankPuls scripts
+        run: |
+          python - <<'PY'
+          import re, urllib.request
+          base='https://tankpuls.de'
+          def get(url):
+              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0','Accept':'text/html,*/*'})
+              with urllib.request.urlopen(req,timeout=30) as r:
+                  return r.read().decode('utf-8','replace')
+          html=get(base+'/')
+          print('HTML',len(html))
+          scripts=re.findall(r'<script[^>]+src=["\']([^"\']+)["\']',html,re.I)
+          print('SCRIPTS',scripts)
+          for s in scripts:
+              url=s if s.startswith('http') else base+s
+              try:
+                  js=get(url)
+              except Exception as e:
+                  print('ERR',url,e); continue
+              hits=[]
+              for needle in ['api.tankpuls','/v1/stations','stations?lat','fuel=','health','graphql','supabase','firebase']:
+                  p=js.lower().find(needle.lower())
+                  if p>=0:
+                      hits.append((needle,js[max(0,p-1500):p+5000]))
+              if hits:
+                  print('\nFILE',url,'LEN',len(js))
+                  for h,x in hits:
+                      print('\n===',h,'===\n',x)
+          PY
