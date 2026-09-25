@@ -7,33 +7,60 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch source and Nuxt payload
+      - name: Decode nationwide Germany fuel data
         run: |
           python - <<'PY'
           import re, json, urllib.request
-          UA = 'Mozilla/5.0 (compatible; HarkasIT-Debug/1.0)'
+          UA='Mozilla/5.0 (compatible; HarkasIT-Debug/1.0)'
           def get(url):
-              req=urllib.request.Request(url, headers={'User-Agent':UA,'Accept':'text/html,application/json'})
-              with urllib.request.urlopen(req, timeout=30) as r:
+              req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept':'text/html,application/json'})
+              with urllib.request.urlopen(req,timeout=30) as r:
                   return r.read().decode('utf-8','replace')
           html=get('https://spritpreisverlauf.at/de/tankstellen')
-          print('HTML_LENGTH',len(html))
-          m=re.search(r'href="([^"]*/de/tankstellen/_payload\.json[^"]*)"',html)
-          if not m:
-              m=re.search(r'href="(/de/tankstellen/_payload\.json[^"]*)"',html)
-          print('PAYLOAD_HREF',m.group(1) if m else 'NONE')
-          if m:
-              href=m.group(1)
-              url=href if href.startswith('http') else 'https://spritpreisverlauf.at'+href
-              payload=get(url)
-              print('PAYLOAD_LENGTH',len(payload))
-              print('PAYLOAD_HEAD',payload[:12000])
-              for needle in ['15042','Access Saarbruecken','diesel','super95','stations','lat','lng','api']:
-                  p=payload.lower().find(needle.lower())
-                  print('\n=== PAYLOAD',needle,'===',p)
-                  print(payload[max(0,p-1200):p+5000] if p>=0 else 'NOT FOUND')
-          for needle in ['fetch(','$fetch','/api/','stations?','loadMore','Mehr anzeigen','pageSize','offset','sortBy','selectedFuel']:
-              p=html.lower().find(needle.lower())
-              print('\n=== HTML',needle,'===',p)
-              print(html[max(0,p-1200):p+5000] if p>=0 else 'NOT FOUND')
+          m=re.search(r'href="(/de/tankstellen/_payload\.json[^"]*)"',html)
+          assert m, 'payload url missing'
+          raw=get('https://spritpreisverlauf.at'+m.group(1))
+          vals=json.loads(raw)
+          memo={}
+          def ref(i):
+              if not isinstance(i,int):
+                  return i
+              if i < 0:
+                  return None
+              if i in memo:
+                  return memo[i]
+              node=vals[i]
+              if isinstance(node,list):
+                  if node and isinstance(node[0],str) and node[0] in ('ShallowReactive','Reactive','Ref','ShallowRef'):
+                      out=ref(node[1])
+                      memo[i]=out
+                      return out
+                  out=[]
+                  memo[i]=out
+                  out.extend(ref(x) if isinstance(x,int) else x for x in node)
+                  return out
+              if isinstance(node,dict):
+                  out={}
+                  memo[i]=out
+                  for k,v in node.items():
+                      out[k]=ref(v) if isinstance(v,int) else v
+                  return out
+              memo[i]=node
+              return node
+          root=ref(0)
+          stations=root['data']['all-stations']
+          print('COUNT',len(stations))
+          for field in ('diesel','super95'):
+              valid=[]
+              for s in stations:
+                  p=s.get(field)
+                  if not isinstance(p,(int,float)) or isinstance(p,bool): continue
+                  if p < 1 or p > 5: continue
+                  if s.get('priceStale') is True: continue
+                  if s.get(field+'Floor') is True: continue
+                  valid.append(s)
+              valid.sort(key=lambda x:x[field])
+              print('\n',field,'VALID',len(valid))
+              for s in valid[:10]:
+                  print(s.get(field), s.get('name'), s.get('address'), s.get('postalCode'), s.get('city'), s.get('latitude'), s.get('longitude'), s.get('lastUpdatedAt'))
           PY
