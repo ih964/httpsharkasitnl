@@ -251,8 +251,8 @@ const fetchOsmStations = async (center: LatLng, radiusKm: number, countries: Cou
   const data = await response.json();
   return (data.elements ?? [])
     .map((element: any) => normalizeOsmStation(element, center))
-    .filter(Boolean)
-    .filter((station: FuelStation) => !station.country || countries.includes(station.country))
+    .filter((station: FuelStation | null): station is FuelStation => station !== null)
+    .filter((station) => !station.country || countries.includes(station.country))
     .sort((a: FuelStation, b: FuelStation) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
 };
 
