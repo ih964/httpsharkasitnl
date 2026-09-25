@@ -7,33 +7,21 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect TankPuls inline code and API
+      - name: Probe TankPuls active API
         run: |
           python - <<'PY'
-          import urllib.request
-          base='https://tankpuls.de'
+          import re, urllib.request, urllib.error
           def req(url):
-              r=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0','Accept':'application/json,text/html,*/*'})
+              r=urllib.request.Request(url,headers={'User-Agent':'HarkasIT/1.0','Accept':'application/json'})
               try:
                   with urllib.request.urlopen(r,timeout=20) as x:
                       body=x.read().decode('utf-8','replace')
-                      print('URL',url,'STATUS',x.status,'LEN',len(body),'TYPE',x.headers.get('content-type'))
-                      return body
+                      print('STATUS',x.status,'URL',url,'LEN',len(body))
+                      print(body[:6000])
+              except urllib.error.HTTPError as e:
+                  print('HTTP',e.code,'URL',url,'BODY',e.read().decode('utf-8','replace')[:3000])
               except Exception as e:
-                  print('URL',url,'ERR',repr(e))
-                  return ''
-          html=req(base+'/')
-          for needle in ['api.tankpuls','/v1/stations','stations?lat','fetch(','XMLHttpRequest','E10','10559','Berlin']:
-              p=html.lower().find(needle.lower())
-              print('\n=== HTML',needle,p,'===')
-              print(html[max(0,p-1500):p+6000] if p>=0 else 'NOT FOUND')
-          for url in [
-              'https://api.tankpuls.de/v1/health',
-              'https://api.tankpuls.de/v1/stations?lat=52.52&lon=13.405&radius=5&fuel=E10&sort=price',
-              'https://api.tankpuls.de/stations?lat=52.52&lon=13.405&radius=5&fuel=E10&sort=price',
-              'https://tankpuls.de/api/v1/stations?lat=52.52&lon=13.405&radius=5&fuel=E10&sort=price',
-              'https://tankpuls.de/api/stations?lat=52.52&lon=13.405&radius=5&fuel=E10&sort=price',
-          ]:
-              body=req(url)
-              if body: print(body[:3000])
+                  print('ERR',repr(e),'URL',url)
+          req('https://api.tankpuls.de/api/search/cheapest?minLat=52.47&minLng=13.32&maxLat=52.57&maxLng=13.49&fuel=e10&limit=10')
+          req('https://api.tankpuls.de/api/search/cheapest?minLat=51.0&minLng=6.0&maxLat=51.5&maxLng=7.0&fuel=diesel&limit=10')
           PY
