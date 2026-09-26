@@ -126,7 +126,7 @@ const getAuthHeader = (req: any) => {
   return Array.isArray(raw) ? raw[0] : raw;
 };
 
-async function requireAdmin(req: any) {
+async function requireFuelAccess(req: any) {
   const authHeader = getAuthHeader(req);
   if (!authHeader) return { ok: false as const, status: 401, message: "Niet ingelogd." };
 
@@ -147,15 +147,14 @@ async function requireAdmin(req: any) {
     return { ok: false as const, status: 401, message: "Sessie ongeldig." };
   }
 
-  const { data: role, error: roleError } = await client
+  const { data: roles, error: roleError } = await client
     .from("user_roles")
     .select("role")
     .eq("user_id", userData.user.id)
-    .eq("role", "admin")
-    .maybeSingle();
+    .in("role", ["admin", "tankprijzen"]);
 
-  if (roleError || !role) {
-    return { ok: false as const, status: 403, message: "Alleen admins hebben toegang." };
+  if (roleError || !roles?.length) {
+    return { ok: false as const, status: 403, message: "Geen toegang tot de tankprijzenmodule." };
   }
 
   return { ok: true as const };
@@ -386,8 +385,8 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const admin = await requireAdmin(req);
-  if (!admin.ok) return res.status(admin.status).json({ error: admin.message });
+  const access = await requireFuelAccess(req);
+  if (!access.ok) return res.status(access.status).json({ error: access.message });
 
   try {
     const body = (req.body ?? {}) as RequestBody;
