@@ -20,7 +20,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import About from "./pages/About";
 import AdminLogin from "./pages/admin/AdminLogin";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminHome from "./pages/admin/AdminHome";
+import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminInvoicesWithStatus from "./pages/admin/AdminInvoicesWithStatus";
 import InvoiceMakerForceLeftRight from "./pages/admin/InvoiceMakerForceLeftRight";
@@ -33,6 +34,7 @@ import AdminPasswords from "./pages/admin/AdminPasswords";
 import AdminFuelPrices from "./pages/admin/AdminFuelPrices";
 import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
+import ModuleRoute from "./components/admin/ModuleRoute";
 
 const queryClient = new QueryClient();
 
@@ -65,16 +67,17 @@ const App = () => (
             <Route path="/voorwaarden" element={<Terms />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="invoices" element={<AdminInvoicesWithStatus />} />
-              <Route path="factuur-maker" element={<InvoiceMakerForceLeftRight />} />
-              <Route path="customers" element={<AdminCustomers />} />
-              <Route path="btw-overzicht" element={<AdminBtwOverzicht />} />
-              <Route path="domeinen" element={<AdminDomains />} />
-              <Route path="uren" element={<AdminTimeEntriesWithPeriod />} />
-              <Route path="wachtwoorden" element={<AdminPasswords />} />
-              <Route path="tankprijzen" element={<AdminFuelPrices />} />
-              <Route path="settings" element={<AdminSettings />} />
+              <Route index element={<AdminHome />} />
+              <Route path="invoices" element={<ModuleRoute adminOnly><AdminInvoicesWithStatus /></ModuleRoute>} />
+              <Route path="factuur-maker" element={<ModuleRoute role="factuur_maker"><InvoiceMakerForceLeftRight /></ModuleRoute>} />
+              <Route path="customers" element={<ModuleRoute adminOnly><AdminCustomers /></ModuleRoute>} />
+              <Route path="btw-overzicht" element={<ModuleRoute adminOnly><AdminBtwOverzicht /></ModuleRoute>} />
+              <Route path="domeinen" element={<ModuleRoute adminOnly><AdminDomains /></ModuleRoute>} />
+              <Route path="uren" element={<ModuleRoute adminOnly><AdminTimeEntriesWithPeriod /></ModuleRoute>} />
+              <Route path="wachtwoorden" element={<ModuleRoute adminOnly><AdminPasswords /></ModuleRoute>} />
+              <Route path="tankprijzen" element={<ModuleRoute role="tankprijzen"><AdminFuelPrices /></ModuleRoute>} />
+              <Route path="gebruikers" element={<ModuleRoute adminOnly><AdminUsers /></ModuleRoute>} />
+              <Route path="settings" element={<ModuleRoute adminOnly><AdminSettings /></ModuleRoute>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
