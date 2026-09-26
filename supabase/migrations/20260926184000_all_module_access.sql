@@ -77,15 +77,14 @@ AS $$
     )
 $$;
 
--- Seed existing admins into the management overview.
+-- Seed every existing auth user into the management overview.
+-- This also recovers accounts that may have been created before this table existed.
 INSERT INTO public.managed_users (user_id, email, display_name)
 SELECT
   u.id,
   COALESCE(u.email, ''),
   COALESCE(NULLIF(u.raw_user_meta_data->>'display_name', ''), split_part(COALESCE(u.email, ''), '@', 1))
 FROM auth.users u
-JOIN public.user_roles r ON r.user_id = u.id
-WHERE r.role = 'admin'
 ON CONFLICT (user_id) DO UPDATE
 SET
   email = EXCLUDED.email,
@@ -292,3 +291,6 @@ BEGIN
   RETURN p_year || '-' || LPAD(next_num::TEXT, 3, '0');
 END;
 $$;
+
+-- Force PostgREST to refresh its schema cache immediately.
+NOTIFY pgrst, 'reload schema';
