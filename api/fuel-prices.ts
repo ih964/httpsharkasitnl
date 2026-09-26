@@ -150,10 +150,10 @@ async function requireFuelAccess(req: any) {
   const { data: roles, error: roleError } = await client
     .from("user_roles")
     .select("role")
-    .eq("user_id", userData.user.id)
-    .in("role", ["admin", "tankprijzen"]);
+    .eq("user_id", userData.user.id);
 
-  if (roleError || !roles?.length) {
+  const roleNames = (roles ?? []).map((row) => String(row.role));
+  if (roleError || (!roleNames.includes("admin") && !roleNames.includes("tankprijzen"))) {
     return { ok: false as const, status: 403, message: "Geen toegang tot de tankprijzenmodule." };
   }
 
