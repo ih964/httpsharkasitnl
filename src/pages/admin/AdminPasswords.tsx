@@ -113,15 +113,21 @@ const AdminPasswords = () => {
   };
 
   const encryptPassword = async (plain: string) => {
-    const { data, error } = await supabase.functions.invoke("encrypt-password", { body: { password: plain } });
+    const { data, error } = await supabase.rpc("encrypt_vault_password", {
+      p_password: plain,
+    });
     if (error) throw error;
-    return (data as { encrypted: string }).encrypted;
+    if (!data) throw new Error("Versleuteling gaf geen resultaat.");
+    return data as string;
   };
 
   const decryptPassword = async (id: string) => {
-    const { data, error } = await supabase.functions.invoke("decrypt-password", { body: { id } });
+    const { data, error } = await supabase.rpc("decrypt_vault_password", {
+      p_id: id,
+    });
     if (error) throw error;
-    return (data as { password: string }).password;
+    if (!data) throw new Error("Wachtwoord kon niet worden ontsleuteld.");
+    return data as string;
   };
 
   const handleReveal = async (id: string) => {
@@ -215,9 +221,9 @@ const AdminPasswords = () => {
 
       <Alert>
         <ShieldAlert className="h-4 w-4" />
-        <AlertTitle>Alleen voor admins</AlertTitle>
+        <AlertTitle>Beveiligde wachtwoordkluis</AlertTitle>
         <AlertDescription>
-          Wachtwoorden zijn server-side versleuteld (AES-GCM). Alleen ingelogde admins kunnen items bekijken of ontsleutelen.
+          Wachtwoorden worden server-side versleuteld. Alleen beheerders en gebruikers met de module Wachtwoorden kunnen ze bekijken of ontsleutelen.
         </AlertDescription>
       </Alert>
 
