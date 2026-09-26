@@ -2,11 +2,17 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+export type AppRole = "admin" | "factuur_maker" | "tankprijzen";
+export type ModuleRole = Exclude<AppRole, "admin">;
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
+  roles: AppRole[];
   isAdmin: boolean;
+  hasAccess: boolean;
   isLoading: boolean;
+  canAccess: (role: ModuleRole) => boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -16,78 +22,67 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const checkAdminRole = async (userId: string): Promise<boolean> => {
+  const loadRoles = async (userId: string): Promise<AppRole[]> => {
     try {
-      console.log("[Auth] admin check started for", userId);
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .maybeSingle();
+        .eq("user_id", userId);
+
       if (error) {
         console.error("[Auth] user_roles query error:", error);
-        return false;
+        return [];
       }
-      const result = !!data;
-      console.log("[Auth] admin check result:", result);
-      return result;
-    } catch (err) {
-      console.error("[Auth] admin check exception:", err);
-      return false;
+
+      return (data ?? [])
+        .map((row) => row.role as AppRole)
+        .filter((role): role is AppRole =>
+          role === "admin" || role === "factuur_maker" || role === "tankprijzen",
+        );
+    } catch (error) {
+      console.error("[Auth] role check exception:", error);
+      return [];
     }
   };
 
   useEffect(() => {
     let mounted = true;
 
-    // Set up listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
-        console.log("[Auth] onAuthStateChange:", _event);
-        if (!mounted) return;
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
+    const applySession = async (nextSession: Session | null) => {
+      if (!mounted) return;
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
 
-        if (newSession?.user) {
-          // Use setTimeout to avoid potential deadlock with Supabase client
-          setTimeout(async () => {
-            if (!mounted) return;
-            const admin = await checkAdminRole(newSession.user.id);
-            if (mounted) {
-              setIsAdmin(admin);
-              setIsLoading(false);
-            }
-          }, 0);
-        } else {
-          setIsAdmin(false);
-          setIsLoading(false);
-        }
+      if (!nextSession?.user) {
+        setRoles([]);
+        setIsLoading(false);
+        return;
       }
+
+      const nextRoles = await loadRoles(nextSession.user.id);
+      if (!mounted) return;
+      setRoles(nextRoles);
+      setIsLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, nextSession) => {
+        setTimeout(() => {
+          applySession(nextSession);
+        }, 0);
+      },
     );
 
-    // Then get initial session
     const initSession = async () => {
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error("[Auth] getSession error:", error);
-        }
-        if (!mounted) return;
-        console.log("[Auth] session loaded:", !!currentSession);
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-
-        if (currentSession?.user) {
-          const admin = await checkAdminRole(currentSession.user.id);
-          if (mounted) setIsAdmin(admin);
-        }
-      } catch (err) {
-        console.error("[Auth] getSession exception:", err);
-      } finally {
+        if (error) console.error("[Auth] getSession error:", error);
+        await applySession(currentSession);
+      } catch (error) {
+        console.error("[Auth] getSession exception:", error);
         if (mounted) setIsLoading(false);
       }
     };
@@ -100,30 +95,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  const isAdmin = roles.includes("admin");
+  const hasAccess = roles.length > 0;
+  const canAccess = (role: ModuleRole) => isAdmin || roles.includes(role);
+
   const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        console.error("[Auth] signIn error:", error);
+        setIsLoading(false);
         return { error: error as Error };
       }
-      console.log("[Auth] signIn success");
       return { error: null };
-    } catch (err) {
-      console.error("[Auth] signIn exception:", err);
-      return { error: err as Error };
+    } catch (error) {
+      setIsLoading(false);
+      return { error: error as Error };
     }
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setIsAdmin(false);
+    setRoles([]);
     setSession(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isAdmin, isLoading, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{ session, user, roles, isAdmin, hasAccess, isLoading, canAccess, signIn, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );
