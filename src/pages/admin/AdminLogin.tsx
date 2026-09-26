@@ -12,17 +12,16 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signOut, isAdmin, isLoading, session } = useAuth();
+  const { signIn, hasAccess, isLoading, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Redirect via useEffect, not in render body
   useEffect(() => {
-    if (!isLoading && session && isAdmin) {
-      console.log("[Login] Redirecting to /admin (session + admin confirmed)");
+    if (!isLoading && session && hasAccess) {
       navigate("/admin", { replace: true });
     }
-  }, [session, isAdmin, isLoading, navigate]);
+  }, [session, hasAccess, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
