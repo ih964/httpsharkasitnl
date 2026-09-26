@@ -114,7 +114,10 @@ const AdminUsers = () => {
     } catch (error: any) {
       toast({
         title: "Gebruikers konden niet worden geladen",
-        description: error?.message || "Voer eerst de nieuwste Supabase-toegangsmigratie uit.",
+        description:
+          error?.message?.includes("managed_users") || error?.message?.includes("user_module_access")
+            ? "Voer in Supabase SQL Editor eerst 20260926184000_all_module_access.sql uit."
+            : error?.message || "Voer eerst de nieuwste Supabase-toegangsmigratie uit.",
         variant: "destructive",
       });
     } finally {
@@ -152,6 +155,17 @@ const AdminUsers = () => {
 
     setCreating(true);
     try {
+      const [{ error: managedCheck }, { error: accessCheck }] = await Promise.all([
+        supabase.from("managed_users").select("user_id", { head: true, count: "exact" }),
+        supabase.from("user_module_access").select("user_id", { head: true, count: "exact" }),
+      ]);
+
+      if (managedCheck || accessCheck) {
+        throw new Error(
+          "Gebruikersbeheer is nog niet geactiveerd in Supabase. Voer eerst de migratie 20260926184000_all_module_access.sql uit in de SQL Editor.",
+        );
+      }
+
       const cleanEmail = email.trim().toLowerCase();
       const { data, error } = await provisioningClient.auth.signUp({
         email: cleanEmail,
