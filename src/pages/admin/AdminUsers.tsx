@@ -1,16 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { ModuleKey } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Loader2, ShieldCheck, UserPlus, UsersRound } from "lucide-react";
-
-type ModuleRole = "factuur_maker" | "tankprijzen";
-type AccessRole = "admin" | ModuleRole;
+import {
+  Calculator,
+  Check,
+  Clock,
+  FileText,
+  Fuel,
+  Globe,
+  KeyRound,
+  LayoutDashboard,
+  Loader2,
+  ReceiptText,
+  Settings,
+  ShieldCheck,
+  UserPlus,
+  Users,
+  UsersRound,
+} from "lucide-react";
 
 type ManagedUser = {
   user_id: string;
@@ -19,9 +33,22 @@ type ManagedUser = {
   created_at: string;
 };
 
-const MODULES: Array<{ role: ModuleRole; label: string; description: string }> = [
-  { role: "factuur_maker", label: "Factuur Maker", description: "Losse facturen maken en als PDF downloaden." },
-  { role: "tankprijzen", label: "Tankprijzen", description: "Tankprijzenkaart voor Nederland, Duitsland en België." },
+const MODULES: Array<{
+  key: ModuleKey;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}> = [
+  { key: "dashboard", label: "Dashboard", description: "Overzicht van klanten, facturen, omzet en domeinen.", icon: LayoutDashboard },
+  { key: "invoices", label: "Facturen", description: "Facturen bekijken, beheren, PDF maken en verzenden.", icon: FileText },
+  { key: "factuur_maker", label: "Factuur Maker", description: "Losse factuur maken en direct als PDF downloaden.", icon: ReceiptText },
+  { key: "customers", label: "Klanten", description: "Klantgegevens bekijken, toevoegen en wijzigen.", icon: Users },
+  { key: "domains", label: "Domeinen", description: "Domeinen, verlengingen en bijbehorende facturatie beheren.", icon: Globe },
+  { key: "time_entries", label: "Uren", description: "Urenregistratie en facturatie vanuit uren.", icon: Clock },
+  { key: "passwords", label: "Wachtwoorden", description: "Toegang tot de beveiligde wachtwoordkluis.", icon: KeyRound },
+  { key: "tankprijzen", label: "Tankprijzen", description: "Tankprijzenkaart voor Nederland, Duitsland en België.", icon: Fuel },
+  { key: "btw_overzicht", label: "BTW overzicht", description: "BTW- en factuuroverzichten bekijken.", icon: Calculator },
+  { key: "settings", label: "Instellingen", description: "Bedrijfs-, factuur- en brandinginstellingen beheren.", icon: Settings },
 ];
 
 const provisioningClient = createClient(
@@ -39,8 +66,8 @@ const provisioningClient = createClient(
 const AdminUsers = () => {
   const { toast } = useToast();
   const [users, setUsers] = useState<ManagedUser[]>([]);
-  const [rolesByUser, setRolesByUser] = useState<Record<string, AccessRole[]>>({});
-  const [draftRoles, setDraftRoles] = useState<Record<string, ModuleRole[]>>({});
+  const [adminIds, setAdminIds] = useState<Set<string>>(new Set());
+  const [draftModules, setDraftModules] = useState<Record<string, ModuleKey[]>>({});
   const [loading, setLoading] = useState(true);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -48,44 +75,46 @@ const AdminUsers = () => {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [newRoles, setNewRoles] = useState<ModuleRole[]>(["factuur_maker", "tankprijzen"]);
+  const [newModules, setNewModules] = useState<ModuleKey[]>(["factuur_maker", "tankprijzen"]);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const [{ data: managed, error: managedError }, { data: roleRows, error: rolesError }] = await Promise.all([
+      const [
+        { data: managed, error: managedError },
+        { data: adminRows, error: adminError },
+        { data: moduleRows, error: moduleError },
+      ] = await Promise.all([
         supabase
           .from("managed_users")
           .select("user_id,email,display_name,created_at")
           .order("created_at", { ascending: true }),
         supabase
           .from("user_roles")
-          .select("user_id,role"),
+          .select("user_id")
+          .eq("role", "admin"),
+        supabase
+          .from("user_module_access")
+          .select("user_id,module_key"),
       ]);
 
       if (managedError) throw managedError;
-      if (rolesError) throw rolesError;
+      if (adminError) throw adminError;
+      if (moduleError) throw moduleError;
 
-      const grouped: Record<string, AccessRole[]> = {};
-      for (const row of roleRows ?? []) {
-        const role = row.role as AccessRole;
-        grouped[row.user_id] = [...(grouped[row.user_id] ?? []), role];
-      }
-
-      const moduleDrafts: Record<string, ModuleRole[]> = {};
-      for (const user of managed ?? []) {
-        moduleDrafts[user.user_id] = (grouped[user.user_id] ?? []).filter(
-          (role): role is ModuleRole => role === "factuur_maker" || role === "tankprijzen",
-        );
+      const nextAdminIds = new Set((adminRows ?? []).map((row) => row.user_id));
+      const grouped: Record<string, ModuleKey[]> = {};
+      for (const row of moduleRows ?? []) {
+        grouped[row.user_id] = [...(grouped[row.user_id] ?? []), row.module_key as ModuleKey];
       }
 
       setUsers((managed ?? []) as ManagedUser[]);
-      setRolesByUser(grouped);
-      setDraftRoles(moduleDrafts);
+      setAdminIds(nextAdminIds);
+      setDraftModules(grouped);
     } catch (error: any) {
       toast({
         title: "Gebruikers konden niet worden geladen",
-        description: error?.message || "Controleer of de nieuwe Supabase-migratie is uitgevoerd.",
+        description: error?.message || "Voer eerst de nieuwste Supabase-toegangsmigratie uit.",
         variant: "destructive",
       });
     } finally {
@@ -97,11 +126,12 @@ const AdminUsers = () => {
     loadUsers();
   }, [loadUsers]);
 
-  const toggleRole = (current: ModuleRole[], role: ModuleRole) =>
-    current.includes(role) ? current.filter((item) => item !== role) : [...current, role];
+  const toggleModule = (current: ModuleKey[], module: ModuleKey) =>
+    current.includes(module) ? current.filter((item) => item !== module) : [...current, module];
 
   const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();
+
     if (!email.trim() || password.length < 8) {
       toast({
         title: "Controleer de gegevens",
@@ -110,7 +140,8 @@ const AdminUsers = () => {
       });
       return;
     }
-    if (newRoles.length === 0) {
+
+    if (newModules.length === 0) {
       toast({
         title: "Kies minimaal één module",
         description: "Een nieuw account moet toegang krijgen tot minstens één module.",
@@ -135,6 +166,7 @@ const AdminUsers = () => {
       if (!data.user?.id) throw new Error("Supabase heeft geen gebruiker-ID teruggegeven.");
 
       const userId = data.user.id;
+
       const { error: profileError } = await supabase
         .from("managed_users")
         .upsert({
@@ -144,10 +176,10 @@ const AdminUsers = () => {
         });
       if (profileError) throw profileError;
 
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert(newRoles.map((role) => ({ user_id: userId, role })));
-      if (roleError) throw roleError;
+      const { error: moduleError } = await supabase
+        .from("user_module_access")
+        .insert(newModules.map((module_key) => ({ user_id: userId, module_key })));
+      if (moduleError) throw moduleError;
 
       toast({
         title: "Gebruiker aangemaakt",
@@ -159,7 +191,7 @@ const AdminUsers = () => {
       setDisplayName("");
       setEmail("");
       setPassword("");
-      setNewRoles(["factuur_maker", "tankprijzen"]);
+      setNewModules(["factuur_maker", "tankprijzen"]);
       await loadUsers();
     } catch (error: any) {
       toast({
@@ -173,22 +205,21 @@ const AdminUsers = () => {
   };
 
   const saveAccess = async (user: ManagedUser) => {
-    if ((rolesByUser[user.user_id] ?? []).includes("admin")) return;
+    if (adminIds.has(user.user_id)) return;
 
     setSavingUserId(user.user_id);
     try {
       const { error: deleteError } = await supabase
-        .from("user_roles")
+        .from("user_module_access")
         .delete()
-        .eq("user_id", user.user_id)
-        .in("role", ["factuur_maker", "tankprijzen"]);
+        .eq("user_id", user.user_id);
       if (deleteError) throw deleteError;
 
-      const selected = draftRoles[user.user_id] ?? [];
+      const selected = draftModules[user.user_id] ?? [];
       if (selected.length > 0) {
         const { error: insertError } = await supabase
-          .from("user_roles")
-          .insert(selected.map((role) => ({ user_id: user.user_id, role })));
+          .from("user_module_access")
+          .insert(selected.map((module_key) => ({ user_id: user.user_id, module_key })));
         if (insertError) throw insertError;
       }
 
@@ -211,17 +242,47 @@ const AdminUsers = () => {
   };
 
   const totalSharedUsers = useMemo(
-    () => users.filter((user) => !(rolesByUser[user.user_id] ?? []).includes("admin")).length,
-    [users, rolesByUser],
+    () => users.filter((user) => !adminIds.has(user.user_id)).length,
+    [users, adminIds],
+  );
+
+  const moduleGrid = (
+    selected: ModuleKey[],
+    setSelected: (next: ModuleKey[]) => void,
+  ) => (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {MODULES.map((module) => {
+        const active = selected.includes(module.key);
+        const Icon = module.icon;
+        return (
+          <button
+            type="button"
+            key={module.key}
+            onClick={() => setSelected(toggleModule(selected, module.key))}
+            className={`rounded-xl border p-4 text-left transition ${active ? "border-primary bg-primary/10" : "border-border bg-background hover:bg-muted/50"}`}
+          >
+            <div className="flex items-start gap-3">
+              <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded border ${active ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+                {active ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
+              </span>
+              <span>
+                <span className="block font-semibold">{module.label}</span>
+                <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{module.description}</span>
+              </span>
+            </div>
+          </button>
+        );
+      })}
+    </div>
   );
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 max-w-7xl">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold font-heading">Gebruikers & toegang</h1>
           <p className="text-muted-foreground">
-            Maak accounts aan en bepaal per gebruiker welke Harkas IT-modules zichtbaar zijn.
+            Kies per gebruiker exact welke onderdelen van het portaal zichtbaar en toegankelijk zijn.
           </p>
         </div>
         <Badge variant="secondary" className="w-fit">
@@ -242,63 +303,31 @@ const AdminUsers = () => {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="user-name">Naam</Label>
-                <Input
-                  id="user-name"
-                  value={displayName}
-                  onChange={(event) => setDisplayName(event.target.value)}
-                  placeholder="Bijv. Yassin"
-                />
+                <Input id="user-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Bijv. Yassin" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="user-email">E-mail</Label>
-                <Input
-                  id="user-email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="naam@voorbeeld.nl"
-                  required
-                />
+                <Input id="user-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="naam@voorbeeld.nl" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="user-password">Tijdelijk wachtwoord</Label>
-                <Input
-                  id="user-password"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Minimaal 8 tekens"
-                  minLength={8}
-                  required
-                />
+                <Input id="user-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimaal 8 tekens" minLength={8} required />
               </div>
             </div>
 
             <div>
-              <Label className="mb-2 block">Modules</Label>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {MODULES.map((module) => {
-                  const active = newRoles.includes(module.role);
-                  return (
-                    <button
-                      type="button"
-                      key={module.role}
-                      onClick={() => setNewRoles((current) => toggleRole(current, module.role))}
-                      className={`rounded-xl border p-4 text-left transition ${active ? "border-primary bg-primary/10" : "border-border bg-background hover:bg-muted/50"}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded border ${active ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
-                          {active && <Check className="h-3.5 w-3.5" />}
-                        </span>
-                        <span>
-                          <span className="block font-semibold">{module.label}</span>
-                          <span className="mt-1 block text-xs text-muted-foreground">{module.description}</span>
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <Label>Modules</Label>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => setNewModules(MODULES.map((item) => item.key))}>
+                    Alles selecteren
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setNewModules([])}>
+                    Alles wissen
+                  </Button>
+                </div>
               </div>
+              {moduleGrid(newModules, setNewModules)}
             </div>
 
             <Button type="submit" disabled={creating}>
@@ -322,15 +351,14 @@ const AdminUsers = () => {
           ) : users.length === 0 ? (
             <p className="py-6 text-sm text-muted-foreground">Nog geen gebruikers gevonden.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {users.map((user) => {
-                const roles = rolesByUser[user.user_id] ?? [];
-                const isAdministrator = roles.includes("admin");
-                const selected = draftRoles[user.user_id] ?? [];
+                const isAdministrator = adminIds.has(user.user_id);
+                const selected = draftModules[user.user_id] ?? [];
 
                 return (
                   <div key={user.user_id} className="rounded-xl border border-border p-4">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="truncate font-semibold">{user.display_name || user.email}</p>
@@ -343,49 +371,27 @@ const AdminUsers = () => {
                         </div>
                         <p className="mt-1 truncate text-sm text-muted-foreground">{user.email}</p>
                       </div>
-
-                      {isAdministrator ? (
-                        <p className="text-sm text-muted-foreground">
-                          Beheerders hebben automatisch toegang tot alle modules.
-                        </p>
-                      ) : (
-                        <div className="flex flex-1 flex-col gap-3 lg:max-w-2xl">
-                          <div className="grid gap-2 sm:grid-cols-2">
-                            {MODULES.map((module) => {
-                              const active = selected.includes(module.role);
-                              return (
-                                <button
-                                  type="button"
-                                  key={module.role}
-                                  onClick={() =>
-                                    setDraftRoles((current) => ({
-                                      ...current,
-                                      [user.user_id]: toggleRole(current[user.user_id] ?? [], module.role),
-                                    }))
-                                  }
-                                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${active ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground"}`}
-                                >
-                                  <span className={`grid h-4 w-4 place-items-center rounded border ${active ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
-                                    {active && <Check className="h-3 w-3" />}
-                                  </span>
-                                  {module.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <div className="flex justify-end">
-                            <Button
-                              size="sm"
-                              onClick={() => saveAccess(user)}
-                              disabled={savingUserId === user.user_id}
-                            >
-                              {savingUserId === user.user_id && <Loader2 className="h-4 w-4 animate-spin" />}
-                              Rechten opslaan
-                            </Button>
-                          </div>
-                        </div>
+                      {!isAdministrator && (
+                        <Button
+                          size="sm"
+                          onClick={() => saveAccess(user)}
+                          disabled={savingUserId === user.user_id}
+                        >
+                          {savingUserId === user.user_id && <Loader2 className="h-4 w-4 animate-spin" />}
+                          Rechten opslaan
+                        </Button>
                       )}
                     </div>
+
+                    {isAdministrator ? (
+                      <p className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+                        Beheerders hebben automatisch toegang tot alle modules en tot gebruikersbeheer.
+                      </p>
+                    ) : (
+                      moduleGrid(selected, (next) =>
+                        setDraftModules((current) => ({ ...current, [user.user_id]: next }))
+                      )
+                    )}
                   </div>
                 );
               })}
