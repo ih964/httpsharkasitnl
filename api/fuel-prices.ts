@@ -147,13 +147,23 @@ async function requireFuelAccess(req: any) {
     return { ok: false as const, status: 401, message: "Sessie ongeldig." };
   }
 
-  const { data: roles, error: roleError } = await client
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userData.user.id);
+  const [{ data: adminRole, error: roleError }, { data: moduleAccess, error: moduleError }] =
+    await Promise.all([
+      client
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .eq("role", "admin")
+        .maybeSingle(),
+      client
+        .from("user_module_access")
+        .select("module_key")
+        .eq("user_id", userData.user.id)
+        .eq("module_key", "tankprijzen")
+        .maybeSingle(),
+    ]);
 
-  const roleNames = (roles ?? []).map((row) => String(row.role));
-  if (roleError || (!roleNames.includes("admin") && !roleNames.includes("tankprijzen"))) {
+  if (roleError || moduleError || (!adminRole && !moduleAccess)) {
     return { ok: false as const, status: 403, message: "Geen toegang tot de tankprijzenmodule." };
   }
 
