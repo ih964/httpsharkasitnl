@@ -68,16 +68,16 @@ const App = () => (
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminHome />} />
-              <Route path="invoices" element={<ModuleRoute adminOnly><AdminInvoicesWithStatus /></ModuleRoute>} />
-              <Route path="factuur-maker" element={<ModuleRoute role="factuur_maker"><InvoiceMakerForceLeftRight /></ModuleRoute>} />
-              <Route path="customers" element={<ModuleRoute adminOnly><AdminCustomers /></ModuleRoute>} />
-              <Route path="btw-overzicht" element={<ModuleRoute adminOnly><AdminBtwOverzicht /></ModuleRoute>} />
-              <Route path="domeinen" element={<ModuleRoute adminOnly><AdminDomains /></ModuleRoute>} />
-              <Route path="uren" element={<ModuleRoute adminOnly><AdminTimeEntriesWithPeriod /></ModuleRoute>} />
-              <Route path="wachtwoorden" element={<ModuleRoute adminOnly><AdminPasswords /></ModuleRoute>} />
-              <Route path="tankprijzen" element={<ModuleRoute role="tankprijzen"><AdminFuelPrices /></ModuleRoute>} />
+              <Route path="invoices" element={<ModuleRoute module="invoices"><AdminInvoicesWithStatus /></ModuleRoute>} />
+              <Route path="factuur-maker" element={<ModuleRoute module="factuur_maker"><InvoiceMakerForceLeftRight /></ModuleRoute>} />
+              <Route path="customers" element={<ModuleRoute module="customers"><AdminCustomers /></ModuleRoute>} />
+              <Route path="btw-overzicht" element={<ModuleRoute module="btw_overzicht"><AdminBtwOverzicht /></ModuleRoute>} />
+              <Route path="domeinen" element={<ModuleRoute module="domains"><AdminDomains /></ModuleRoute>} />
+              <Route path="uren" element={<ModuleRoute module="time_entries"><AdminTimeEntriesWithPeriod /></ModuleRoute>} />
+              <Route path="wachtwoorden" element={<ModuleRoute module="passwords"><AdminPasswords /></ModuleRoute>} />
+              <Route path="tankprijzen" element={<ModuleRoute module="tankprijzen"><AdminFuelPrices /></ModuleRoute>} />
               <Route path="gebruikers" element={<ModuleRoute adminOnly><AdminUsers /></ModuleRoute>} />
-              <Route path="settings" element={<ModuleRoute adminOnly><AdminSettings /></ModuleRoute>} />
+              <Route path="settings" element={<ModuleRoute module="settings"><AdminSettings /></ModuleRoute>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
