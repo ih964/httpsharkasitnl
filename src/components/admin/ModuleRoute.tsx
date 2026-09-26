@@ -1,13 +1,13 @@
 import { Navigate } from "react-router-dom";
-import { AppRole, useAuth } from "@/contexts/AuthContext";
+import { ModuleKey, useAuth } from "@/contexts/AuthContext";
 
 type ModuleRouteProps = {
   children: React.ReactNode;
-  role?: Exclude<AppRole, "admin">;
+  module?: ModuleKey;
   adminOnly?: boolean;
 };
 
-const ModuleRoute = ({ children, role, adminOnly = false }: ModuleRouteProps) => {
+const ModuleRoute = ({ children, module, adminOnly = false }: ModuleRouteProps) => {
   const { session, isAdmin, isLoading, canAccess } = useAuth();
 
   if (isLoading) {
@@ -20,7 +20,7 @@ const ModuleRoute = ({ children, role, adminOnly = false }: ModuleRouteProps) =>
 
   if (!session) return <Navigate to="/admin/login" replace />;
 
-  const allowed = adminOnly ? isAdmin : role ? canAccess(role) : isAdmin;
+  const allowed = adminOnly ? isAdmin : module ? canAccess(module) : isAdmin;
   if (!allowed) return <Navigate to="/admin" replace />;
 
   return <>{children}</>;
