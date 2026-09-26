@@ -399,24 +399,47 @@ const AdminInvoices = () => {
       toast({ title: "Validatiefout", description: validationError, variant: "destructive" });
       return;
     }
+
     setSendingEmail(true);
     try {
-      if (!emailInvoice.pdf_storage_path) {
-        await generatePdf(emailInvoice.id);
+      let invoice = emailInvoice;
+
+      if (!invoice.pdf_storage_path) {
+        const pdfPath = await generatePdf(invoice.id);
+        if (!pdfPath) throw new Error("PDF kon niet worden gegenereerd.");
+        invoice = { ...invoice, pdf_storage_path: pdfPath };
       }
-      const { error } = await supabase.functions.invoke("send-invoice-email", {
-        body: {
-          invoice_id: emailInvoice.id,
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Je sessie is verlopen. Log opnieuw in.");
+
+      const response = await fetch("/api/send-invoice-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          invoice_id: invoice.id,
           recipient_email: emailTo.trim(),
           cc_email: emailCc.trim() || undefined,
           from_name: emailFromName.trim() || undefined,
           from_email: emailFromEmail.trim() || undefined,
-        },
+        }),
       });
-      if (error) throw error;
-      toast({ title: "Factuur verzonden", description: `E-mail met PDF bijlage verstuurd naar ${emailTo}` });
+
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(body?.error || `E-mail verzenden mislukt (HTTP ${response.status}).`);
+      }
+
+      toast({
+        title: "Factuur verzonden",
+        description: `E-mail met PDF bijlage verstuurd naar ${emailTo}`,
+      });
       setEmailDialogOpen(false);
-      fetchData();
+      await fetchData();
     } catch (err: any) {
       toast({ title: "Fout bij verzenden", description: err.message, variant: "destructive" });
     } finally {
