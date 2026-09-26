@@ -157,6 +157,30 @@ export type Database = {
           },
         ]
       }
+      managed_users: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoice_counters: {
         Row: {
           invoice_year: number
@@ -509,7 +533,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin"
+      app_role: "admin" | "factuur_maker" | "tankprijzen"
       domain_action_status: "none" | "pending" | "extended" | "cancelled"
       domain_status: "active" | "expiring" | "urgent" | "expired"
     }
@@ -639,7 +663,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin"],
+      app_role: ["admin", "factuur_maker", "tankprijzen"],
       domain_action_status: ["none", "pending", "extended", "cancelled"],
       domain_status: ["active", "expiring", "urgent", "expired"],
     },
