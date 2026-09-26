@@ -1,4 +1,4 @@
-import { AppRole, useAuth } from "@/contexts/AuthContext";
+import { ModuleKey, useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
 import {
@@ -32,22 +32,22 @@ type SidebarItem = {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
-  role?: Exclude<AppRole, "admin">;
+  module?: ModuleKey;
   adminOnly?: boolean;
 };
 
 const items: SidebarItem[] = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard, adminOnly: true },
-  { title: "Facturen", url: "/admin/invoices", icon: FileText, adminOnly: true },
-  { title: "Factuur Maker", url: "/admin/factuur-maker", icon: ReceiptText, role: "factuur_maker" },
-  { title: "Klanten", url: "/admin/customers", icon: Users, adminOnly: true },
-  { title: "Domeinen", url: "/admin/domeinen", icon: Globe, adminOnly: true },
-  { title: "Uren", url: "/admin/uren", icon: Clock, adminOnly: true },
-  { title: "Wachtwoorden", url: "/admin/wachtwoorden", icon: KeyRound, adminOnly: true },
-  { title: "Tankprijzen", url: "/admin/tankprijzen", icon: Fuel, role: "tankprijzen" },
-  { title: "BTW overzicht", url: "/admin/btw-overzicht", icon: Calculator, adminOnly: true },
+  { title: "Dashboard", url: "/admin", icon: LayoutDashboard, module: "dashboard" },
+  { title: "Facturen", url: "/admin/invoices", icon: FileText, module: "invoices" },
+  { title: "Factuur Maker", url: "/admin/factuur-maker", icon: ReceiptText, module: "factuur_maker" },
+  { title: "Klanten", url: "/admin/customers", icon: Users, module: "customers" },
+  { title: "Domeinen", url: "/admin/domeinen", icon: Globe, module: "domains" },
+  { title: "Uren", url: "/admin/uren", icon: Clock, module: "time_entries" },
+  { title: "Wachtwoorden", url: "/admin/wachtwoorden", icon: KeyRound, module: "passwords" },
+  { title: "Tankprijzen", url: "/admin/tankprijzen", icon: Fuel, module: "tankprijzen" },
+  { title: "BTW overzicht", url: "/admin/btw-overzicht", icon: Calculator, module: "btw_overzicht" },
   { title: "Gebruikers", url: "/admin/gebruikers", icon: UserCog, adminOnly: true },
-  { title: "Instellingen", url: "/admin/settings", icon: Settings, adminOnly: true },
+  { title: "Instellingen", url: "/admin/settings", icon: Settings, module: "settings" },
 ];
 
 const AdminSidebar = () => {
@@ -59,7 +59,7 @@ const AdminSidebar = () => {
   const visibleItems = items.filter((item) => {
     if (isAdmin) return true;
     if (item.adminOnly) return false;
-    return item.role ? canAccess(item.role) : false;
+    return item.module ? canAccess(item.module) : false;
   });
 
   const handleLogout = async () => {
