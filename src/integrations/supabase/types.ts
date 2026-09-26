@@ -541,7 +541,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrypt_vault_password: { Args: { p_id: string }; Returns: string }
+      encrypt_vault_password: { Args: { p_password: string }; Returns: string }
       generate_invoice_number: { Args: { p_year: number }; Returns: string }
+      has_module: {
+        Args: {
+          _module_key: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
