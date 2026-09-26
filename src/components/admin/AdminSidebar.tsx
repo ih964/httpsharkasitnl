@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { AppRole, useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
 import {
@@ -12,27 +12,55 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, FileText, Users, Calculator, Settings, LogOut, Globe, Clock, KeyRound, ReceiptText, Fuel } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  Calculator,
+  Settings,
+  LogOut,
+  Globe,
+  Clock,
+  KeyRound,
+  ReceiptText,
+  Fuel,
+  UserCog,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const items = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Facturen", url: "/admin/invoices", icon: FileText },
-  { title: "Factuur Maker", url: "/admin/factuur-maker", icon: ReceiptText },
-  { title: "Klanten", url: "/admin/customers", icon: Users },
-  { title: "Domeinen", url: "/admin/domeinen", icon: Globe },
-  { title: "Uren", url: "/admin/uren", icon: Clock },
-  { title: "Wachtwoorden", url: "/admin/wachtwoorden", icon: KeyRound },
-  { title: "Tankprijzen", url: "/admin/tankprijzen", icon: Fuel },
-  { title: "BTW overzicht", url: "/admin/btw-overzicht", icon: Calculator },
-  { title: "Instellingen", url: "/admin/settings", icon: Settings },
+type SidebarItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  role?: Exclude<AppRole, "admin">;
+  adminOnly?: boolean;
+};
+
+const items: SidebarItem[] = [
+  { title: "Dashboard", url: "/admin", icon: LayoutDashboard, adminOnly: true },
+  { title: "Facturen", url: "/admin/invoices", icon: FileText, adminOnly: true },
+  { title: "Factuur Maker", url: "/admin/factuur-maker", icon: ReceiptText, role: "factuur_maker" },
+  { title: "Klanten", url: "/admin/customers", icon: Users, adminOnly: true },
+  { title: "Domeinen", url: "/admin/domeinen", icon: Globe, adminOnly: true },
+  { title: "Uren", url: "/admin/uren", icon: Clock, adminOnly: true },
+  { title: "Wachtwoorden", url: "/admin/wachtwoorden", icon: KeyRound, adminOnly: true },
+  { title: "Tankprijzen", url: "/admin/tankprijzen", icon: Fuel, role: "tankprijzen" },
+  { title: "BTW overzicht", url: "/admin/btw-overzicht", icon: Calculator, adminOnly: true },
+  { title: "Gebruikers", url: "/admin/gebruikers", icon: UserCog, adminOnly: true },
+  { title: "Instellingen", url: "/admin/settings", icon: Settings, adminOnly: true },
 ];
 
 const AdminSidebar = () => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const { signOut } = useAuth();
+  const { signOut, isAdmin, canAccess } = useAuth();
   const navigate = useNavigate();
+
+  const visibleItems = items.filter((item) => {
+    if (isAdmin) return true;
+    if (item.adminOnly) return false;
+    return item.role ? canAccess(item.role) : false;
+  });
 
   const handleLogout = async () => {
     await signOut();
@@ -43,10 +71,9 @@ const AdminSidebar = () => {
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarContent className="flex flex-col h-full">
         <div className="p-4 border-b border-border">
-          {!collapsed && (
+          {!collapsed ? (
             <h2 className="font-heading font-bold text-lg text-primary">Harkas IT</h2>
-          )}
-          {collapsed && (
+          ) : (
             <span className="font-heading font-bold text-lg text-primary">H</span>
           )}
         </div>
@@ -55,7 +82,7 @@ const AdminSidebar = () => {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
