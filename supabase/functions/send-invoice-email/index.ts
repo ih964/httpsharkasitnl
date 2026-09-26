@@ -44,8 +44,11 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-    if (!roleData) {
+    const [{ data: roleData }, { data: moduleRows }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
+      supabase.from("user_module_access").select("module_key").eq("user_id", user.id).in("module_key", ["invoices", "domains", "time_entries"]),
+    ]);
+    if (!roleData && !moduleRows?.length) {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
