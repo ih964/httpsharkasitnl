@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Save, Upload, Loader2, Image as ImageIcon } from "lucide-react";
+import { Save, Upload, Loader2, Image as ImageIcon, Send } from "lucide-react";
 
 interface Settings {
   id?: string;
@@ -36,7 +36,7 @@ const AdminSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState(false);\n  const [testingSmtp, setTestingSmtp] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -130,6 +130,29 @@ const AdminSettings = () => {
       toast.error("Upload mislukt: " + err.message);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleSmtpTest = async () => {
+    setTestingSmtp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("smtp-send", {
+        body: {
+          to: settings.email || "info@harkasit.nl",
+          subject: "SMTP-test Harkas IT",
+          text: "Deze testmail is rechtstreeks via de SMTP-mailbox van Harkas IT verzonden.",
+          replyTo: "info@harkasit.nl",
+          fromName: "Harkas IT",
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "SMTP-test gaf geen verzendbevestiging.");
+      toast.success("SMTP-test verzonden via de mailbox.");
+    } catch (err: any) {
+      toast.error("SMTP-test mislukt: " + (err?.message || "onbekende fout"));
+    } finally {
+      setTestingSmtp(false);
     }
   };
 
@@ -250,6 +273,23 @@ const AdminSettings = () => {
             </div>
             <p className="text-xs text-muted-foreground">
               PNG of JPG. Wordt getoond op facturen.
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>E-mail / SMTP</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Test de rechtstreekse SMTP-verzendroute van Harkas IT. Het mailboxwachtwoord staat alleen als beveiligde Supabase-secret opgeslagen en nooit in de browser of GitHub.
+            </p>
+            <Button variant="outline" className="w-full" onClick={handleSmtpTest} disabled={testingSmtp}>
+              {testingSmtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              {testingSmtp ? "Testmail verzenden..." : "SMTP testmail sturen"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Ontvanger: {settings.email || "info@harkasit.nl"}
             </p>
           </CardContent>
         </Card>
