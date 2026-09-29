@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import tls from 'node:tls';
+import * as tls from 'node:tls';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 
 const SMTP_HOST = process.env.SMTP_HOST || 'shared70.cloud86-host.nl';
@@ -148,12 +148,21 @@ async function sendSmtpMail(to: string, subject: string, text: string) {
   });
   socket.setTimeout(20_000);
 
-  await new Promise<void>((resolve, reject) => {
-    socket.once('secureConnect', resolve);
-    socket.once('error', reject);
-  });
-
   const reader = new SmtpReader(socket);
+
+  await new Promise<void>((resolve, reject) => {
+    const onError = (error: Error) => {
+      socket.off('secureConnect', onSecure);
+      reject(error);
+    };
+    const onSecure = () => {
+      socket.off('error', onError);
+      resolve();
+    };
+
+    socket.once('secureConnect', onSecure);
+    socket.once('error', onError);
+  });
 
   try {
     assertResponse(await reader.response(), 220, 'greeting');
