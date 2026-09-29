@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Save, Upload, Loader2, Image as ImageIcon, Send } from "lucide-react";
+import { Save, Upload, Loader2, Image as ImageIcon } from "lucide-react";
 
 interface Settings {
   id?: string;
@@ -130,29 +130,6 @@ const AdminSettings = () => {
       toast.error("Upload mislukt: " + err.message);
     } finally {
       setUploading(false);
-    }
-  };
-
-  const handleSmtpTest = async () => {
-    setTestingSmtp(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("smtp-send", {
-        body: {
-          to: settings.email || "info@harkasit.nl",
-          subject: "SMTP-test Harkas IT",
-          text: "Deze testmail is rechtstreeks via de SMTP-mailbox van Harkas IT verzonden.",
-          replyTo: "info@harkasit.nl",
-          fromName: "Harkas IT",
-        },
-      });
-
-      if (error) throw error;
-      if (!data?.ok) throw new Error(data?.error || "SMTP-test gaf geen verzendbevestiging.");
-      toast.success("SMTP-test verzonden via de mailbox.");
-    } catch (err: any) {
-      toast.error("SMTP-test mislukt: " + (err?.message || "onbekende fout"));
-    } finally {
-      setTestingSmtp(false);
     }
   };
 
