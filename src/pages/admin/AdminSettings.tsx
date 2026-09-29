@@ -253,23 +253,7 @@ const AdminSettings = () => {
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>E-mail / SMTP</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Test de rechtstreekse SMTP-verzendroute van Harkas IT. Het mailboxwachtwoord staat alleen als beveiligde Supabase-secret opgeslagen en nooit in de browser of GitHub.
-            </p>
-            <Button variant="outline" className="w-full" onClick={handleSmtpTest} disabled={testingSmtp}>
-              {testingSmtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-              {testingSmtp ? "Testmail verzenden..." : "SMTP testmail sturen"}
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Ontvanger: {settings.email || "info@harkasit.nl"}
-            </p>
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   );
