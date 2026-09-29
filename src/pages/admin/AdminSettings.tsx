@@ -36,7 +36,6 @@ const AdminSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);\n  const [testingSmtp, setTestingSmtp] = useState(false);
 
   useEffect(() => {
     fetchSettings();
