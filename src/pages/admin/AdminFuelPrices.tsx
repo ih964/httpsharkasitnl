@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   CircleAlert,
   Clock3,
@@ -13,6 +13,7 @@ import {
   MapPin,
   Navigation,
   Search,
+  List,
   SlidersHorizontal,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ type FuelType = "e10" | "e5" | "diesel" | "lpg";
 type CountryCode = "NL" | "DE" | "BE";
 type SearchMode = "nearby" | "country";
 type PriceOrder = "cheapest" | "expensive";
+type MobilePanelView = "filters" | "results";
 
 type LatLng = { lat: number; lng: number };
 
@@ -308,6 +310,8 @@ function FilterPanel({
   setSelectedId,
   warnings,
   sources,
+  view = "all",
+  hideSearchButton = false,
 }: {
   mode: SearchMode;
   setMode: (mode: SearchMode) => void;
@@ -333,10 +337,13 @@ function FilterPanel({
   setSelectedId: (id: string) => void;
   warnings: string[];
   sources: string[];
+  view?: "all" | MobilePanelView;
+  hideSearchButton?: boolean;
 }) {
   return (
-    <div className="flex h-full flex-col bg-card">
-      <div className="border-b border-border p-4 sm:p-5">
+    <div className="flex h-full min-h-0 flex-col bg-card">
+      {view !== "results" && (
+      <div className={view === "filters" ? "min-h-0 flex-1 overflow-y-auto p-4 pb-6 sm:p-5" : "border-b border-border p-4 sm:p-5"}>
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/15 text-primary">
             <Fuel className="h-5 w-5" />
@@ -478,16 +485,18 @@ function FilterPanel({
             </div>
           )}
 
-          <Button onClick={onSearch} className="w-full" disabled={loading || (mode === "nearby" && countries.length === 0)}>
-            <Search className="h-4 w-4" />
-            {loading
-              ? "Zoeken..."
-              : mode === "nearby"
-                ? unlimited
-                  ? `Zoek ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"} per land`
-                  : `Zoek ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"}`
-                : `Zoek ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"} van land`}
-          </Button>
+          {!hideSearchButton && (
+            <Button onClick={onSearch} className="w-full" disabled={loading || (mode === "nearby" && countries.length === 0)}>
+              <Search className="h-4 w-4" />
+              {loading
+                ? "Zoeken..."
+                : mode === "nearby"
+                  ? unlimited
+                    ? `Zoek ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"} per land`
+                    : `Zoek ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"}`
+                  : `Zoek ${priceOrder === "cheapest" ? "goedkoopste" : "duurste"} van land`}
+            </Button>
+          )}
         </div>
 
         {(warnings.length > 0 || sources.length > 0) && (
@@ -504,7 +513,9 @@ function FilterPanel({
           </div>
         )}
       </div>
+      )}
 
+      {view !== "filters" && (
       <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm font-semibold">{stations.length} tankstations</p>
@@ -579,6 +590,7 @@ function FilterPanel({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -600,6 +612,8 @@ export default function AdminFuelPrices() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [sources, setSources] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [mobilePanelView, setMobilePanelView] = useState<MobilePanelView>("filters");
 
   const sortedStations = useMemo(
     () =>
@@ -683,6 +697,7 @@ export default function AdminFuelPrices() {
       setStations(nextStations);
       setWarnings(data?.warnings ?? []);
       setSources(data?.sources ?? []);
+      setMobilePanelView("results");
     } catch (error) {
       if (requestedMode === "country") {
         setStations([]);
@@ -811,6 +826,16 @@ export default function AdminFuelPrices() {
     sources,
   };
 
+  const mobilePanelProps = {
+    ...panelProps,
+    setSelectedId: (id: string) => {
+      setSelectedId(id);
+      setMobileSheetOpen(false);
+    },
+  };
+
+  const mobileSearchDisabled = loading || (mode === "nearby" && countries.length === 0);
+
   return (
     <div className="relative h-[calc(100svh-3.5rem)] min-h-[560px] overflow-hidden bg-background">
       <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_390px]">
@@ -857,19 +882,71 @@ export default function AdminFuelPrices() {
           )}
 
           <div className="absolute inset-x-3 bottom-3 z-[500] lg:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button className="h-12 w-full justify-between rounded-2xl shadow-2xl">
-                  <span className="flex items-center gap-2"><SlidersHorizontal className="h-4 w-4" /> Filters & resultaten</span>
-                  <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs">{sortedStations.length}</span>
+            <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  className="h-12 rounded-2xl shadow-2xl"
+                  onClick={() => {
+                    setMobilePanelView("filters");
+                    setMobileSheetOpen(true);
+                  }}
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filters
                 </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="max-h-[84svh] overflow-hidden rounded-t-3xl border-border p-0">
+                <Button
+                  variant="secondary"
+                  className="h-12 rounded-2xl shadow-2xl"
+                  onClick={() => {
+                    setMobilePanelView("results");
+                    setMobileSheetOpen(true);
+                  }}
+                >
+                  <List className="h-4 w-4" />
+                  Lijst
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">{sortedStations.length}</span>
+                </Button>
+              </div>
+
+              <SheetContent side="bottom" className="h-[88svh] max-h-[88svh] overflow-hidden rounded-t-3xl border-border p-0">
                 <SheetHeader className="sr-only">
-                  <SheetTitle>Tankprijzen zoeken</SheetTitle>
+                  <SheetTitle>Tankprijzen</SheetTitle>
                 </SheetHeader>
-                <div className="h-[82svh]">
-                  <FilterPanel {...panelProps} />
+
+                <div className="flex h-full min-h-0 flex-col">
+                  <div className="grid grid-cols-2 gap-2 border-b border-border bg-card p-3 pr-12">
+                    <button
+                      type="button"
+                      onClick={() => setMobilePanelView("filters")}
+                      className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${mobilePanelView === "filters" ? "bg-primary/15 text-primary" : "bg-muted/50 text-muted-foreground"}`}
+                    >
+                      Filters
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMobilePanelView("results")}
+                      className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${mobilePanelView === "results" ? "bg-primary/15 text-primary" : "bg-muted/50 text-muted-foreground"}`}
+                    >
+                      Lijst ({sortedStations.length})
+                    </button>
+                  </div>
+
+                  <div className="min-h-0 flex-1 overflow-hidden">
+                    <FilterPanel
+                      {...mobilePanelProps}
+                      view={mobilePanelView}
+                      hideSearchButton={mobilePanelView === "filters"}
+                    />
+                  </div>
+
+                  {mobilePanelView === "filters" && (
+                    <div className="border-t border-border bg-card p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                      <Button className="h-12 w-full" onClick={handleSearch} disabled={mobileSearchDisabled}>
+                        <Search className="h-4 w-4" />
+                        {loading ? "Zoeken..." : "Zoek tankstations"}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
