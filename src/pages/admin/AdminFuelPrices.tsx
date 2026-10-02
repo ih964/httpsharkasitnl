@@ -375,7 +375,7 @@ function FilterPanel({
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Brandstof</label>
             <Select value={fuel} onValueChange={(value) => setFuel(value as FuelType)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[1102]">
                 {Object.entries(fuelLabels).map(([value, label]) => (
                   <SelectItem key={value} value={value}>{label}</SelectItem>
                 ))}
@@ -469,7 +469,7 @@ function FilterPanel({
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Land</label>
               <Select value={countryModeCountry} onValueChange={(value) => setCountryModeCountry(value as CountryCode)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[1102]">
                   <SelectItem value="NL">Nederland</SelectItem>
                   <SelectItem value="DE">Duitsland</SelectItem>
                   <SelectItem value="BE">België</SelectItem>
