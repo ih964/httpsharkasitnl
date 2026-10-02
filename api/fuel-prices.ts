@@ -147,27 +147,35 @@ async function requireFuelAccess(req: any) {
     return { ok: false as const, status: 401, message: "Sessie ongeldig." };
   }
 
-  const [{ data: adminRole, error: roleError }, { data: moduleAccess, error: moduleError }] =
-    await Promise.all([
-      client
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userData.user.id)
-        .eq("role", "admin")
-        .maybeSingle(),
-      client
-        .from("user_module_access")
-        .select("module_key")
-        .eq("user_id", userData.user.id)
-        .eq("module_key", "tankprijzen")
-        .maybeSingle(),
-    ]);
+  const { data: adminRole, error: roleError } = await client
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userData.user.id)
+    .eq("role", "admin")
+    .maybeSingle();
 
-  if (roleError || moduleError || (!adminRole && !moduleAccess)) {
-    return { ok: false as const, status: 403, message: "Geen toegang tot de tankprijzenmodule." };
+  if (!roleError && adminRole) {
+    return { ok: true as const };
   }
 
-  return { ok: true as const };
+  const { data: moduleAccess, error: moduleError } = await client
+    .from("user_module_access")
+    .select("module_key")
+    .eq("user_id", userData.user.id)
+    .eq("module_key", "tankprijzen")
+    .maybeSingle();
+
+  if (!moduleError && moduleAccess) {
+    return { ok: true as const };
+  }
+
+  console.warn("[fuel-prices] access denied", {
+    userId: userData.user.id,
+    roleError: roleError?.message ?? null,
+    moduleError: moduleError?.message ?? null,
+  });
+
+  return { ok: false as const, status: 403, message: "Geen toegang tot de tankprijzenmodule." };
 }
 
 async function fetchCachedJson(url: string, source: "tankpuls" | "anwb") {
