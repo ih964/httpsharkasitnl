@@ -161,22 +161,15 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    // --- Send email via Resend gateway ---
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY is niet geconfigureerd" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
+    // --- Send email directly via Resend ---
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
       return new Response(JSON.stringify({ error: "RESEND_API_KEY is niet geconfigureerd" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Build CC list
     const ccList: string[] = [];
     if (cc_email) {
-      const parts = String(cc_email).split(",").map((s: string) => s.trim()).filter((s: string) => s.length > 0);
-      ccList.push(...parts);
+      ccList.push(...String(cc_email).split(",").map((s: string) => s.trim()).filter(Boolean));
     }
 
     const emailPayload: Record<string, unknown> = {
@@ -184,28 +177,20 @@ Deno.serve(async (req) => {
       to: [recipient_email],
       subject: `Factuur ${invoice.invoice_number} – ${senderName}`,
       html: emailHtml,
-      attachments: [
-        {
-          filename: pdfFilename,
-          content: pdfBase64,
-        },
-      ],
+      attachments: [{ filename: pdfFilename, content: pdfBase64 }],
     };
-    if (ccList.length > 0) {
-      emailPayload.cc = ccList;
-    }
+    if (ccList.length > 0) emailPayload.cc = ccList;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     let resendResponse: Response;
     try {
-      resendResponse = await fetch(`${GATEWAY_URL}/emails`, {
+      resendResponse = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-          "X-Connection-Api-Key": RESEND_API_KEY,
+          "Authorization": `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify(emailPayload),
         signal: controller.signal,
@@ -219,8 +204,6 @@ Deno.serve(async (req) => {
     clearTimeout(timeoutId);
 
     const resendBody = await resendResponse.text();
-    console.log("Resend response status:", resendResponse.status, "body:", resendBody);
-
     if (!resendResponse.ok) {
       let errorMessage = `Resend error (${resendResponse.status})`;
       try {
