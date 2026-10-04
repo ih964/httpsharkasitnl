@@ -113,7 +113,7 @@ const AdminPasswords = () => {
   };
 
   const encryptPassword = async (plain: string) => {
-    const { data, error } = await supabase.rpc("encrypt_vault_password", {
+    const { data, error } = await (supabase.rpc as any)("encrypt_vault_password", {
       p_password: plain,
     });
     if (error) throw error;
@@ -122,7 +122,7 @@ const AdminPasswords = () => {
   };
 
   const decryptPassword = async (id: string) => {
-    const { data, error } = await supabase.rpc("decrypt_vault_password", {
+    const { data, error } = await (supabase.rpc as any)("decrypt_vault_password", {
       p_id: id,
     });
     if (error) throw error;

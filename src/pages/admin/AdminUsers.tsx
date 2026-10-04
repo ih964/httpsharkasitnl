@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as typedSupabase } from "@/integrations/supabase/client";
+const supabase = typedSupabase as any;
 import { ModuleKey } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,7 +103,7 @@ const AdminUsers = () => {
       if (adminError) throw adminError;
       if (moduleError) throw moduleError;
 
-      const nextAdminIds = new Set((adminRows ?? []).map((row) => row.user_id));
+      const nextAdminIds = new Set<string>((adminRows ?? []).map((row: { user_id: string }) => row.user_id));
       const grouped: Record<string, ModuleKey[]> = {};
       for (const row of moduleRows ?? []) {
         grouped[row.user_id] = [...(grouped[row.user_id] ?? []), row.module_key as ModuleKey];
