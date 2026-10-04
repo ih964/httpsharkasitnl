@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
+const RESEND_API_URL = "https://api.resend.com"; // direct Resend API (no Lovable gateway)
 
 const FROM = "Harkas IT <administratie@harkasit.nl>";
 const TO_RECIPIENTS = ["info@harkasit.nl", "iliasharkati@outlook.com"];
@@ -41,20 +41,17 @@ function buildBody(d: DomainRow) {
 }
 
 async function sendResend(subject: string, html: string) {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY ontbreekt");
   if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY ontbreekt");
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 10_000);
   try {
-    const res = await fetch(`${GATEWAY_URL}/emails`, {
+    const res = await fetch(`${RESEND_API_URL}/emails`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
         from: FROM,
