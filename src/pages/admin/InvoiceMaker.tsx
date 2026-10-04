@@ -42,11 +42,11 @@ const formatCurrency = (value: number) =>
 
 const escapeHtml = (value: string) =>
   value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .split("&").join( "&amp;")
+    .split("<").join( "&lt;")
+    .split(">").join( "&gt;")
+    .split('"').join( "&quot;")
+    .split("'").join( "&#039;");
 
 const InvoiceMaker = () => {
   const { toast } = useToast();
@@ -230,7 +230,7 @@ const InvoiceMaker = () => {
   <div class="footer">
     <div class="block small">
       <strong>Opmerking</strong><br />
-      ${escapeHtml(notes).replaceAll("\n", "<br />")}
+      ${escapeHtml(notes).split("\n").join( "<br />")}
     </div>
     <div class="block small">
       <strong>Betaalgegevens</strong><br />
