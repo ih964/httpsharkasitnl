@@ -4,88 +4,702 @@ import { createClient } from "@supabase/supabase-js";
 
 const TARGET_URL = "https://uqkrxzlkvjdmebsbdrmb.supabase.co";
 
+const ALLOWED_ADMINS = [
+  "info@harkasit.nl",
+  "administratie@harkasit.nl",
+  "iliasharkati@outlook.com",
+];
+
+type LogType = "info" | "success" | "error";
+
+type LogEntry = {
+  message: string;
+  type: LogType;
+};
+
 export default function MigrationVault() {
   const [targetKey, setTargetKey] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState("");
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
 
-  const run = async () => {
-    if (running) return;
-    setRunning(true); setLogs([]);
-    try {
-      if (!targetKey.trim()) throw new Error("Vul de publishable/anon key van uqkr... in.");
-      const target = createClient(TARGET_URL, targetKey.trim(), { auth: { persistSession: false, autoRefreshToken: false } });
-      const { data: srcUser } = await source.auth.getUser();
-      if (!srcUser.user) throw new Error("Log eerst in op de oude Harkas IT omgeving.");
-      const { data: srcRole } = await source.from("user_roles").select("role").eq("user_id", srcUser.user.id).eq("role","admin").maybeSingle();
-      if (!srcRole) throw new Error("Oude account is geen administrator.");
-      setLogs(x=>[...x,"Oude admin-sessie gecontroleerd."]);
-      const { data: login, error: loginError } = await target.auth.signInWithPassword({ email: email.trim(), password });
-      if (loginError || !login.user) throw new Error(loginError?.message || "Nieuwe admin-login mislukt.");
-      const { data: targetRole } = await target.from("user_roles").select("role").eq("user_id", login.user.id).eq("role","admin").maybeSingle();
-      if (!targetRole) throw new Error("Nieuwe account heeft geen adminrol.");
-      setLogs(x=>[...x,"Nieuwe admin-sessie gecontroleerd."]);
-      const { data: rows, error } = await source.from("password_vault").select("id");
-      if (error) throw error;
-      if ((rows?.length ?? 0)!==60) throw new Error("Bron-vault bevat niet precies 60 items.");
-      let n=0;
-      for (const row of rows ?? []) {
-        const { data: dec, error: de } = await source.functions.invoke("decrypt-password",{body:{id:row.id}});
-        if (de || !dec?.password) throw new Error("Oude vault kon niet worden ontsleuteld.");
-        const { data: enc, error: ee } = await target.functions.invoke("encrypt-password",{body:{password:dec.password}});
-        if (ee || !enc?.encrypted) throw new Error("Nieuwe vault kon niet worden versleuteld.");
-        const { error: we } = await target.from("password_vault").update({encrypted_password:enc.encrypted,updated_at:new Date().toISOString()}).eq("id",row.id);
-        if (we) throw new Error("Nieuwe vault kon niet worden bijgewerkt.");
-        n++; setProgress(`Vault ${n}/60`);
-      }
-      setLogs(x=>[...x,"60/60 wachtwoorden opnieuw versleuteld."]);
-      const { data: invs, error: ie } = await source.from("invoices").select("pdf_storage_path").not("pdf_storage_path","is",null);
-      if (ie) throw ie;
-      let f=0;
-      for (const inv of invs ?? []) {
-        const path=String(inv.pdf_storage_path);
-        const {data:file,error:de}=await source.storage.from("invoices").download(path);
-        if(de||!file) throw new Error("PDF kon niet worden gelezen.");
-        const {error:ue}=await target.storage.from("invoices").upload(path,file,{upsert:true,contentType:"application/pdf"});
-        if(ue) throw new Error("PDF kon niet worden opgeslagen.");
-        f++; setProgress(`Bestanden ${f}/19`);
-      }
-      const {data:brands,error:be}=await source.storage.from("branding").list("",{limit:100});
-      if(be) throw be;
-      for(const item of brands ?? []) {
-        if(!item.name) continue;
-        const {data:file,error:de}=await source.storage.from("branding").download(item.name);
-        if(de||!file) throw new Error("Logo kon niet worden gelezen.");
-        const {error:ue}=await target.storage.from("branding").upload(item.name,file,{upsert:true,contentType:file.type||undefined});
-        if(ue) throw new Error("Logo kon niet worden opgeslagen.");
-        f++; setProgress(`Bestanden ${f}/19`);
-      }
-      setLogs(x=>[...x,`Storage overgezet: ${f} bestanden.`]);
-      const {data:check,error:ce}=await target.from("password_vault").select("id");
-      if(ce || (check?.length??0)!==60) throw new Error("Eindcontrole vault mislukt.");
-      setLogs(x=>[...x,"Eindcontrole geslaagd. Productie is nog niet omgezet."]);
-      setProgress("Klaar.");
-      setPassword("");
-    } catch(e) {
-      setLogs(x=>[...x,e instanceof Error?e.message:"Onbekende fout"]);
-      setProgress("Gestopt — bron is niet gewijzigd.");
-    } finally { setRunning(false); }
+  const addLog = (message: string, type: LogType = "info") => {
+    setLogs((current) => [...current, { message, type }]);
   };
 
-  return <main style={{maxWidth:760,margin:"40px auto",padding:24,fontFamily:"system-ui"}}>
-    <h1>Harkas IT — eenmalige migratie</h1>
-    <p>De oude Lovable-database wordt alleen gelezen. Er wordt niets verwijderd.</p>
-    <label>Nieuwe Supabase publishable/anon key</label>
-    <input value={targetKey} onChange={e=>setTargetKey(e.target.value)} disabled={running} style={{display:"block",width:"100%",padding:10,margin:"6px 0 14px"}} />
-    <label>Nieuw admin e-mailadres</label>
-    <input value={email} onChange={e=>setEmail(e.target.value)} disabled={running} style={{display:"block",width:"100%",padding:10,margin:"6px 0 14px"}} />
-    <label>Nieuw admin wachtwoord</label>
-    <input type="password" value={password} onChange={e=>setPassword(e.target.value)} disabled={running} style={{display:"block",width:"100%",padding:10,margin:"6px 0 14px"}} />
-    <button onClick={run} disabled={running||!targetKey||!email||!password} style={{padding:"12px 18px"}}>{running?"Bezig...":"Start migratie"}</button>
-    <p>{progress}</p>
-    <pre style={{whiteSpace:"pre-wrap",background:"#111",color:"#fff",padding:16,borderRadius:8}}>{logs.join("\n")}</pre>
-  </main>;
+  const fail = (message: string) => {
+    addLog(message, "error");
+    setProgress("Migratie gestopt — bron is niet gewijzigd.");
+  };
+
+  const runMigration = async () => {
+    if (running) return;
+
+    setRunning(true);
+    setLogs([]);
+    setProgress("Migratie voorbereiden...");
+
+    try {
+      /*
+       * ------------------------------------------------------------
+       * 1. INPUT VALIDATION
+       * ------------------------------------------------------------
+       */
+
+      const cleanTargetKey = targetKey.trim();
+      const cleanEmail = email.trim().toLowerCase();
+
+      if (!cleanTargetKey) {
+        throw new Error(
+          "Vul de publishable/anon key van het nieuwe Supabase-project in."
+        );
+      }
+
+      if (!cleanEmail) {
+        throw new Error("Vul het nieuwe admin e-mailadres in.");
+      }
+
+      if (!ALLOWED_ADMINS.includes(cleanEmail)) {
+        throw new Error(
+          "Dit account is niet toegestaan voor deze migratie."
+        );
+      }
+
+      if (!password) {
+        throw new Error("Vul het nieuwe admin-wachtwoord in.");
+      }
+
+      /*
+       * ------------------------------------------------------------
+       * 2. CREATE TARGET CLIENT
+       * ------------------------------------------------------------
+       *
+       * Alleen een publishable/anon key.
+       *
+       * NOOIT:
+       * - service_role
+       * - database password
+       * - management token
+       */
+
+      const target = createClient(TARGET_URL, cleanTargetKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      });
+
+      /*
+       * ------------------------------------------------------------
+       * 3. VERIFY OLD SESSION
+       * ------------------------------------------------------------
+       */
+
+      setProgress("Oude productieomgeving controleren...");
+
+      const {
+        data: sourceUserData,
+        error: sourceUserError,
+      } = await source.auth.getUser();
+
+      if (sourceUserError || !sourceUserData.user) {
+        throw new Error(
+          "Je bent niet ingelogd op de oude Harkas IT omgeving."
+        );
+      }
+
+      const {
+        data: sourceRole,
+        error: sourceRoleError,
+      } = await source
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", sourceUserData.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (sourceRoleError) {
+        throw new Error(
+          `Oude administratorcontrole mislukt: ${sourceRoleError.message}`
+        );
+      }
+
+      if (!sourceRole) {
+        throw new Error(
+          "Het huidige account is geen administrator."
+        );
+      }
+
+      addLog(
+        `Oude admin-sessie gecontroleerd: ${sourceUserData.user.email}`,
+        "success"
+      );
+
+      /*
+       * ------------------------------------------------------------
+       * 4. LOGIN TO TARGET
+       * ------------------------------------------------------------
+       */
+
+      setProgress("Nieuwe Harkas Admin controleren...");
+
+      const {
+        data: targetLogin,
+        error: targetLoginError,
+      } = await target.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+
+      if (targetLoginError || !targetLogin.user) {
+        throw new Error(
+          targetLoginError?.message ||
+            "Inloggen op de nieuwe Harkas Admin omgeving mislukt."
+        );
+      }
+
+      if (
+        !targetLogin.user.email ||
+        targetLogin.user.email.toLowerCase() !== cleanEmail
+      ) {
+        throw new Error(
+          "Het ingelogde account komt niet overeen met het opgegeven admin-account."
+        );
+      }
+
+      if (!ALLOWED_ADMINS.includes(cleanEmail)) {
+        throw new Error(
+          "Dit account is niet toegestaan voor de migratie."
+        );
+      }
+
+      addLog(
+        `Nieuwe admin-login succesvol: ${cleanEmail}`,
+        "success"
+      );
+
+      /*
+       * ------------------------------------------------------------
+       * 5. VERIFY SOURCE VAULT
+       * ------------------------------------------------------------
+       */
+
+      setProgress("Aantal vault-items controleren...");
+
+      const {
+        data: vaultRows,
+        error: vaultReadError,
+      } = await source
+        .from("password_vault")
+        .select("id");
+
+      if (vaultReadError) {
+        throw new Error(
+          `Oude vault kon niet worden gelezen: ${vaultReadError.message}`
+        );
+      }
+
+      if (!vaultRows || vaultRows.length !== 60) {
+        throw new Error(
+          `Verwacht 60 vault-items, maar vond ${
+            vaultRows?.length ?? 0
+          }. Migratie wordt afgebroken.`
+        );
+      }
+
+      addLog("Bron bevat exact 60 vault-items.", "success");
+
+      /*
+       * ------------------------------------------------------------
+       * 6. MIGRATE VAULT
+       * ------------------------------------------------------------
+       *
+       * De oude decrypt-password Edge Function gebruikt:
+       *
+       *   oude VAULT_ENCRYPTION_KEY
+       *
+       * De nieuwe encrypt-password Edge Function gebruikt:
+       *
+       *   nieuwe VAULT_ENCRYPTION_KEY
+       *
+       * Plaintext wachtwoorden worden NIET opgeslagen.
+       */
+
+      let migratedVault = 0;
+
+      for (const row of vaultRows) {
+        setProgress(
+          `Wachtwoordkluis migreren: ${migratedVault + 1}/60`
+        );
+
+        /*
+         * Oude omgeving decrypt.
+         */
+
+        const {
+          data: decrypted,
+          error: decryptError,
+        } = await source.functions.invoke("decrypt-password", {
+          body: {
+            id: row.id,
+          },
+        });
+
+        if (decryptError || !decrypted?.password) {
+          throw new Error(
+            `Vault-item ${row.id} kon niet vanuit de oude omgeving worden ontsleuteld.`
+          );
+        }
+
+        /*
+         * Nieuwe omgeving encrypt.
+         */
+
+        const {
+          data: encrypted,
+          error: encryptError,
+        } = await target.functions.invoke("encrypt-password", {
+          body: {
+            password: decrypted.password,
+          },
+        });
+
+        /*
+         * Probeer plaintext zo snel mogelijk uit de lokale
+         * variabele te verwijderen.
+         */
+
+        const plaintextLength = decrypted.password.length;
+
+        if (encryptError || !encrypted?.encrypted) {
+          throw new Error(
+            `Vault-item ${row.id} kon niet opnieuw worden versleuteld.`
+          );
+        }
+
+        /*
+         * Alleen ciphertext naar de nieuwe database.
+         */
+
+        const {
+          error: updateError,
+        } = await target
+          .from("password_vault")
+          .update({
+            encrypted_password: encrypted.encrypted,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", row.id);
+
+        if (updateError) {
+          throw new Error(
+            `Vault-item ${row.id} kon niet naar de nieuwe database worden geschreven: ${updateError.message}`
+          );
+        }
+
+        migratedVault++;
+
+        /*
+         * Geen plaintext loggen.
+         */
+
+        void plaintextLength;
+
+        addLog(
+          `Vault-item ${migratedVault}/60 gemigreerd.`,
+          "success"
+        );
+      }
+
+      addLog(
+        "Alle 60 vault-items zijn opnieuw versleuteld.",
+        "success"
+      );
+
+      /*
+       * ------------------------------------------------------------
+       * 7. MIGRATE INVOICE FILES
+       * ------------------------------------------------------------
+       */
+
+      setProgress("Factuur-PDF's controleren...");
+
+      const {
+        data: invoices,
+        error: invoiceError,
+      } = await source
+        .from("invoices")
+        .select("id,pdf_storage_path")
+        .not("pdf_storage_path", "is", null);
+
+      if (invoiceError) {
+        throw new Error(
+          `Facturen konden niet worden gelezen: ${invoiceError.message}`
+        );
+      }
+
+      let migratedFiles = 0;
+
+      for (const invoice of invoices ?? []) {
+        const path = String(invoice.pdf_storage_path);
+
+        setProgress(
+          `Factuur-PDF's migreren: ${migratedFiles + 1}/19`
+        );
+
+        const {
+          data: file,
+          error: downloadError,
+        } = await source.storage
+          .from("invoices")
+          .download(path);
+
+        if (downloadError || !file) {
+          throw new Error(
+            `PDF kon niet worden gelezen: ${path}`
+          );
+        }
+
+        const {
+          error: uploadError,
+        } = await target.storage
+          .from("invoices")
+          .upload(path, file, {
+            upsert: true,
+            contentType: "application/pdf",
+          });
+
+        if (uploadError) {
+          throw new Error(
+            `PDF kon niet worden opgeslagen: ${path} — ${uploadError.message}`
+          );
+        }
+
+        migratedFiles++;
+
+        addLog(
+          `PDF gemigreerd: ${migratedFiles}/${invoices.length}.`,
+          "success"
+        );
+      }
+
+      /*
+       * ------------------------------------------------------------
+       * 8. MIGRATE BRANDING
+       * ------------------------------------------------------------
+       */
+
+      setProgress("Logo/branding migreren...");
+
+      const {
+        data: brandingFiles,
+        error: brandingError,
+      } = await source.storage
+        .from("branding")
+        .list("", {
+          limit: 100,
+        });
+
+      if (brandingError) {
+        throw new Error(
+          `Branding kon niet worden gelezen: ${brandingError.message}`
+        );
+      }
+
+      for (const item of brandingFiles ?? []) {
+        if (!item.name) continue;
+
+        const {
+          data: file,
+          error: downloadError,
+        } = await source.storage
+          .from("branding")
+          .download(item.name);
+
+        if (downloadError || !file) {
+          throw new Error(
+            `Branding-bestand kon niet worden gelezen: ${item.name}`
+          );
+        }
+
+        const {
+          error: uploadError,
+        } = await target.storage
+          .from("branding")
+          .upload(item.name, file, {
+            upsert: true,
+            contentType: file.type || undefined,
+          });
+
+        if (uploadError) {
+          throw new Error(
+            `Branding-bestand kon niet worden opgeslagen: ${item.name} — ${uploadError.message}`
+          );
+        }
+
+        migratedFiles++;
+
+        addLog(
+          `Branding-bestand gemigreerd: ${item.name}`,
+          "success"
+        );
+      }
+
+      addLog(
+        `Storage-migratie voltooid: ${migratedFiles} bestanden.`,
+        "success"
+      );
+
+      /*
+       * ------------------------------------------------------------
+       * 9. VERIFY VAULT COUNT
+       * ------------------------------------------------------------
+       */
+
+      setProgress("Nieuwe vault controleren...");
+
+      const {
+        data: targetVault,
+        error: targetVaultError,
+      } = await target
+        .from("password_vault")
+        .select("id");
+
+      if (targetVaultError) {
+        throw new Error(
+          `Nieuwe vault kon niet worden gecontroleerd: ${targetVaultError.message}`
+        );
+      }
+
+      if ((targetVault?.length ?? 0) !== 60) {
+        throw new Error(
+          `Nieuwe vault bevat ${
+            targetVault?.length ?? 0
+          } items; verwacht 60.`
+        );
+      }
+
+      addLog(
+        "Nieuwe vault bevat 60/60 items.",
+        "success"
+      );
+
+      /*
+       * ------------------------------------------------------------
+       * 10. VERIFY STORAGE
+       * ------------------------------------------------------------
+       */
+
+      setProgress("Storage eindcontrole...");
+
+      let verifiedFiles = 0;
+
+      for (const invoice of invoices ?? []) {
+        const path = String(invoice.pdf_storage_path);
+
+        const directory = path.includes("/")
+          ? path.substring(0, path.lastIndexOf("/"))
+          : "";
+
+        const filename = path.includes("/")
+          ? path.substring(path.lastIndexOf("/") + 1)
+          : path;
+
+        const {
+          data: files,
+          error: listError,
+        } = await target.storage
+          .from("invoices")
+          .list(directory, {
+            search: filename,
+            limit: 20,
+          });
+
+        if (listError) {
+          throw new Error(
+            `Storagecontrole mislukt voor ${path}: ${listError.message}`
+          );
+        }
+
+        if (!files?.some((file) => file.name === filename)) {
+          throw new Error(
+            `PDF ontbreekt in de nieuwe storage: ${path}`
+          );
+        }
+
+        verifiedFiles++;
+      }
+
+      addLog(
+        `PDF-controle: ${verifiedFiles}/${invoices?.length ?? 0}.`,
+        "success"
+      );
+
+      /*
+       * ------------------------------------------------------------
+       * 11. CLEAN UP SESSION
+       * ------------------------------------------------------------
+       */
+
+      await target.auth.signOut();
+
+      setPassword("");
+
+      setProgress(
+        "Migratie + basiscontrole voltooid. Productie is NIET omgezet."
+      );
+
+      addLog(
+        "Migratie is voltooid. De oude productieomgeving is ongemoeid gelaten.",
+        "success"
+      );
+    } catch (error) {
+      fail(
+        error instanceof Error
+          ? error.message
+          : "Onbekende migratiefout."
+      );
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <main
+      style={{
+        maxWidth: 760,
+        margin: "40px auto",
+        padding: 24,
+        fontFamily: "system-ui",
+      }}
+    >
+      <h1>Harkas IT — eenmalige migratie</h1>
+
+      <p>
+        Deze tool migreert de resterende vault- en storagegegevens
+        van de oude Lovable Cloud omgeving naar Harkas Admin.
+      </p>
+
+      <p>
+        De oude database wordt alleen gelezen. Er wordt niets
+        verwijderd.
+      </p>
+
+      <div style={{ marginTop: 24 }}>
+        <label>
+          Nieuwe Supabase publishable/anon key
+        </label>
+
+        <input
+          value={targetKey}
+          onChange={(event) =>
+            setTargetKey(event.target.value)
+          }
+          disabled={running}
+          autoComplete="off"
+          style={{
+            display: "block",
+            width: "100%",
+            padding: 10,
+            marginTop: 6,
+            marginBottom: 16,
+          }}
+        />
+      </div>
+
+      <div>
+        <label>
+          Nieuw admin e-mailadres
+        </label>
+
+        <input
+          type="email"
+          value={email}
+          onChange={(event) =>
+            setEmail(event.target.value)
+          }
+          disabled={running}
+          autoComplete="username"
+          style={{
+            display: "block",
+            width: "100%",
+            padding: 10,
+            marginTop: 6,
+            marginBottom: 16,
+          }}
+        />
+      </div>
+
+      <div>
+        <label>
+          Nieuw admin wachtwoord
+        </label>
+
+        <input
+          type="password"
+          value={password}
+          onChange={(event) =>
+            setPassword(event.target.value)
+          }
+          disabled={running}
+          autoComplete="current-password"
+          style={{
+            display: "block",
+            width: "100%",
+            padding: 10,
+            marginTop: 6,
+            marginBottom: 16,
+          }}
+        />
+      </div>
+
+      <button
+        onClick={runMigration}
+        disabled={
+          running ||
+          !targetKey.trim() ||
+          !email.trim() ||
+          !password
+        }
+        style={{
+          padding: "12px 20px",
+          cursor: running ? "wait" : "pointer",
+        }}
+      >
+        {running
+          ? "Migratie bezig..."
+          : "Start migratie"}
+      </button>
+
+      {progress && (
+        <p style={{ marginTop: 20 }}>
+          <strong>Status:</strong> {progress}
+        </p>
+      )}
+
+      {logs.length > 0 && (
+        <pre
+          style={{
+            marginTop: 20,
+            whiteSpace: "pre-wrap",
+            background: "#111",
+            color: "#fff",
+            padding: 16,
+            borderRadius: 8,
+            overflowX: "auto",
+          }}
+        >
+          {logs
+            .map(
+              (entry) =>
+                `[${entry.type.toUpperCase()}] ${entry.message}`
+            )
+            .join("\n")}
+        </pre>
+      )}
+    </main>
+  );
 }
