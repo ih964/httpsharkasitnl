@@ -103,7 +103,7 @@ const AdminUsers = () => {
       if (adminError) throw adminError;
       if (moduleError) throw moduleError;
 
-      const nextAdminIds = new Set((adminRows ?? []).map((row) => row.user_id));
+      const nextAdminIds = new Set<string>((adminRows ?? []).map((row: { user_id: string }) => row.user_id));
       const grouped: Record<string, ModuleKey[]> = {};
       for (const row of moduleRows ?? []) {
         grouped[row.user_id] = [...(grouped[row.user_id] ?? []), row.module_key as ModuleKey];
