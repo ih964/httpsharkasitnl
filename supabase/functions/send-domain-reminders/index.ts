@@ -41,38 +41,26 @@ function buildBody(d: DomainRow) {
 }
 
 async function sendResend(subject: string, html: string) {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY ontbreekt");
-  if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY ontbreekt");
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  if (!apiKey) throw new Error("RESEND_API_KEY ontbreekt in de Edge Function secrets.");
 
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 10_000);
-  try {
-    const res = await fetch(`${GATEWAY_URL}/emails`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
-      },
-      body: JSON.stringify({
-        from: FROM,
-        to: TO_RECIPIENTS,
-        subject,
-        html,
-      }),
-      signal: ctrl.signal,
-    });
-    const txt = await res.text();
-    if (!res.ok) {
-      console.error("Resend error", res.status, txt);
-      throw new Error(`Resend ${res.status}: ${txt}`);
-    }
-    return JSON.parse(txt);
-  } finally {
-    clearTimeout(timer);
-  }
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: FROM,
+      to: TO_RECIPIENTS,
+      subject,
+      html,
+    }),
+  });
+
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Resend ${response.status}: ${text}`);
+  return JSON.parse(text);
 }
 
 Deno.serve(async (req) => {
