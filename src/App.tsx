@@ -35,7 +35,6 @@ import AdminFuelPrices from "./pages/admin/AdminFuelPrices";
 import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import ModuleRoute from "./components/admin/ModuleRoute";
-import MigrationVault from "./pages/MigrationVault";
 
 const queryClient = new QueryClient();
 
@@ -67,7 +66,6 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/voorwaarden" element={<Terms />} />
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/migration-vault" element={<ProtectedRoute><MigrationVault /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminHome />} />
               <Route path="invoices" element={<ModuleRoute module="invoices"><AdminInvoicesWithStatus /></ModuleRoute>} />
