@@ -113,21 +113,21 @@ const AdminPasswords = () => {
   };
 
   const encryptPassword = async (plain: string) => {
-    const { data, error } = await (supabase.rpc as any)("encrypt_vault_password", {
-      p_password: plain,
+    const { data, error } = await supabase.functions.invoke("encrypt-password", {
+      body: { password: plain },
     });
     if (error) throw error;
-    if (!data) throw new Error("Versleuteling gaf geen resultaat.");
-    return data as string;
+    if (!data?.encrypted) throw new Error("Versleuteling gaf geen resultaat.");
+    return data.encrypted as string;
   };
 
   const decryptPassword = async (id: string) => {
-    const { data, error } = await (supabase.rpc as any)("decrypt_vault_password", {
-      p_id: id,
+    const { data, error } = await supabase.functions.invoke("decrypt-password", {
+      body: { id },
     });
     if (error) throw error;
-    if (!data) throw new Error("Wachtwoord kon niet worden ontsleuteld.");
-    return data as string;
+    if (!data?.password) throw new Error("Wachtwoord kon niet worden ontsleuteld.");
+    return data.password as string;
   };
 
   const handleReveal = async (id: string) => {
