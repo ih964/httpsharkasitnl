@@ -15,6 +15,7 @@ import {
   Clock,
   FileText,
   Fuel,
+  Car,
   Globe,
   KeyRound,
   LayoutDashboard,
@@ -48,6 +49,7 @@ const MODULES: Array<{
   { key: "time_entries", label: "Uren", description: "Urenregistratie en facturatie vanuit uren.", icon: Clock },
   { key: "passwords", label: "Wachtwoorden", description: "Toegang tot de beveiligde wachtwoordkluis.", icon: KeyRound },
   { key: "tankprijzen", label: "Tankprijzen", description: "Tankprijzenkaart voor Nederland, Duitsland en België.", icon: Fuel },
+  { key: "parkeren", label: "Parkeren", description: "Parkeerkaart met gratis/betaald, tijden, tarieven en parkeerregels.", icon: Car },
   { key: "btw_overzicht", label: "BTW overzicht", description: "BTW- en factuuroverzichten bekijken.", icon: Calculator },
   { key: "settings", label: "Instellingen", description: "Bedrijfs-, factuur- en brandinginstellingen beheren.", icon: Settings },
 ];
@@ -76,7 +78,7 @@ const AdminUsers = () => {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [newModules, setNewModules] = useState<ModuleKey[]>(["factuur_maker", "tankprijzen"]);
+  const [newModules, setNewModules] = useState<ModuleKey[]>(["factuur_maker", "tankprijzen", "parkeren"]);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -206,7 +208,7 @@ const AdminUsers = () => {
       setDisplayName("");
       setEmail("");
       setPassword("");
-      setNewModules(["factuur_maker", "tankprijzen"]);
+      setNewModules(["factuur_maker", "tankprijzen", "parkeren"]);
       await loadUsers();
     } catch (error: any) {
       toast({
