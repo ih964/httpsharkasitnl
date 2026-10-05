@@ -24,6 +24,7 @@ import {
   KeyRound,
   ReceiptText,
   Fuel,
+  Car,
   UserCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ const items: SidebarItem[] = [
   { title: "Uren", url: "/admin/uren", icon: Clock, module: "time_entries" },
   { title: "Wachtwoorden", url: "/admin/wachtwoorden", icon: KeyRound, module: "passwords" },
   { title: "Tankprijzen", url: "/admin/tankprijzen", icon: Fuel, module: "tankprijzen" },
+  { title: "Parkeren", url: "/admin/parkeren", icon: Car, module: "parkeren" },
   { title: "BTW overzicht", url: "/admin/btw-overzicht", icon: Calculator, module: "btw_overzicht" },
   { title: "Gebruikers", url: "/admin/gebruikers", icon: UserCog, adminOnly: true },
   { title: "Instellingen", url: "/admin/settings", icon: Settings, module: "settings" },
