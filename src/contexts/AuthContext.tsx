@@ -12,6 +12,7 @@ export type ModuleKey =
   | "time_entries"
   | "passwords"
   | "tankprijzen"
+  | "parkeren"
   | "btw_overzicht"
   | "settings";
 
@@ -63,6 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           "time_entries",
           "passwords",
           "tankprijzen",
+          "parkeren",
           "btw_overzicht",
           "settings",
         ].includes(module),
