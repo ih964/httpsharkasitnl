@@ -20,6 +20,7 @@ type LatLng = { lat: number; lng: number };
 type ParkingStatus = "free" | "paid" | "permit" | "blue" | "restricted" | "unknown";
 type StatusFilter = "all" | ParkingStatus;
 type MobilePanelView = "filters" | "results";
+type PlaceSuggestion = { label: string; displayName: string; center: LatLng; municipality: string };
 
 type ParkingItem = {
   id: string;
@@ -120,12 +121,18 @@ function ParkingMap({
   items,
   selectedId,
   onSelect,
+  suggestions,
+  onChooseSuggestion,
+  onQueryChange,
 }: {
   center: LatLng;
   zoom: number;
   items: ParkingItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  suggestions: PlaceSuggestion[];
+  onChooseSuggestion: (suggestion: PlaceSuggestion) => void;
+  onQueryChange: (value: string) => void;
 }) {
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
@@ -180,13 +187,25 @@ function ParkingMap({
             {
               color: meta.border,
               fillColor: meta.marker,
-              fillOpacity: selected ? 0.35 : 0.18,
-              opacity: selected ? 1 : 0.75,
-              weight: selected ? 4 : 2,
+              fillOpacity: selected ? 0.62 : 0.48,
+              opacity: 0.98,
+              weight: selected ? 5 : 3,
             },
           ).addTo(layer);
           polygon.on("click", () => onSelect(item.id));
         });
+
+        const price = formatMoney(item.pricePerHour);
+        const zoneLabel = item.status === "paid" && price ? `${price}/u` : meta.label;
+        const zoneIcon = L.divIcon({
+          className: "",
+          html: `<div style="transform:translate(-50%,-50%);white-space:nowrap;background:${meta.marker};color:#fff;border:2px solid #fff;padding:5px 8px;border-radius:999px;font:800 11px/1 system-ui;box-shadow:0 4px 16px rgba(0,0,0,.45)">${zoneLabel}</div>`,
+          iconSize: [1, 1],
+          iconAnchor: [0, 0],
+        });
+        L.marker([item.lat, item.lng], { icon: zoneIcon })
+          .addTo(layer)
+          .on("click", () => onSelect(item.id));
       } else {
         const price = formatMoney(item.pricePerHour);
         const label = item.status === "paid" && price ? `${price}/u` : meta.label;
@@ -354,12 +373,29 @@ function FilterPanel({
                 Plaats of postcode
               </label>
               <div className="flex gap-2">
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && onSearch()}
-                  placeholder="Bijv. Nieuwegein, Rotterdam..."
-                />
+                <div className="relative min-w-0 flex-1">
+                  <Input
+                    value={query}
+                    onChange={(e) => onQueryChange(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && onSearch()}
+                    placeholder="Plaats, postcode of plek (bijv. UMC)"
+                  />
+                  {suggestions.length > 0 && (
+                    <div className="absolute z-[1200] mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-border bg-popover p-1 shadow-2xl">
+                      {suggestions.map((suggestion) => (
+                        <button
+                          type="button"
+                          key={`${suggestion.center.lat}-${suggestion.center.lng}-${suggestion.displayName}`}
+                          onClick={() => onChooseSuggestion(suggestion)}
+                          className="block w-full rounded-lg px-3 py-2 text-left hover:bg-muted"
+                        >
+                          <span className="block truncate text-sm font-semibold">{suggestion.label}</span>
+                          <span className="block truncate text-[11px] text-muted-foreground">{suggestion.displayName}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <Button variant="outline" size="icon" onClick={onLocate} title="Mijn locatie">
                   <LocateFixed className="h-4 w-4" />
                 </Button>
@@ -484,34 +520,92 @@ export default function AdminParking() {
   const [loading, setLoading] = useState(false);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [mobilePanelView, setMobilePanelView] = useState<MobilePanelView>("filters");
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceSuggestion | null>(null);
 
   const filteredItems = useMemo(
     () => items.filter((item) => statusFilter === "all" || item.status === statusFilter),
     [items, statusFilter],
   );
 
-  const geocode = async (value: string) => {
-    const params = new URLSearchParams({
-      format: "jsonv2",
-      q: value,
-      countrycodes: "nl",
-      limit: "1",
-      addressdetails: "1",
-      "accept-language": "nl",
-      email: "info@harkasit.nl",
-    });
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`);
-    if (!response.ok) throw new Error("Plaats zoeken is mislukt.");
-    const data = await response.json();
-    if (!data?.[0]) throw new Error("Plaats of postcode niet gevonden.");
-    const address = data[0].address ?? {};
-    const municipalityName =
-      address.municipality || address.city || address.town || address.village || address.county || "";
-    return {
-      center: { lat: Number(data[0].lat), lng: Number(data[0].lon) },
-      municipality: municipalityName,
+  const searchPlaces = async (value: string): Promise<PlaceSuggestion[]> => {
+    const run = async (q: string) => {
+      const params = new URLSearchParams({
+        format: "jsonv2",
+        q,
+        countrycodes: "nl",
+        limit: "8",
+        addressdetails: "1",
+        namedetails: "1",
+        "accept-language": "nl",
+        email: "info@harkasit.nl",
+      });
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`);
+      if (!response.ok) return [];
+      return response.json();
     };
+
+    let rows = await run(value);
+    if (rows.length < 3 && value.trim().length <= 8) {
+      const extra = await run(`${value}, Nederland`);
+      rows = [...rows, ...extra];
+    }
+
+    const seen = new Set<string>();
+    return rows
+      .map((row: any): PlaceSuggestion | null => {
+        const lat = Number(row.lat);
+        const lng = Number(row.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        const address = row.address ?? {};
+        const municipalityName =
+          address.municipality || address.city || address.town || address.village || address.county || "";
+        const displayName = String(row.display_name ?? value);
+        const label =
+          row.namedetails?.name ||
+          row.name ||
+          displayName.split(",")[0] ||
+          value;
+        return {
+          label: String(label),
+          displayName,
+          center: { lat, lng },
+          municipality: String(municipalityName),
+        };
+      })
+      .filter((row: PlaceSuggestion | null): row is PlaceSuggestion => {
+        if (!row) return false;
+        const key = `${row.center.lat.toFixed(5)},${row.center.lng.toFixed(5)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 6);
   };
+
+  const geocode = async (value: string) => {
+    const matches = await searchPlaces(value);
+    if (!matches.length) throw new Error("Plaats, postcode of locatie niet gevonden.");
+    return matches[0];
+  };
+
+  useEffect(() => {
+    const value = query.trim();
+    if (value.length < 2 || selectedPlace?.label === query) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        setSuggestions(await searchPlaces(value));
+      } catch {
+        setSuggestions([]);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [query, selectedPlace]);
 
   const reverseGeocode = async (origin: LatLng) => {
     const params = new URLSearchParams({
@@ -575,9 +669,10 @@ export default function AdminParking() {
   const handleSearch = async () => {
     try {
       const result = query.trim()
-        ? await geocode(query.trim())
+        ? selectedPlace ?? (await geocode(query.trim()))
         : { center, municipality: municipality || (await reverseGeocode(center)) };
 
+      setSuggestions([]);
       setCenter(result.center);
       setMunicipality(result.municipality);
       setZoom(radius >= 10 ? 11 : radius >= 5 ? 12 : radius >= 3 ? 13 : 14);
@@ -617,6 +712,17 @@ export default function AdminParking() {
     setMobileSheetOpen(false);
   };
 
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    setSelectedPlace(null);
+  };
+
+  const chooseSuggestion = (suggestion: PlaceSuggestion) => {
+    setSelectedPlace(suggestion);
+    setQuery(suggestion.label);
+    setSuggestions([]);
+  };
+
   const panelProps = {
     query,
     setQuery,
@@ -634,6 +740,9 @@ export default function AdminParking() {
     items: filteredItems,
     selectedId,
     onSelect: setSelectedId,
+    suggestions,
+    onChooseSuggestion: chooseSuggestion,
+    onQueryChange: handleQueryChange,
   };
 
   return (
@@ -657,7 +766,7 @@ export default function AdminParking() {
             </div>
           </div>
 
-          <div className="absolute right-3 top-3 z-[500] hidden max-w-xs rounded-xl border border-white/10 bg-slate-950/90 p-2 text-[11px] text-white shadow-xl backdrop-blur sm:block">
+          <div className="absolute right-3 top-16 z-[500] max-w-[180px] rounded-xl border border-white/10 bg-slate-950/92 p-2 text-[11px] text-white shadow-xl backdrop-blur">
             <div className="flex flex-wrap gap-2">
               {(["free", "paid", "blue", "permit"] as ParkingStatus[]).map((status) => (
                 <span key={status} className="inline-flex items-center gap-1">
