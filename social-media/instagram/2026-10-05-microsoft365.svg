@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#061421"/>
+    <stop offset="0.55" stop-color="#0B2135"/>
+    <stop offset="1" stop-color="#0E2C46"/>
+  </linearGradient>
+  <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#198CFF"/>
+    <stop offset="1" stop-color="#55B7FF"/>
+  </linearGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="26"/>
+  </filter>
+</defs>
+<rect width="1080" height="1080" fill="url(#bg)"/>
+<circle cx="905" cy="165" r="230" fill="#168CFF" opacity=".11" filter="url(#glow)"/>
+<circle cx="95" cy="930" r="260" fill="#168CFF" opacity=".08" filter="url(#glow)"/>
+
+<g font-family="Arial, Helvetica, sans-serif">
+  <g transform="translate(72 72)">
+    <rect x="0" y="0" width="54" height="54" rx="8" fill="none" stroke="#FFFFFF" stroke-width="4"/>
+    <path d="M12 12v30M42 12v30M12 27h30" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+    <text x="72" y="39" font-size="42" font-weight="700" fill="#FFFFFF">Harkas<tspan fill="#2E9BFF">IT</tspan></text>
+    <text x="74" y="65" font-size="13" letter-spacing="5" fill="#A9B9C8">IT · CLOUD · WEBSITES · SUPPORT</text>
+  </g>
+
+  <text x="72" y="270" font-size="76" font-weight="800" fill="#FFFFFF">Microsoft 365</text>
+  <text x="72" y="350" font-size="76" font-weight="800" fill="url(#accent)">goed ingericht.</text>
+  <text x="72" y="415" font-size="30" fill="#C8D4DF">Minder losse oplossingen. Meer grip op je digitale werkplek.</text>
+
+  <g transform="translate(72 505)">
+    <rect width="936" height="330" rx="30" fill="#FFFFFF" opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
+    <g transform="translate(38 48)">
+      <circle cx="36" cy="36" r="36" fill="#168CFF" opacity=".16"/>
+      <path d="M22 38l10 10 20-24" fill="none" stroke="#55B7FF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="94" y="28" font-size="28" font-weight="700" fill="#FFFFFF">Veiliger werken</text>
+      <text x="94" y="62" font-size="21" fill="#BFCBD6">Beheer toegang, apparaten en data centraal.</text>
+    </g>
+    <g transform="translate(38 140)">
+      <circle cx="36" cy="36" r="36" fill="#168CFF" opacity=".16"/>
+      <path d="M18 40h36M26 28h20M26 52h20" stroke="#55B7FF" stroke-width="6" stroke-linecap="round"/>
+      <text x="94" y="28" font-size="28" font-weight="700" fill="#FFFFFF">Slimmer samenwerken</text>
+      <text x="94" y="62" font-size="21" fill="#BFCBD6">Teams, SharePoint en bestanden logisch ingericht.</text>
+    </g>
+    <g transform="translate(38 232)">
+      <circle cx="36" cy="36" r="36" fill="#168CFF" opacity=".16"/>
+      <path d="M19 49V38M31 49V28M43 49V21M55 49V33" stroke="#55B7FF" stroke-width="6" stroke-linecap="round"/>
+      <text x="94" y="28" font-size="28" font-weight="700" fill="#FFFFFF">Beheer dat meegroeit</text>
+      <text x="94" y="62" font-size="21" fill="#BFCBD6">Van inrichting tot support en doorlopend beheer.</text>
+    </g>
+  </g>
+
+  <rect x="72" y="900" width="356" height="82" rx="41" fill="url(#accent)"/>
+  <text x="118" y="952" font-size="27" font-weight="700" fill="#FFFFFF">harkasit.nl</text>
+  <path d="M350 941h32m-12-12 12 12-12 12" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="466" y="938" font-size="23" font-weight="700" fill="#FFFFFF">Jouw IT. Onze zorg.</text>
+  <text x="466" y="970" font-size="18" fill="#A9B9C8">Praktisch · professioneel · betrokken</text>
+
+  <text x="72" y="1032" font-size="14" fill="#72879A">AI-GEGENEREERDE VISUAL</text>
+</g>
+</svg>
