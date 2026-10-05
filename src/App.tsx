@@ -32,6 +32,7 @@ import AdminDomains from "./pages/admin/AdminDomains";
 import AdminTimeEntriesWithPeriod from "./pages/admin/AdminTimeEntriesWithPeriod";
 import AdminPasswords from "./pages/admin/AdminPasswords";
 import AdminFuelPrices from "./pages/admin/AdminFuelPrices";
+import AdminParking from "./pages/admin/AdminParking";
 import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import ModuleRoute from "./components/admin/ModuleRoute";
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="uren" element={<ModuleRoute module="time_entries"><AdminTimeEntriesWithPeriod /></ModuleRoute>} />
               <Route path="wachtwoorden" element={<ModuleRoute module="passwords"><AdminPasswords /></ModuleRoute>} />
               <Route path="tankprijzen" element={<ModuleRoute module="tankprijzen"><AdminFuelPrices /></ModuleRoute>} />
+              <Route path="parkeren" element={<ModuleRoute module="parkeren"><AdminParking /></ModuleRoute>} />
               <Route path="gebruikers" element={<ModuleRoute adminOnly><AdminUsers /></ModuleRoute>} />
               <Route path="settings" element={<ModuleRoute module="settings"><AdminSettings /></ModuleRoute>} />
             </Route>
