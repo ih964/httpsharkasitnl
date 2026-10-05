@@ -6,7 +6,7 @@ import AdminSidebar from "./AdminSidebar";
 const AdminLayout = () => {
   const location = useLocation();
   const { isAdmin } = useAuth();
-  const isFuelPrices = location.pathname === "/admin/tankprijzen";
+  const isMapTool = location.pathname === "/admin/tankprijzen" || location.pathname === "/admin/parkeren";
 
   return (
     <SidebarProvider>
@@ -19,7 +19,7 @@ const AdminLayout = () => {
               {isAdmin ? "Admin Panel" : "Harkas IT Tools"}
             </span>
           </header>
-          <main className={isFuelPrices ? "flex-1 min-h-0 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
+          <main className={isMapTool ? "flex-1 min-h-0 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
             <Outlet />
           </main>
         </div>
