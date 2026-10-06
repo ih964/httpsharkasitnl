@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Pool } from "pg";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
@@ -200,7 +199,7 @@ async function execute(kind:"supabase"|"neon", body:any) {
   throw new Error("Unsupported action");
 }
 
-export default async function handler(req:VercelRequest,res:VercelResponse){
+export default async function handler(req:any,res:any){
   if(req.method!=="POST"){res.status(405).json({error:"Method not allowed"});return;}
   try{
     const primary=await choosePrimary();
