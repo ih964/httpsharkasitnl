@@ -67,5 +67,6 @@
     "domains": 7,
     "time_entries": 49,
     "activity_logs": 126
-  }
+  },
+  "source_pooler_host": "aws-1-eu-west-3.pooler.supabase.com"
 }
