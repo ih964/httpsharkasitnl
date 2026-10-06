@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "project": {
+    "id": "harkasit.nl",
+    "repository": "ih964/httpsharkasitnl",
+    "database_owner": "Harkas IT",
+    "source": "supabase",
+    "standby": "neon",
+    "schema": "public"
+  },
+  "source_project_ref": "uqkrxzlkvjdmebsbdrmb",
+  "application_tables": [
+    "activity_logs",
+    "assessment_audit_events",
+    "assessment_leads",
+    "assessment_proposal_drafts",
+    "assessment_runs",
+    "assessment_submission_rate_limits",
+    "customers",
+    "domains",
+    "invoice_counters",
+    "invoice_items",
+    "invoices",
+    "keep_alive",
+    "linkedin_audit_log",
+    "linkedin_connections",
+    "linkedin_internal_config",
+    "linkedin_organization_analytics",
+    "linkedin_organizations",
+    "linkedin_post_queue",
+    "linkedin_post_snapshots",
+    "linkedin_profile_snapshots",
+    "linkedin_repost_candidates",
+    "managed_users",
+    "password_vault",
+    "settings",
+    "time_entries",
+    "user_module_access",
+    "user_roles"
+  ],
+  "control_tables": [
+    "harkas_dr_checkpoint",
+    "harkas_dr_outbox",
+    "harkas_failover_control",
+    "harkas_resilience_state",
+    "harkas_resilience_heartbeat"
+  ],
+  "verification_tables": [
+    "customers",
+    "invoices",
+    "invoice_items",
+    "domains",
+    "time_entries",
+    "activity_logs",
+    "password_vault",
+    "settings",
+    "user_roles",
+    "user_module_access",
+    "managed_users",
+    "keep_alive"
+  ],
+  "critical_counts": {
+    "password_vault": 60,
+    "invoices": 18,
+    "invoice_items": 101,
+    "customers": 6,
+    "domains": 7,
+    "time_entries": 49,
+    "activity_logs": 126
+  }
+}
