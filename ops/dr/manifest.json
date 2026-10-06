@@ -43,7 +43,9 @@
     "harkas_dr_outbox",
     "harkas_failover_control",
     "harkas_resilience_state",
-    "harkas_resilience_heartbeat"
+    "harkas_resilience_heartbeat",
+    "harkas_dr_replication_state",
+    "harkas_resilience_lease"
   ],
   "verification_tables": [
     "customers",
