@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1080" viewBox="0 0 1080 1080">
+<defs>
+  <linearGradient id="base" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#04101f"/><stop offset=".64" stop-color="#081a32"/><stop offset="1" stop-color="#0a2140"/></linearGradient>
+  <linearGradient id="photoFade"><stop stop-color="#041021" stop-opacity="1"/><stop offset=".42" stop-color="#031024" stop-opacity=".94"/><stop offset=".7" stop-color="#03152a" stop-opacity=".58"/><stop offset="1" stop-color="#04152a" stop-opacity=".22"/></linearGradient>
+  <linearGradient id="topFade" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#010814" stop-opacity=".68"/><stop offset=".3" stop-color="#010814" stop-opacity="0"/><stop offset=".75" stop-color="#010814" stop-opacity=".0"/><stop offset="1" stop-color="#010814" stop-opacity=".87"/></linearGradient>
+  <linearGradient id="electric" x1="0" x2="1" y1="0" y2="0"><stop stop-color="#2a9af3"/><stop offset=".52" stop-color="#41b8ff"/><stop offset="1" stop-color="#7bddff"/></linearGradient>
+  <linearGradient id="button" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#0870e8"/><stop offset=".55" stop-color="#178bff"/><stop offset="1" stop-color="#29b3f8"/></linearGradient>
+  <linearGradient id="footer" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#081a30" stop-opacity=".94"/><stop offset="1" stop-color="#020b16"/></linearGradient>
+  <pattern id="mesh" width="39" height="39" patternUnits="userSpaceOnUse"><path d="M39 0H0V39" fill="none" stroke="#82c9ff" stroke-width=".55" opacity=".10"/></pattern>
+  <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="11"/></filter>
+  <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="9" stdDeviation="13" flood-color="#000915" flood-opacity=".75"/></filter>
+  <clipPath id="frame"><rect width="1080" height="1080"/></clipPath>
+</defs>
+<g clip-path="url(#frame)">
+  <rect width="1080" height="1080" fill="url(#base)"/>
+  <image xlink:href="assets/server-room.jpg" x="270" y="0" width="1080" height="1000" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#photoFade)"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#topFade)"/>
+  <rect x="0" y="0" width="1080" height="970" fill="url(#mesh)" opacity=".32"/>
+  <circle cx="1040" cy="360" r="240" fill="#128cff" opacity=".12" filter="url(#glow)"/>
+  <path d="M930 -15Q740 380 1090 675" fill="none" stroke="#158cff" stroke-width="16" opacity=".28" filter="url(#glow)"/>
+  <path d="M1015 -20Q750 374 1116 686" fill="none" stroke="#239cff" stroke-width="3.5" opacity=".58"/>
+  <path d="M720 160H1040" stroke="#59aaff" stroke-opacity=".15" stroke-width="1"/>
+  <path d="M750 235H1040" stroke="#59aaff" stroke-opacity=".13" stroke-width="1"/>
+  
+  <!-- Always sourced, never regenerated, from src/assets/logo.png. -->
+  <image xlink:href="assets/harkas-logo-white.png" x="62" y="44" width="492" height="139" preserveAspectRatio="xMinYMid meet" />
+  <rect x="890" y="59" width="4" height="112" rx="2" fill="#139bff"/>
+  <text x="918" y="79" font-size="17" fill="#eaf6ff" font-family="DejaVu Sans,Arial,sans-serif">BEHEER</text>
+  <text x="918" y="106" font-size="17" fill="#eaf6ff" font-family="DejaVu Sans,Arial,sans-serif">BEVEILIGING</text>
+  <text x="918" y="133" font-size="17" fill="#eaf6ff" font-family="DejaVu Sans,Arial,sans-serif">CLOUD</text>
+  <text x="918" y="160" font-size="17" fill="#eaf6ff" font-family="DejaVu Sans,Arial,sans-serif">SUPPORT</text>
+
+  <rect x="66" y="223" rx="15" width="274" height="37" fill="#005b9d" fill-opacity=".22" stroke="#2287c7" stroke-opacity=".55"/>
+  <circle cx="89" cy="241" r="5" fill="#35bcff"/>
+  <text x="110" y="248" font-size="17" letter-spacing="2" font-weight="bold" fill="#bfe7ff" font-family="DejaVu Sans,Arial,sans-serif">CYBERSECURITY</text>
+
+  <text x="64" y="361" font-size="75" font-weight="bold" fill="#ffffff" letter-spacing="-3.8" filter="url(#shadow)" font-family="DejaVu Sans,Arial,sans-serif">VEILIG WERKEN</text>
+  <text x="64" y="447" font-size="80" font-weight="bold" fill="#ffffff" letter-spacing="-3.3" filter="url(#shadow)" font-family="DejaVu Sans,Arial,sans-serif">BEGINT BIJ</text>
+  <text x="64" y="548" font-size="102" font-weight="bold" fill="url(#electric)" letter-spacing="-3.3" filter="url(#shadow)" font-family="DejaVu Sans,Arial,sans-serif">DE BASIS.</text>
+
+  <text x="72" y="617" font-size="29" fill="#edf6ff" font-family="DejaVu Sans,Arial,sans-serif">MFA, updates en back-ups:</text>
+  <text x="72" y="657" font-size="29" fill="#edf6ff" font-family="DejaVu Sans,Arial,sans-serif">drie aandachtspunten voor elk bedrijf.</text>
+
+  <g fill="none" stroke="#071b31" stroke-width="4">
+    <circle cx="92" cy="724" r="21" fill="#34b1ff" stroke="none"/>
+    <path d="M81 725l8 8 14-16" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="92" cy="784" r="21" fill="#34b1ff" stroke="none"/>
+    <path d="M81 785l8 8 14-16" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="92" cy="844" r="21" fill="#34b1ff" stroke="none"/>
+    <path d="M81 845l8 8 14-16" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g font-size="27" fill="#f3f8ff" font-family="DejaVu Sans,Arial,sans-serif">
+    <text x="134" y="733">Extra verificatie voor toegang (MFA)</text>
+    <text x="134" y="793">Apparaten en software up-to-date</text>
+    <text x="134" y="853">Back-ups en herstel regelmatig testen</text>
+  </g>
+  
+  <!-- A crisp vector security accent over the real photograph. -->
+  <g transform="translate(838 493)" opacity=".76">
+    <path d="M0 -123L99 -81V6Q99 70 0 130Q-99 70 -99 6V-81Z" fill="#0065aa" fill-opacity=".1" stroke="#45bfff" stroke-width="14" filter="url(#glow)"/>
+    <path d="M0 -123L99 -81V6Q99 70 0 130Q-99 70 -99 6V-81Z" fill="#00548a" fill-opacity=".10" stroke="#4fc9ff" stroke-width="3.2"/>
+    <path d="M-32 -14v-23a32 32 0 0 1 64 0v23" fill="none" stroke="#9cdeff" stroke-width="6"/>
+    <rect x="-45" y="-16" width="90" height="79" rx="12" fill="#1b83c8" fill-opacity=".20" stroke="#d4f4ff" stroke-width="4"/>
+    <circle cy="17" r="9" fill="#d1f5ff"/>
+    <path d="M0 24V42" stroke="#d1f5ff" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="-99" cy="-81" r="6" fill="#78daff"/><circle cx="99" cy="-81" r="6" fill="#78daff"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="890" width="496" height="66" rx="33" fill="url(#button)" stroke="#8bdfff" stroke-width="2"/>
+    <text x="101" y="933" font-size="29" fill="#fff" font-weight="bold" font-family="DejaVu Sans,Arial,sans-serif">Ontdek wat Harkas IT doet</text>
+    <path d="M511 923h28m-12-12 12 12-12 12" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <rect x="0" y="968" width="1080" height="112" fill="url(#footer)"/>
+  <path d="M61 968H1020" stroke="#1584c9" stroke-opacity=".55" stroke-width="1.6"/>
+  <g fill="none" stroke="#3db5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M87 1016v-9a17 17 0 0 1 34 0v9m-40 0h46v32H81Z"/><path d="M104 1029v8"/>
+    <path d="M457 1003h34v23h-34zM465 1032h18M474 1026v6"/><path d="M505 1007h23v34h-23z"/>
+    <path d="M773 1025c-6-12 6-25 18-21 12-18 39-4 38 12 22-2 29 30 2 30h-52c-20 0-23-18-6-21z"/>
+  </g>
+  <text x="141" y="1036" font-size="21" fill="#e8f5ff" font-family="DejaVu Sans,Arial,sans-serif">VEILIGE TOEGANG</text>
+  <text x="545" y="1036" font-size="21" fill="#e8f5ff" font-family="DejaVu Sans,Arial,sans-serif">ACTUELE IT</text>
+  <text x="849" y="1036" font-size="21" fill="#e8f5ff" font-family="DejaVu Sans,Arial,sans-serif">BACK-UPS</text>
+  <rect x="70" y="954" rx="2" width="496" height="4" fill="#3daaff" opacity=".5"/>
+</g>
+</svg>
