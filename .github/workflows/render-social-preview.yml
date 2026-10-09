@@ -1,0 +1,114 @@
+name: Render Harkas social preview
+
+on:
+  push:
+    branches: ['social/harkas-20261008']
+    paths:
+      - 'public/social-src/instagram-cybersecurity.svg'
+      - '.github/workflows/render-social-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: social-preview-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install renderer
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin python3-pil fonts-dejavu-core
+      - name: Fetch licensed photographic source
+        run: |
+          mkdir -p /tmp/harkas-social
+          curl --fail --location --retry 2 --max-time 60 --max-filesize 8000000 'https://images.pexels.com/photos/17489163/pexels-photo-17489163.jpeg?cs=srgb&dl=pexels-cookiecutter-17489163.jpg&fm=jpg' --output /tmp/harkas-social/server.jpg
+      - name: Embed assets and validate source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import base64, hashlib, io, json
+          from xml.etree import ElementTree as ET
+
+          out = Path('/tmp/harkas-social')
+          logo_bytes = Path('src/assets/logo.png').read_bytes()
+          logo_git_sha = hashlib.sha1(b'blob ' + str(len(logo_bytes)).encode() + b'\0' + logo_bytes).hexdigest()
+          assert logo_git_sha == '931c9fabb991a69203ac7af1f495136201365c05', 'Official logo changed; review required'
+          logo = Image.open(io.BytesIO(logo_bytes)).convert('RGB')
+          assert logo.size == (1024, 1024), 'Unexpected official logo dimensions'
+          # Crop only empty margins; do not redraw, recolour or distort the logo.
+          logo = logo.crop((60, 355, 970, 617))
+          buf = io.BytesIO()
+          logo.save(buf, 'PNG')
+          photo_bytes = (out / 'server.jpg').read_bytes()
+          photo = Image.open(io.BytesIO(photo_bytes))
+          assert photo.format == 'JPEG' and photo.width >= 1000 and photo.height >= 600
+          photo.verify()
+
+          source = Path('public/social-src/instagram-cybersecurity.svg').read_text()
+          ET.fromstring(source)
+          assert source.count('assets/server-room.jpg') == 1
+          assert source.count('assets/harkas-logo-white.png') == 1
+          source = source.replace('assets/server-room.jpg', 'data:image/jpeg;base64,' + base64.b64encode(photo_bytes).decode())
+          source = source.replace('assets/harkas-logo-white.png', 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode())
+          source = source.replace('x="270" y="0" width="1080" height="1000"', 'x="0" y="0" width="1080" height="1000"')
+          source = source.replace('preserveAspectRatio="xMidYMid slice"', 'preserveAspectRatio="xMaxYMid slice"')
+          source = source.replace('font-size="29" fill="#fff" font-weight="bold"', 'font-size="25" fill="#fff" font-weight="bold"')
+          source = source.replace('Ontdek wat Harkas IT doet', 'Bekijk de mogelijkheden')
+          source = source.replace('<rect x="0" y="968"', '<text x="715" y="934" font-family="DejaVu Sans,Arial,sans-serif" font-size="32" font-weight="bold" fill="#ffffff">harkasit.nl</text>\n<rect x="0" y="968"')
+          root = ET.fromstring(source)
+          for node in root.iter():
+              for key, value in node.attrib.items():
+                  if key.endswith('href'):
+                      assert value.startswith('data:image/'), 'Unresolved image asset'
+          (out / 'embedded.svg').write_text(source)
+          manifest = {
+              'title': 'Veilig werken begint bij de basis',
+              'source_branch': 'social/harkas-20261008',
+              'logo_git_blob_sha': logo_git_sha,
+              'photo_source': 'https://www.pexels.com/photo/computer-server-in-data-center-room-17489163/',
+              'photo_author': 'panumas nikhomkhai',
+              'photo_license': 'https://www.pexels.com/license/',
+              'photo_sha256': hashlib.sha256(photo_bytes).hexdigest(),
+              'render_method': 'Existing vector layout with licensed camera photograph and unchanged official logo crop',
+              'requires_visual_review': True,
+              'publishes_to_instagram': False
+          }
+          (out / 'provenance.json').write_text(json.dumps(manifest, indent=2))
+          PY
+      - name: Render and validate JPEG
+        run: |
+          rsvg-convert -w 2160 -h 2160 /tmp/harkas-social/embedded.svg -o /tmp/harkas-social/render.png
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import hashlib, json
+          folder = Path('/tmp/harkas-social')
+          target = folder / 'harkas-cybersecurity.jpg'
+          with Image.open(folder / 'render.png') as image:
+              image.convert('RGB').resize((1080,1080), Image.Resampling.LANCZOS).save(target,'JPEG',quality=95,optimize=True,subsampling=0)
+          assert 10000 < target.stat().st_size < 8 * 1024 * 1024
+          with Image.open(target) as image:
+              assert image.format == 'JPEG' and image.size == (1080,1080)
+              image.verify()
+          manifest = json.loads((folder / 'provenance.json').read_text())
+          manifest['jpeg_sha256'] = hashlib.sha256(target.read_bytes()).hexdigest()
+          (folder / 'provenance.json').write_text(json.dumps(manifest,indent=2))
+          print('JPEG rendered; visual review and explicit publication step still required.')
+          PY
+      - name: Export review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: harkas-cybersecurity-preview
+          path: |
+            /tmp/harkas-social/harkas-cybersecurity.jpg
+            /tmp/harkas-social/provenance.json
+          if-no-files-found: error
+          retention-days: 14
