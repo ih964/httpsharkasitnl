@@ -76,7 +76,15 @@ class HAQuery implements PromiseLike<any> {
 
 const haClient:any = {
   ...authClient,
-  from: (table:string)=>new HAQuery(table),
+  // Authentication and authorization remain on Supabase Auth/PostgREST.
+  // The HA database router requires server-side DSNs, so ACL lookups must
+  // not depend on the database API being fully configured or available.
+  // Supabase RLS continues to enforce user_roles and module_access permissions.
+  from: (table:string)=>table==="user_roles"
+    ? authClient.from("user_roles")
+    : table==="user_module_access"
+      ? authClient.from("user_module_access")
+      : new HAQuery(table),
   rpc: (fn:string,args?:Record<string,unknown>)=>{
     const run=async()=>{
       try{
