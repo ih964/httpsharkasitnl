@@ -60,6 +60,68 @@ async function probe(kind: "supabase" | "neon", connectionString?: string) {
   }
 }
 
+
+/**
+ * Compare the same database credential via the two Supabase pooler ports
+ * and check common URL-copying mistakes without exposing the password.
+ */
+async function checkSupabaseVariants(value?: string) {
+  if (!value) return { available: false };
+  try {
+    const uri = new URL(value);
+    const secret = decodeURIComponent(uri.password);
+    const signs = {
+      mayBeDoubleUrlEncoded: /%[0-9a-f]{2}/i.test(secret),
+      hasBoundaryWhitespace: secret !== secret.trim(),
+      hasWrappingQuotes: /^(['"]).*\1$/.test(secret),
+      containsUriEscapes: /%[0-9a-f]{2}/i.test(uri.password),
+    };
+    const transaction = new URL(value);
+    transaction.port = "6543";
+    const transactionProbe = await probe("supabase", transaction.toString());
+    const variants: Array<{ name: string; value: string }> = [];
+    if (signs.mayBeDoubleUrlEncoded) {
+      try {
+        const twice = decodeURIComponent(secret);
+        if (twice !== secret) {
+          const u = new URL(value);
+          u.password = encodeURIComponent(twice);
+          variants.push({ name: "doubleEncodingCorrected", value: u.toString() });
+        }
+      } catch {}
+    }
+    if (signs.hasBoundaryWhitespace || signs.hasWrappingQuotes) {
+      const cleaned = secret.trim().replace(/^(['"])(.*)\1$/, "$2");
+      if (cleaned !== secret) {
+        const u = new URL(value);
+        u.password = encodeURIComponent(cleaned);
+        variants.push({ name: "trimmedFormatting", value: u.toString() });
+      }
+    }
+    const alt: Record<string, { reachable: boolean; role?: string; failure?: {code: string;reason: string} }> = {};
+    for (const v of variants) {
+      const result = await probe("supabase", v.value);
+      alt[v.name] = {
+        reachable: result.reachable,
+        role: "role" in result ? result.role : undefined,
+        failure: "failure" in result ? result.failure as any : undefined,
+      };
+    }
+    return {
+      available: true,
+      signs,
+      transaction: {
+        reachable: transactionProbe.reachable,
+        role: "role" in transactionProbe ? transactionProbe.role : undefined,
+        failure: "failure" in transactionProbe ? transactionProbe.failure : undefined,
+      },
+      alternatives: alt,
+    };
+  } catch {
+    return { available: false, uriParseError: true };
+  }
+}
+
 export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "private, no-store, max-age=0");
   res.setHeader("X-Robots-Tag", "noindex");
@@ -68,9 +130,10 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const [supabase, neon] = await Promise.all([
+  const [supabase, neon, credentialDiagnostics] = await Promise.all([
     probe("supabase", process.env.HARKAS_SUPABASE_DSN),
     probe("neon", process.env.HARKAS_NEON_DSN),
+    checkSupabaseVariants(process.env.HARKAS_SUPABASE_DSN),
   ]);
   const healthyPrimary = (supabase.reachable && supabase.role === "primary") ||
     (neon.reachable && neon.role === "primary");
@@ -78,5 +141,6 @@ export default async function handler(req: any, res: any) {
     healthyPrimary,
     supabase,
     neon,
+    credentialDiagnostics,
   });
 }
