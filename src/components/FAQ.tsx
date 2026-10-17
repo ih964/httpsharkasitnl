@@ -4,7 +4,15 @@ import { motion } from "framer-motion";
 const faqs = [
   {
     question: "Waar helpt Harkas IT mee?",
-    answer: "Harkas IT ondersteunt organisaties met IT & cloud, managed IT en support, netwerk & security, installatie en field services, websites en software, automatisering, online marketing en specialistische zorgtechnologie.",
+    answer: "Harkas IT ondersteunt organisaties met IT & cloud, managed IT en support, netwerk & security, cybersecurity, installatie en field services, websites en software, automatisering, online marketing en specialistische zorgtechnologie.",
+  },
+  {
+    question: "Waarmee helpt Harkas IT op het gebied van cybersecurity?",
+    answer: "We helpen met het verkleinen van cyberrisico's via Microsoft 365-security, MFA, veilig toegangsbeheer, Intune, Microsoft Defender, beveiligingscontroles en praktisch advies. Welke onderdelen we uitvoeren en monitoren leggen we vooraf vast.",
+  },
+  {
+    question: "Waar stuur ik algemene correspondentie, facturen of administratie naartoe?",
+    answer: "Algemene vragen, offertes, aanvragen en correspondentie stuur je naar info@harkasit.nl. Facturen, betalingsvragen en administratieve documenten stuur je naar administratie@harkasit.nl.",
   },
   {
     question: "Werken jullie met vaste prijzen of standaardpakketten?",

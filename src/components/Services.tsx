@@ -6,6 +6,7 @@ import {
   Headphones,
   Megaphone,
   Network,
+  ShieldCheck,
   Wrench,
   CheckCircle2,
 } from "lucide-react";
@@ -39,8 +40,16 @@ const services = [
     href: "/diensten/werkplekbeheer",
   },
   {
-    icon: Wrench,
+    icon: ShieldCheck,
     number: "04",
+    title: "Cybersecurity",
+    description: "Beperk digitale risico's met sterke accountbeveiliging, veilige werkplekken en praktische Microsoft 365-security.",
+    points: ["Security quickscan", "MFA & Conditional Access", "Defender & Intune"],
+    href: "/diensten/cybersecurity",
+  },
+  {
+    icon: Wrench,
+    number: "05",
     title: "Installatie & Field Services",
     description: "Technische uitvoering op locatie voor werkplekken, hardware, printers, scanners, netwerken en roll-outs.",
     points: ["Werkplekinstallatie", "Hardware roll-outs", "Field service"],
@@ -48,7 +57,7 @@ const services = [
   },
   {
     icon: Code2,
-    number: "05",
+    number: "06",
     title: "Software & Digital",
     description: "Digitale oplossingen die passen bij je bedrijf: websites, webapps, klantportalen en automatisering.",
     points: ["Websites & webshops", "Webapps & portalen", "AI & automatisering"],
@@ -57,7 +66,7 @@ const services = [
   },
   {
     icon: HeartPulse,
-    number: "06",
+    number: "07",
     title: "Zorgtechnologie",
     description: "Een specialistische pijler voor zorgorganisaties: medische techniek aan de IT-zijde en zorgdomotica.",
     points: ["Medische techniek", "Zorgdomotica", "Technische koppelingen"],
@@ -65,7 +74,7 @@ const services = [
   },
   {
     icon: Megaphone,
-    number: "07",
+    number: "08",
     title: "Online Marketing",
     description: "Meer zichtbaarheid en resultaat met vindbaarheid, campagnes en een digitale basis die converteert.",
     points: ["SEO", "Google Ads", "Digitale groei"],

@@ -10,11 +10,13 @@ const serviceOptions = [
   "IT & Cloud / Microsoft 365",
   "Managed IT & Support",
   "Netwerk & Security",
+  "Cybersecurity",
   "Installatie & Field Services",
   "Software, website, app of automatisering",
   "Zorgtechnologie",
   "Online Marketing",
   "Project of maatwerkoplossing",
+  "Administratie & facturatie",
   "Anders",
 ];
 
@@ -22,13 +24,16 @@ const requestedServices: Record<string, string> = {
   kennismaking: serviceOptions[0],
   "microsoft-365": serviceOptions[1],
   "it-beheer": serviceOptions[2],
-  security: serviceOptions[3],
-  "field-service": serviceOptions[4],
-  websites: serviceOptions[5],
-  zorgtechnologie: serviceOptions[6],
-  marketing: serviceOptions[7],
-  maatwerk: serviceOptions[8],
-  "technische-controle": serviceOptions[8],
+  netwerk: serviceOptions[3],
+  security: serviceOptions[4],
+  cybersecurity: serviceOptions[4],
+  "field-service": serviceOptions[5],
+  websites: serviceOptions[6],
+  zorgtechnologie: serviceOptions[7],
+  marketing: serviceOptions[8],
+  maatwerk: serviceOptions[9],
+  "technische-controle": serviceOptions[9],
+  administratie: serviceOptions[10],
 };
 
 const serviceFromSearch = (search: string) => {
@@ -103,7 +108,12 @@ const Contact = () => {
         service: serviceFromSearch(location.search) ?? serviceOptions[0],
         message: "",
       });
-      toast({ title: "Aanvraag verzonden", description: "Bedankt. Je aanvraag is verzonden naar Harkas IT." });
+      toast({
+        title: "Bericht verzonden",
+        description: service === "Administratie & facturatie"
+          ? "Je bericht is verstuurd naar administratie@harkasit.nl."
+          : "Je aanvraag is verstuurd naar info@harkasit.nl.",
+      });
     } catch {
       toast({
         title: "Verzenden niet gelukt",
@@ -135,7 +145,7 @@ const Contact = () => {
             Vertel waar jouw organisatie <span className="text-gradient">verder mee wil.</span>
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Van IT en installaties tot software, automatisering en zorgtechnologie. We bespreken eerst de situatie en bepalen
+            Van IT en cybersecurity tot installaties, software en zorgtechnologie. We bespreken eerst de situatie en bepalen
             daarna samen wat een logische volgende stap is.
           </p>
         </motion.div>
@@ -166,8 +176,18 @@ const Contact = () => {
                     <Mail className="w-5 h-5 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">E-mail</p>
+                    <p className="text-sm text-muted-foreground">Correspondentie & algemene vragen</p>
                     <p className="font-medium break-words group-hover:text-primary transition-colors">info@harkasit.nl</p>
+                  </div>
+                </a>
+
+                <a href="mailto:administratie@harkasit.nl" className="flex items-center gap-4 group">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <Mail className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm text-muted-foreground">Administratie, facturen & betalingen</p>
+                    <p className="font-medium break-words group-hover:text-primary transition-colors">administratie@harkasit.nl</p>
                   </div>
                 </a>
 
@@ -227,7 +247,7 @@ const Contact = () => {
           >
             <h3 className="text-xl font-semibold mb-2">Waarmee kunnen we je helpen?</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Geef kort aan waar je vraag over gaat. We nemen contact op om de situatie en gewenste aanpak te bespreken.
+              Geef kort aan waar je vraag over gaat. Algemene aanvragen gaan naar info@harkasit.nl; bij “Administratie & facturatie” gaat het bericht naar administratie@harkasit.nl.
             </p>
 
             {submitted && (

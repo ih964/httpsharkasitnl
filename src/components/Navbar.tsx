@@ -19,6 +19,11 @@ const serviceLinks = [
     href: "/diensten/werkplekbeheer",
   },
   {
+    name: "Cybersecurity",
+    description: "Microsoft 365-security, MFA, apparaten en cyberrisico's.",
+    href: "/diensten/cybersecurity",
+  },
+  {
     name: "Installatie & Field Services",
     description: "Hardware, roll-outs en technische inzet op locatie.",
     href: "/diensten/installatie-field-services",

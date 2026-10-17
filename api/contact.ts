@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 const resendApiKey = process.env.RESEND_API_KEY;
 const fromEmail = process.env.CONTACT_FROM_EMAIL || 'Harkas IT <info@harkasit.nl>';
 const toEmail = process.env.CONTACT_TO_EMAIL || 'info@harkasit.nl';
+const administrationToEmail = 'administratie@harkasit.nl';
 
 const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 const escapeHtml = (value: string) =>
@@ -35,12 +36,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Invalid form data' });
   }
 
+  // Alleen het vaste, door ons aangeboden formulieronderwerp kan naar administratie routeren.
+  // De afzender kan nooit zelf een willekeurig bestemmingsadres meesturen.
+  const destination = cleanService === 'Administratie & facturatie' ? administrationToEmail : toEmail;
   const resend = new Resend(resendApiKey);
 
   try {
     const { data, error } = await resend.emails.send({
       from: fromEmail,
-      to: [toEmail],
+      to: [destination],
       replyTo: cleanEmail,
       subject: `Nieuwe aanvraag via harkasit.nl - ${cleanService || cleanName}`,
       text: [

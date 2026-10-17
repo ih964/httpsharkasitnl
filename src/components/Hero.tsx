@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 
 const capabilityItems = [
   { icon: CloudCog, label: "IT & Cloud", detail: "Microsoft 365 · Werkplekken" },
-  { icon: Network, label: "Infrastructuur", detail: "Netwerk · Security" },
+  { icon: Network, label: "Infrastructuur", detail: "Netwerk · Wifi" },
+  { icon: ShieldCheck, label: "Cybersecurity", detail: "Identity · Device security" },
   { icon: Wrench, label: "Field Services", detail: "Installatie · Roll-outs" },
   { icon: Code2, label: "Software & Digital", detail: "Web · Apps · Automatisering" },
   { icon: HeartPulse, label: "Zorgtechnologie", detail: "Medische techniek · Domotica" },
@@ -51,7 +52,7 @@ const Hero = () => {
               transition={{ duration: 0.55, delay: 0.16 }}
               className="text-lg md:text-xl text-muted-foreground max-w-3xl leading-relaxed mb-9"
             >
-              Van IT-beheer, cloud en security tot installaties op locatie, websites, automatisering en zorgtechnologie.
+              Van IT-beheer, cloud en cybersecurity tot installaties op locatie, websites, automatisering en zorgtechnologie.
               Harkas IT realiseert en ondersteunt oplossingen die passen bij de dagelijkse praktijk van jouw organisatie.
             </motion.p>
 
