@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 const SUPABASE_URL = process.env.HARKAS_SUPABASE_URL || "https://uqkrxzlkvjdmebsbdrmb.supabase.co";
@@ -133,9 +133,9 @@ function buildWhere(filters:Filter[], start=1){
   return {where:sqls.length?` where ${sqls.join(" and ")}`:"",params,next:n};
 }
 
-async function execute(kind:"supabase"|"neon", body:any) {
+async function execute(kind:"supabase"|"neon", body:any, db?:PoolClient) {
   if(!TABLES.has(body.table||"") && body.action!=="rpc") throw new Error("Table not allowed");
-  const pool=poolFor(kind);
+  const pool=db ?? poolFor(kind);
 
   if(body.action==="rpc"){
     if(body.fn!=="generate_invoice_number") throw new Error("RPC not allowed");
@@ -199,6 +199,93 @@ async function execute(kind:"supabase"|"neon", body:any) {
   throw new Error("Unsupported action");
 }
 
+
+/**
+ * An idle PRIMARY is allowed to let its ten-minute fencing lease expire.
+ * On its next authenticated write, verify BOTH database roles and the
+ * authoritative failover epoch, then renew only Supabase's own lease.
+ *
+ * Lock state + lease until the mutation commits. A concurrent fencing
+ * transaction cannot demote the source halfway through the write.
+ * Do not auto-promote, replay DR events, create missing leases, or bypass
+ * the HARKAS_WRITER_FENCED database trigger.
+ */
+async function withVerifiedPrimaryLease<T>(
+  perform:(client:PoolClient)=>Promise<T>
+):Promise<T> {
+  const client=await poolFor("supabase").connect();
+  let inTransaction=false;
+  try {
+    await client.query("BEGIN");
+    inTransaction=true;
+    await client.query("SET LOCAL lock_timeout = '3s'");
+    await client.query("SET LOCAL statement_timeout = '12s'");
+
+    const state=await client.query(
+      "SELECT role, epoch FROM public.harkas_resilience_state WHERE singleton=true FOR UPDATE"
+    );
+    const source=state.rows[0];
+    if (!source || source.role!=="primary") {
+      throw new Error("HARKAS_WRITER_FENCED: Supabase is not PRIMARY");
+    }
+
+    const control=await client.query(
+      "SELECT writer, epoch FROM public.harkas_failover_control "+
+      "WHERE resource='harkas-admin-db' FOR UPDATE"
+    );
+    const owner=control.rows[0];
+    if (!owner || owner.writer!=="supabase" ||
+        Number(owner.epoch)!==Number(source.epoch)) {
+      throw new Error("HARKAS_WRITER_FENCED: writer/epoch authority mismatch");
+    }
+
+    // Fail closed if Neon is unreachable or was promoted. Using only the
+    // local role could reactivate a stale PRIMARY after split-brain.
+    const peer=await poolFor("neon").query(
+      "SELECT role, epoch FROM public.harkas_resilience_state WHERE singleton=true"
+    );
+    const standby=peer.rows[0];
+    if (!standby || standby.role!=="standby" ||
+        Number(standby.epoch)!==Number(source.epoch)) {
+      throw new Error("HARKAS_WRITER_FENCED: standby role/epoch mismatch");
+    }
+
+    const leases=await client.query(
+      "SELECT node, epoch FROM public.harkas_resilience_lease "+
+      "WHERE singleton=true FOR UPDATE"
+    );
+    const lease=leases.rows[0];
+    if (!lease || lease.node!=="supabase" ||
+        Number(lease.epoch)!==Number(source.epoch)) {
+      throw new Error("HARKAS_WRITER_FENCED: lease belongs to another writer");
+    }
+
+    // A renewal and its application mutation commit atomically.
+    const renewed=await client.query(
+      "UPDATE public.harkas_resilience_lease "+
+      "SET expires_at=now()+interval '10 minutes', renewed_at=now() "+
+      "WHERE singleton=true AND node='supabase' AND epoch=$1",
+      [source.epoch]
+    );
+    if (renewed.rowCount!==1) {
+      throw new Error("HARKAS_WRITER_FENCED: unable to renew PRIMARY lease");
+    }
+
+    const result=await perform(client);
+    await client.query("COMMIT");
+    inTransaction=false;
+    return result;
+  } catch (error) {
+    if (inTransaction) {
+      try { await client.query("ROLLBACK"); }
+      catch (rollbackError) { console.error("[HA] lease rollback failed", rollbackError instanceof Error ? rollbackError.name : "unknown"); }
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export default async function handler(req:any,res:any){
   if(req.method!=="POST"){res.status(405).json({error:"Method not allowed"});return;}
   try{
@@ -206,7 +293,11 @@ export default async function handler(req:any,res:any){
     const user=await authenticate(req,primary);
     const pool=poolFor(primary);
     await authorize(pool,user.id);
-    const result=await execute(primary,req.body);
+    // Writes require a verified, current PRIMARY lease in the same SQL
+    // transaction. Reads do not change leases or require standby availability.
+    const result=primary==="supabase" && req.body?.action!=="select"
+      ? await withVerifiedPrimaryLease((client)=>execute(primary,req.body,client))
+      : await execute(primary,req.body);
     res.setHeader("Cache-Control","no-store");
     res.status(200).json({primary,...result});
   }catch(error:any){
