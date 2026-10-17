@@ -6,6 +6,7 @@ const expertiseLinks = [
   { label: "IT & Cloud", href: "/diensten/microsoft-365-beheer" },
   { label: "Managed IT & Support", href: "/diensten/it-beheer" },
   { label: "Netwerk & Security", href: "/diensten/werkplekbeheer" },
+  { label: "Cybersecurity", href: "/diensten/cybersecurity" },
   { label: "Installatie & Field Services", href: "/diensten/installatie-field-services" },
   { label: "Software & Digital", href: "/diensten/websites" },
   { label: "Zorgtechnologie", href: "/diensten/zorgtechnologie" },
@@ -58,9 +59,18 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-5">Contact</h3>
             <div className="space-y-3 mb-6">
-              <a href="mailto:info@harkasit.nl" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <Mail className="w-4 h-4" /> info@harkasit.nl
-              </a>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Correspondentie & aanvragen</p>
+                <a href="mailto:info@harkasit.nl" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors break-all">
+                  <Mail className="w-4 h-4 shrink-0" /> info@harkasit.nl
+                </a>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Administratie & facturatie</p>
+                <a href="mailto:administratie@harkasit.nl" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors break-all">
+                  <Mail className="w-4 h-4 shrink-0" /> administratie@harkasit.nl
+                </a>
+              </div>
               <a href="tel:+31851249091" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <Phone className="w-4 h-4" /> 085 124 9091
               </a>

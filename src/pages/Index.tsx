@@ -20,7 +20,7 @@ const Index = () => {
   useEffect(() => {
     applyPageSeo({
       title: "Harkas IT | IT, Technologie & Digitale Oplossingen",
-      description: "Harkas IT ondersteunt organisaties met IT-beheer, Microsoft 365, cloud, field services, websites, automatisering, online marketing en zorgtechnologie.",
+      description: "Harkas IT ondersteunt organisaties met IT-beheer, Microsoft 365, cloud, cybersecurity, field services, websites, automatisering, online marketing en zorgtechnologie.",
     });
   }, []);
 
