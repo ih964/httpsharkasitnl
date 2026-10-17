@@ -1,6 +1,7 @@
 import { Instagram, Linkedin, Mail, MessageSquareText, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { businessDetails } from "@/lib/businessDetails";
 
 const expertiseLinks = [
   { label: "IT & Cloud", href: "/diensten/microsoft-365-beheer" },
@@ -53,6 +54,14 @@ const Footer = () => {
               <Link to="/over-ons" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Over ons</Link>
               <a href="/#prijzen" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Offerte & werkwijze</a>
               <Link to="/it-check" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">IT-zelfcheck</Link>
+            </div>
+            <div className="mt-6 border-t border-border/40 pt-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Bedrijfsgegevens</p>
+              <p className="text-sm text-muted-foreground">{businessDetails.legalName}</p>
+              <p className="text-sm text-muted-foreground mt-1">KvK {businessDetails.kvk}</p>
+              <Link to="/factuurgegevens" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all mt-3">
+                Factuurgegevens <span aria-hidden="true">→</span>
+              </Link>
             </div>
           </div>
 

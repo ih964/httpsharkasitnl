@@ -19,6 +19,7 @@ import CareTechnology from "./pages/services/CareTechnology";
 import Cybersecurity from "./pages/services/Cybersecurity";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import Factuurgegevens from "./pages/Factuurgegevens";
 import About from "./pages/About";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminHome from "./pages/admin/AdminHome";
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/diensten/it-support-mkb" element={<NationalLanding />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/voorwaarden" element={<Terms />} />
+            <Route path="/factuurgegevens" element={<Factuurgegevens />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminHome />} />
