@@ -76,6 +76,12 @@ class HAQuery implements PromiseLike<any> {
 
 const haClient:any = {
   ...authClient,
+  // SupabaseClient exposes Functions and Storage through prototype getters.
+  // Spreading the instance does NOT copy those getters. Keep the native
+  // clients attached so vault encryption/decryption and uploads still work.
+  auth: authClient.auth,
+  functions: authClient.functions,
+  storage: authClient.storage,
   // Authentication and authorization remain on Supabase Auth/PostgREST.
   // The HA database router requires server-side DSNs, so ACL lookups must
   // not depend on the database API being fully configured or available.
