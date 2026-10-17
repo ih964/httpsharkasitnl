@@ -24,6 +24,10 @@
       "destination": "/favicon.svg"
     },
     {
+      "source": "/factuurgegevens",
+      "destination": "/index.html"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

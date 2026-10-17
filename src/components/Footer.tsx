@@ -59,9 +59,9 @@ const Footer = () => {
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Bedrijfsgegevens</p>
               <p className="text-sm text-muted-foreground">{businessDetails.legalName}</p>
               <p className="text-sm text-muted-foreground mt-1">KvK {businessDetails.kvk}</p>
-              <Link to="/factuurgegevens" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all mt-3">
+              <a href="/factuurgegevens" aria-label="Factuurgegevens van Harkas IT openen" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all mt-3">
                 Factuurgegevens <span aria-hidden="true">→</span>
-              </Link>
+              </a>
             </div>
           </div>
 
