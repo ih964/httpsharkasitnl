@@ -26,6 +26,7 @@ import {
   Fuel,
   Car,
   UserCog,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -42,6 +43,7 @@ const items: SidebarItem[] = [
   { title: "Facturen", url: "/admin/invoices", icon: FileText, module: "invoices" },
   { title: "Factuur Maker", url: "/admin/factuur-maker", icon: ReceiptText, module: "factuur_maker" },
   { title: "Klanten", url: "/admin/customers", icon: Users, module: "customers" },
+  { title: "Supporttickets", url: "/admin/tickets", icon: LifeBuoy, module: "tickets" },
   { title: "Domeinen", url: "/admin/domeinen", icon: Globe, module: "domains" },
   { title: "Uren", url: "/admin/uren", icon: Clock, module: "time_entries" },
   { title: "Wachtwoorden", url: "/admin/wachtwoorden", icon: KeyRound, module: "passwords" },

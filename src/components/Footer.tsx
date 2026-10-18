@@ -101,6 +101,7 @@ const Footer = () => {
         <div className="mt-12 pt-6 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">© 2026 Harkas IT. Alle rechten voorbehouden.</p>
           <div className="flex items-center gap-5">
+            <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Klantenportaal</Link>
             <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacyverklaring</Link>
             <Link to="/voorwaarden" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Algemene voorwaarden</Link>
           </div>

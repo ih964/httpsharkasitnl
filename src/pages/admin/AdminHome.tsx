@@ -7,6 +7,7 @@ const fallbackOrder: Array<{ module: ModuleKey; path: string }> = [
   { module: "invoices", path: "/admin/invoices" },
   { module: "factuur_maker", path: "/admin/factuur-maker" },
   { module: "customers", path: "/admin/customers" },
+  { module: "tickets", path: "/admin/tickets" },
   { module: "domains", path: "/admin/domeinen" },
   { module: "time_entries", path: "/admin/uren" },
   { module: "passwords", path: "/admin/wachtwoorden" },

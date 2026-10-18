@@ -26,6 +26,7 @@ import {
   UserPlus,
   Users,
   UsersRound,
+  LifeBuoy,
 } from "lucide-react";
 
 type ManagedUser = {
@@ -45,6 +46,7 @@ const MODULES: Array<{
   { key: "invoices", label: "Facturen", description: "Facturen bekijken, beheren, PDF maken en verzenden.", icon: FileText },
   { key: "factuur_maker", label: "Factuur Maker", description: "Losse factuur maken en direct als PDF downloaden.", icon: ReceiptText },
   { key: "customers", label: "Klanten", description: "Klantgegevens bekijken, toevoegen en wijzigen.", icon: Users },
+  { key: "tickets", label: "Supporttickets", description: "Klantmeldingen beheren, beantwoorden en portaaltoegang regelen.", icon: LifeBuoy },
   { key: "domains", label: "Domeinen", description: "Domeinen, verlengingen en bijbehorende facturatie beheren.", icon: Globe },
   { key: "time_entries", label: "Uren", description: "Urenregistratie en facturatie vanuit uren.", icon: Clock },
   { key: "passwords", label: "Wachtwoorden", description: "Toegang tot de beveiligde wachtwoordkluis.", icon: KeyRound },

@@ -35,6 +35,8 @@ import AdminTimeEntriesWithPeriod from "./pages/admin/AdminTimeEntriesWithPeriod
 import AdminPasswords from "./pages/admin/AdminPasswords";
 import AdminFuelPrices from "./pages/admin/AdminFuelPrices";
 import AdminParking from "./pages/admin/AdminParking";
+import AdminTickets from "./pages/admin/AdminTickets";
+import SupportPortal from "./pages/SupportPortal";
 import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import ModuleRoute from "./components/admin/ModuleRoute";
@@ -70,12 +72,14 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/voorwaarden" element={<Terms />} />
             <Route path="/factuurgegevens" element={<Factuurgegevens />} />
+            <Route path="/support" element={<SupportPortal />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminHome />} />
               <Route path="invoices" element={<ModuleRoute module="invoices"><AdminInvoicesWithStatus /></ModuleRoute>} />
               <Route path="factuur-maker" element={<ModuleRoute module="factuur_maker"><InvoiceMakerForceLeftRight /></ModuleRoute>} />
               <Route path="customers" element={<ModuleRoute module="customers"><AdminCustomers /></ModuleRoute>} />
+              <Route path="tickets" element={<ModuleRoute module="tickets"><AdminTickets /></ModuleRoute>} />
               <Route path="btw-overzicht" element={<ModuleRoute module="btw_overzicht"><AdminBtwOverzicht /></ModuleRoute>} />
               <Route path="domeinen" element={<ModuleRoute module="domains"><AdminDomains /></ModuleRoute>} />
               <Route path="uren" element={<ModuleRoute module="time_entries"><AdminTimeEntriesWithPeriod /></ModuleRoute>} />
