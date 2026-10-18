@@ -14,6 +14,7 @@ import {
   Plus, RefreshCw, Search, Send, ShieldCheck, Trash2, Users,
 } from "lucide-react";
 import TicketAttachments from "@/components/support/TicketAttachments";
+import { notifySupportChange } from "@/lib/supportNotify";
 import {
   formatTicketDate, PortalAccess, statusBadge, SupportTicket,
   ticketCategories, TicketMessage, ticketNumber, ticketPriorities, ticketStatuses,
@@ -91,6 +92,7 @@ export default function AdminTickets() {
   const openTicket = (ticket: SupportTicket) => {
     setSelected(ticket);
     setReply("");
+    void notifySupportChange(selected.id);
     setIsInternal(false);
     setMessages([]);
     void loadMessages(ticket.id);
@@ -106,6 +108,7 @@ export default function AdminTickets() {
       return;
     }
     const updated = data as SupportTicket;
+    if (changes.status && changes.status !== selected.status) void notifySupportChange(updated.id);
     setSelected(updated);
     setTickets(list => list.map(t => t.id === updated.id ? updated : t));
     toast({ title: "Ticket bijgewerkt" });

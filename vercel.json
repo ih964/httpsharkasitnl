@@ -31,5 +31,11 @@
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/support-notify",
+      "schedule": "7 8 * * *"
+    }
   ]
 }
