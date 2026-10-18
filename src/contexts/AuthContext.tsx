@@ -14,7 +14,8 @@ export type ModuleKey =
   | "tankprijzen"
   | "parkeren"
   | "btw_overzicht"
-  | "settings";
+  | "settings"
+  | "tickets";
 
 interface AuthContextType {
   session: Session | null;
@@ -67,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           "parkeren",
           "btw_overzicht",
           "settings",
+          "tickets",
         ].includes(module),
       );
 
