@@ -106,3 +106,5 @@ const haClient:any = {
 };
 
 export const supabase = haClient as any;
+// Support portal uses Supabase PostgREST directly so row-level security applies to every customer query.
+export const portalSupabase = authClient as any;
