@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "@/hooks/use-toast";
 import { AlertCircle, ArrowLeft, LifeBuoy, Loader2, LogOut, Plus, Send, ShieldCheck } from "lucide-react";
 import TicketAttachments from "@/components/support/TicketAttachments";
+import { notifySupportChange } from "@/lib/supportNotify";
 import {
   formatTicketDate, PortalAccess, statusBadge, SupportTicket, ticketCategories,
   TicketMessage, ticketNumber, ticketPriorities, ticketStatuses, TicketPriority,
@@ -152,6 +153,7 @@ export default function SupportPortal() {
       return;
     }
     toast({ title: "Ticket aangemaakt", description: ticketNumber(data.ticket_no) + " is opgeslagen." });
+    void notifySupportChange(data.id);
     setNewOpen(false);
     setForm(emptyForm);
     await loadTickets(accountId);
@@ -171,6 +173,7 @@ export default function SupportPortal() {
       return;
     }
     setReply("");
+    void notifySupportChange(selected.id);
     await Promise.all([loadMessages(selected.id), loadTickets(accountId)]);
     toast({ title: "Reactie toegevoegd" });
   };
