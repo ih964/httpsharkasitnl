@@ -44,7 +44,7 @@ BEGIN
            'status',t.status,
            'priority',t.priority,
            'category',t.category
-         ) || pg_catalog.coalesce(p_details, '{}'::jsonb)
+         ) || coalesce(p_details, '{}'::jsonb)
   FROM public.support_tickets t
   CROSS JOIN (VALUES ('staff'::text), ('customer'::text)) AS recipients(recipient_type)
   WHERE t.id = p_ticket_id;
@@ -70,14 +70,14 @@ BEGIN
 
   IF TG_TABLE_NAME = 'support_tickets' AND TG_OP = 'INSERT' THEN
     PERFORM public.support_enqueue_notification_pair(
-      NEW.id, pg_catalog.coalesce(v_actor, NEW.created_by), 'created',
+      NEW.id, coalesce(v_actor, NEW.created_by), 'created',
       pg_catalog.jsonb_build_object('description',NEW.description)
     );
 
   ELSIF TG_TABLE_NAME = 'support_ticket_messages' AND TG_OP = 'INSERT' THEN
     IF NOT NEW.is_internal THEN
       PERFORM public.support_enqueue_notification_pair(
-        NEW.ticket_id, pg_catalog.coalesce(v_actor, NEW.author_id),
+        NEW.ticket_id, coalesce(v_actor, NEW.author_id),
         CASE WHEN NEW.sender_type = 'klant' THEN 'customer_reply' ELSE 'staff_reply' END,
         pg_catalog.jsonb_build_object('message',NEW.body)
       );
@@ -86,7 +86,7 @@ BEGIN
   ELSIF TG_TABLE_NAME = 'support_ticket_files' AND TG_OP = 'INSERT' THEN
     IF NOT NEW.is_internal THEN
       PERFORM public.support_enqueue_notification_pair(
-        NEW.ticket_id, pg_catalog.coalesce(v_actor, NEW.uploaded_by),
+        NEW.ticket_id, coalesce(v_actor, NEW.uploaded_by),
         'attachment_added',
         pg_catalog.jsonb_build_object('filename',NEW.original_name)
       );
