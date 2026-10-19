@@ -92,7 +92,6 @@ export default function AdminTickets() {
   const openTicket = (ticket: SupportTicket) => {
     setSelected(ticket);
     setReply("");
-    void notifySupportChange(selected.id);
     setIsInternal(false);
     setMessages([]);
     void loadMessages(ticket.id);
@@ -108,7 +107,10 @@ export default function AdminTickets() {
       return;
     }
     const updated = data as SupportTicket;
-    if (changes.status && changes.status !== selected.status) void notifySupportChange(updated.id);
+    // Any customer-visible field change (status, priority, assignee) queues mail for both parties.
+    if (Object.entries(changes).some(([field, next]) => (selected as unknown as Record<string, unknown>)[field] !== next)) {
+      void notifySupportChange(updated.id);
+    }
     setSelected(updated);
     setTickets(list => list.map(t => t.id === updated.id ? updated : t));
     toast({ title: "Ticket bijgewerkt" });
@@ -131,6 +133,8 @@ export default function AdminTickets() {
       return;
     }
     setReply("");
+    // Internal notes stay private and never cause a customer notification.
+    if (!isInternal) void notifySupportChange(selected.id);
     setIsInternal(false);
     await Promise.all([loadMessages(selected.id), reload()]);
     toast({ title: "Reactie opgeslagen", description: isInternal ? "Alleen zichtbaar voor medewerkers." : "Zichtbaar in het klantenportaal." });

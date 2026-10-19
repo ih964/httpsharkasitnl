@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Paperclip, Download, Loader2, Upload } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { notifySupportChange } from "@/lib/supportNotify";
 import { formatTicketDate } from "@/lib/support";
 
 type Attachment = {
@@ -83,6 +84,8 @@ export default function TicketAttachments({ ticketId, userId, isStaff = false, c
       setInternal(false);
       const el = document.getElementById("support-upload-" + ticketId) as HTMLInputElement | null;
       if (el) el.value = "";
+      // A customer-visible attachment is a ticket update; a private staff file is not.
+      if (!(isStaff && internal)) void notifySupportChange(ticketId);
       toast({ title: "Bijlage toegevoegd" });
       await load();
     } catch (e: unknown) {
