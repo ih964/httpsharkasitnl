@@ -9,6 +9,16 @@ const authClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY
   auth: { storage: brokeredPreviewStorage(), persistSession: true, autoRefreshToken: true },
 });
 
+async function quoteRequest(action: string, args?: Record<string, unknown>) {
+  try {
+    const { data: { session } } = await authClient.auth.getSession();
+    if (!session?.access_token) return { data: null, error: { message: "Niet ingelogd" } };
+    const response = await fetch("/api/quotes", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ action, args }) });
+    const result = await response.json();
+    return response.ok ? { data: result.data, error: null } : { data: null, error: { message: result.error || "Offerteverzoek mislukt" } };
+  } catch { return { data: null, error: { message: "Geen bevestiging ontvangen. Vernieuw het overzicht voordat je opnieuw probeert." } }; }
+}
+
 type Filter = { op:string; column:string; value:unknown };
 
 class HAQuery implements PromiseLike<any> {
@@ -54,6 +64,10 @@ class HAQuery implements PromiseLike<any> {
     return this.execute().then(onfulfilled||undefined,onrejected||undefined);
   }
   private async execute(){
+    if (this.table === "quotes") {
+      if (this.action !== "select" || this.filters.length || this.columns !== "*" || this.singleMode || this.limitValue !== undefined || this.offsetValue !== undefined || this.head || this.countMode || this.orderBy.some(o => o.column !== "created_at" || o.ascending !== false)) return { data: null, error: { message: "Gebruik de beveiligde offerteacties." } };
+      return quoteRequest("list");
+    }
     try{
       const {data:{session}}=await authClient.auth.getSession();
       if(!session?.access_token) return {data:null,error:{message:"Niet ingelogd"},count:null};
@@ -92,6 +106,7 @@ const haClient:any = {
       ? authClient.from("user_module_access")
       : new HAQuery(table),
   rpc: (fn:string,args?:Record<string,unknown>)=>{
+    if (["save_quote", "set_quote_status", "convert_quote_to_invoice"].includes(fn)) return quoteRequest(fn, args);
     const run=async()=>{
       try{
         const {data:{session}}=await authClient.auth.getSession();

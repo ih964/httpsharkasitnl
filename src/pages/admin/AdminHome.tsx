@@ -5,6 +5,7 @@ import AdminDashboard from "./AdminDashboard";
 const fallbackOrder: Array<{ module: ModuleKey; path: string }> = [
   { module: "dashboard", path: "/admin" },
   { module: "invoices", path: "/admin/invoices" },
+  { module: "quotes", path: "/admin/offertes" },
   { module: "factuur_maker", path: "/admin/factuur-maker" },
   { module: "customers", path: "/admin/customers" },
   { module: "tickets", path: "/admin/tickets" },
