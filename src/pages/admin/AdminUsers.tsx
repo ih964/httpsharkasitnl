@@ -44,6 +44,7 @@ const MODULES: Array<{
 }> = [
   { key: "dashboard", label: "Dashboard", description: "Overzicht van klanten, facturen, omzet en domeinen.", icon: LayoutDashboard },
   { key: "invoices", label: "Facturen", description: "Facturen bekijken, beheren, PDF maken en verzenden.", icon: FileText },
+  { key: "quotes", label: "Offertes", description: "Offertes maken, beheren en downloaden. Omzetten vereist ook toegang tot Facturen.", icon: FileText },
   { key: "factuur_maker", label: "Factuur Maker", description: "Losse factuur maken en direct als PDF downloaden.", icon: ReceiptText },
   { key: "customers", label: "Klanten", description: "Klantgegevens bekijken, toevoegen en wijzigen.", icon: Users },
   { key: "tickets", label: "Supporttickets", description: "Klantmeldingen beheren, beantwoorden en portaaltoegang regelen.", icon: LifeBuoy },
