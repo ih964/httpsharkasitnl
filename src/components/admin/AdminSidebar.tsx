@@ -27,6 +27,7 @@ import {
   Car,
   UserCog,
   LifeBuoy,
+  FilePenLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -41,6 +42,7 @@ type SidebarItem = {
 const items: SidebarItem[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, module: "dashboard" },
   { title: "Facturen", url: "/admin/invoices", icon: FileText, module: "invoices" },
+  { title: "Offertes", url: "/admin/offertes", icon: FilePenLine, module: "quotes" },
   { title: "Factuur Maker", url: "/admin/factuur-maker", icon: ReceiptText, module: "factuur_maker" },
   { title: "Klanten", url: "/admin/customers", icon: Users, module: "customers" },
   { title: "Supporttickets", url: "/admin/tickets", icon: LifeBuoy, module: "tickets" },

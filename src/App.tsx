@@ -26,6 +26,7 @@ import AdminHome from "./pages/admin/AdminHome";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminInvoicesWithStatus from "./pages/admin/AdminInvoicesWithStatus";
+import AdminQuotes from "./pages/admin/AdminQuotes";
 import InvoiceMakerForceLeftRight from "./pages/admin/InvoiceMakerForceLeftRight";
 import "./pages/admin/invoice-maker-preview.css";
 import AdminBtwOverzicht from "./pages/admin/AdminBtwOverzicht";
@@ -77,6 +78,8 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminHome />} />
               <Route path="invoices" element={<ModuleRoute module="invoices"><AdminInvoicesWithStatus /></ModuleRoute>} />
+              <Route path="offertes" element={<ModuleRoute module="quotes"><AdminQuotes /></ModuleRoute>} />
+              <Route path="offerte-maker" element={<Navigate to="/admin/offertes" replace />} />
               <Route path="factuur-maker" element={<ModuleRoute module="factuur_maker"><InvoiceMakerForceLeftRight /></ModuleRoute>} />
               <Route path="customers" element={<ModuleRoute module="customers"><AdminCustomers /></ModuleRoute>} />
               <Route path="tickets" element={<ModuleRoute module="tickets"><AdminTickets /></ModuleRoute>} />

@@ -7,6 +7,7 @@ export type ModuleKey =
   | "dashboard"
   | "invoices"
   | "factuur_maker"
+  | "quotes"
   | "customers"
   | "domains"
   | "time_entries"
@@ -60,6 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           "dashboard",
           "invoices",
           "factuur_maker",
+          "quotes",
           "customers",
           "domains",
           "time_entries",
