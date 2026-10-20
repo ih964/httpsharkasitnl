@@ -47,12 +47,13 @@ export default async function handler(req: Request, res: Response) {
     await db.query("set local lock_timeout='3s'"); await db.query("set local statement_timeout='12s'");
     const permission = (await db.query("select public.has_module($1::uuid,'quotes') as allowed", [user.id])).rows[0];
     if (!permission?.allowed) { await db.query('rollback'); res.status(403).json({ error: 'Geen toegang tot Offertes.' }); return; }
-    // The new module fails closed during failover until its standby schema and replication are verified.
+    // Fail closed during failover until the standby baseline and replication are verified.
     const role = (await db.query('select role from public.harkas_resilience_state where singleton=true')).rows[0]?.role;
     if (role !== 'primary') throw new Error('HARKAS_WRITER_FENCED: Offertes is tijdelijk niet beschikbaar tijdens database-failover.');
     if (action === 'list') {
-      const result = await db.query('select * from public.quotes order by created_at desc');
-      await db.query('commit'); res.status(200).json({ data: result.rows }); return;
+      // JSONB keeps NUMERIC values numeric in JavaScript, matching mutation RPCs.
+      const result = await db.query('select to_jsonb(q) as data from public.quotes q order by created_at desc');
+      await db.query('commit'); res.status(200).json({ data: result.rows.map(row => row.data) }); return;
     }
     await verifyAndRenewLease(db, peer);
     // Claims originate only from the verified Auth user, never from request arguments.
@@ -68,7 +69,7 @@ export default async function handler(req: Request, res: Response) {
     const e = err as { code?: string; message?: string };
     const validation = ['P0001','40001','42501'].includes(e.code || '');
     const fenced = e.message?.startsWith('HARKAS_WRITER_FENCED');
-    const status = e.code === '42501' ? 403 : e.code === '40001' ? 409 : validation || e.code?.startsWith('22') ? 400 : 503;
+    const status = fenced ? 503 : e.code === '42501' ? 403 : e.code === '40001' ? 409 : validation || e.code?.startsWith('22') ? 400 : 503;
     res.status(status).json({ error: validation || fenced ? e.message : status === 400 ? 'Controleer de ingevoerde offertegegevens.' : 'Offerte-database tijdelijk niet bereikbaar. Je wijzigingen zijn niet bevestigd; vernieuw voordat je opnieuw probeert.' });
   } finally { db?.release(); }
 }
