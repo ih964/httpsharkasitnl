@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import { euro, nlDate, type Quote } from './quotes';
 
 /** Uses the immutable saved snapshots and server-calculated line amounts. */
