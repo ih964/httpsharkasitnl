@@ -19,6 +19,8 @@ export interface Quote {
   customer_snapshot: QuoteParty; company_snapshot: QuoteParty; status: QuoteStatus;
   version: number; invoice_id: string | null; invoice_number: string | null;
   created_at: string; updated_at: string;
+  emailed_at?: string | null; emailed_to?: string | null; emailed_cc?: string[] | null;
+  pending_email_to?: string | null; pending_email_cc?: string[] | null;
 }
 export type QuoteDraft = Pick<Quote, 'id' | 'customer_id' | 'title' | 'quote_date' | 'valid_until' | 'reference' | 'notes' | 'terms' | 'discount_percentage' | 'items' | 'version'>;
 export const euro = (n: number) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(n);

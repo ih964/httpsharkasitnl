@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "test:finance": "node tests/quotes.test.mjs && node tests/quote-email.test.mjs && node tests/ha-db-authorization.test.mjs && node tests/invoice-integrity.test.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

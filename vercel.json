@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/quotes.ts": { "includeFiles": "src/assets/logo.png", "maxDuration": 60 }
+  },
   "headers": [
     {
       "source": "/favicon.ico",

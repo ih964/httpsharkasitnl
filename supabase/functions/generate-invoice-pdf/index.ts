@@ -56,11 +56,12 @@ Deno.serve(async (req) => {
     }
 
     const { data: invoice, error: invError } = await supabase.from("invoices").select("*").eq("id", invoice_id).single();
-    if (invError || !invoice) {
+    if (invError || !invoice || invoice.deleted_at) {
       return new Response(JSON.stringify({ error: "Invoice not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { data: items } = await supabase.from("invoice_items").select("*").eq("invoice_id", invoice_id).order("created_at");
+    const { data: items, error: itemsError } = await supabase.from("invoice_items").select("*").eq("invoice_id", invoice_id).order("created_at");
+    if (itemsError) throw new Error("Factuurregels konden niet worden geladen.");
 
     let customer = null;
     if (invoice.customer_id) {
@@ -78,6 +79,7 @@ Deno.serve(async (req) => {
     let y = 20;
 
     const fmt = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
+    const unitPrice = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(n);
 
     // Company defaults (fallback when settings are empty)
     const companyName = settings?.company_name || "Harkas IT";
@@ -186,19 +188,27 @@ Deno.serve(async (req) => {
     doc.setFont("helvetica", "normal");
     const lineItems = items || [];
     for (const item of lineItems) {
-      const lineSub = Math.round(Number(item.quantity) * Number(item.price) * 100) / 100;
+      // Conversion already stores the exact NUMERIC amount, including discounts.
+      const lineSub = Number(item.subtotal);
+      if (item.subtotal == null || !Number.isFinite(lineSub)) throw new Error("Factuurregel mist een geldig opgeslagen bedrag.");
 
       if (y > 250) {
         doc.addPage();
         y = 20;
       }
 
-      doc.text(item.description.substring(0, 40), cols[0], y);
-      doc.text(String(item.quantity), cols[1], y, { align: "right" });
-      doc.text(fmt(Number(item.price)), cols[2] + 10, y, { align: "right" });
-      doc.text(`${item.vat_percentage}%`, cols[3] + 10, y, { align: "right" });
-      doc.text(fmt(lineSub), colEnd, y, { align: "right" });
-      y += 5;
+      const descriptionLines = doc.splitTextToSize(String(item.description), 70);
+      for (let row = 0; row < descriptionLines.length; row++) {
+        if (y > 250) { doc.addPage(); y = 20; }
+        doc.text(descriptionLines[row], cols[0], y);
+        if (row === 0) {
+          doc.text(String(item.quantity), cols[1], y, { align: "right" });
+          doc.text(unitPrice(Number(item.price)), cols[2] + 10, y, { align: "right" });
+          doc.text(`${item.vat_percentage}%`, cols[3] + 10, y, { align: "right" });
+          doc.text(fmt(lineSub), colEnd, y, { align: "right" });
+        }
+        y += 5;
+      }
     }
 
     y += 4;
@@ -292,9 +302,7 @@ Deno.serve(async (req) => {
 
     // Upload to storage
     const pdfBytes = doc.output("arraybuffer");
-    const pdfPath = `invoices/${invoice_id}.pdf`;
-
-    await supabase.storage.from("invoices").remove([pdfPath]);
+    const pdfPath = `invoices/${invoice_id}-v${invoice.edit_version}.pdf`;
 
     const { error: uploadError } = await supabase.storage
       .from("invoices")
@@ -307,7 +315,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    await supabase.from("invoices").update({ pdf_storage_path: pdfPath }).eq("id", invoice_id);
+    const { data: attached, error: attachError } = await supabase.from("invoices")
+      .update({ pdf_storage_path: pdfPath }).eq("id", invoice_id).eq("edit_version", invoice.edit_version).select("id").maybeSingle();
+    if (attachError) throw new Error("De PDF is gemaakt, maar kon niet aan de factuur worden gekoppeld. Probeer opnieuw.");
+    if (!attached) return new Response(JSON.stringify({ error: "De factuur is tijdens het maken van de PDF gewijzigd. Genereer de PDF opnieuw." }), {
+      status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
 
     return new Response(JSON.stringify({ success: true, pdf_path: pdfPath }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,4 +1,5 @@
 import { Pool, type PoolClient } from 'pg';
+import { QuoteEmailError, sendQuoteEmail } from '../server/quote-email';
 
 type Request = { method?: string; headers: Record<string, string | string[] | undefined>; body?: { action?: string; args?: Record<string, unknown> } };
 type Response = { status: (code: number) => Response; json: (body: unknown) => void; setHeader: (name: string, value: string) => void };
@@ -11,7 +12,7 @@ function pools() {
   peerPool ??= new Pool({ connectionString: process.env.HARKAS_NEON_DSN, max: 1, connectionTimeoutMillis: 4000, idleTimeoutMillis: 5000 });
   return { source: sourcePool, peer: peerPool };
 }
-const actions = new Set(['list', 'save_quote', 'set_quote_status', 'convert_quote_to_invoice']);
+const actions = new Set(['list', 'save_quote', 'set_quote_status', 'convert_quote_to_invoice', 'send_quote_email']);
 
 /** Same single-writer lease checks as ha-db.ts; never promote or bypass a fence. */
 async function verifyAndRenewLease(db: PoolClient, peer: Pool) {
@@ -52,13 +53,18 @@ export default async function handler(req: Request, res: Response) {
     if (role !== 'primary') throw new Error('HARKAS_WRITER_FENCED: Offertes is tijdelijk niet beschikbaar tijdens database-failover.');
     if (action === 'list') {
       // JSONB keeps NUMERIC values numeric in JavaScript, matching mutation RPCs.
-      const result = await db.query('select to_jsonb(q) as data from public.quotes q order by created_at desc');
+      const result = await db.query(`select to_jsonb(q) || jsonb_build_object('pending_email_to',mail.recipient_email,'pending_email_cc',mail.cc_emails) as data
+        from public.quotes q left join public.quote_email_deliveries mail on mail.quote_id=q.id and mail.state='pending' order by q.created_at desc`);
       await db.query('commit'); res.status(200).json({ data: result.rows.map(row => row.data) }); return;
     }
     await verifyAndRenewLease(db, peer);
     // Claims originate only from the verified Auth user, never from request arguments.
     await db.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claims',$2,true)", [user.id, JSON.stringify({ sub: user.id, role: 'authenticated' })]);
     const args = req.body?.args ?? {};
+    if (action === 'send_quote_email') {
+      const data = await sendQuoteEmail(db, peer, args, user.id, verifyAndRenewLease);
+      res.status(200).json({ data }); return;
+    }
     let result;
     if (action === 'save_quote') result = await db.query('select public.save_quote($1::jsonb) as data', [JSON.stringify(args.p_quote ?? null)]);
     else if (action === 'set_quote_status') result = await db.query('select public.set_quote_status($1::uuid,$2::integer,$3::text) as data', [args.p_id, args.p_version, args.p_status]);
@@ -67,6 +73,7 @@ export default async function handler(req: Request, res: Response) {
   } catch (err) {
     if (db) { try { await db.query('rollback'); } catch { /* connection is released below */ } }
     const e = err as { code?: string; message?: string };
+    if (err instanceof QuoteEmailError) { res.status(err.status).json({ error: err.message }); return; }
     const validation = ['P0001','40001','42501'].includes(e.code || '');
     const fenced = e.message?.startsWith('HARKAS_WRITER_FENCED');
     const status = fenced ? 503 : e.code === '42501' ? 403 : e.code === '40001' ? 409 : validation || e.code?.startsWith('22') ? 400 : 503;
