@@ -185,11 +185,24 @@ export default function SupportPortal() {
     const address = email.trim().toLowerCase();
     if (!address) return;
     setSendingLogin(true);
+    const { data: preparation, error: prepareError } = await portalSupabase.functions.invoke("support-prepare-login", {
+      body: { email: address },
+    });
+    if (prepareError) {
+      setSendingLogin(false);
+      toast({ title: "Inloglink aanvragen mislukt", description: "Inloggen voorbereiden mislukt. Probeer het later opnieuw of neem contact op met support@harkasit.nl.", variant: "destructive" });
+      return;
+    }
+    if (preparation?.invited) {
+      setSendingLogin(false);
+      setLoginSent(true);
+      return;
+    }
     const { error } = await portalSupabase.auth.signInWithOtp({
       email: address,
       options: {
         emailRedirectTo: window.location.origin + "/support",
-        shouldCreateUser: true,
+        shouldCreateUser: false,
       },
     });
     setSendingLogin(false);
