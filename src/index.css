@@ -318,3 +318,27 @@ html:has([data-support-page])::-webkit-scrollbar-thumb {
   border: 3px solid #15191f;
   border-radius: 8px;
 }
+
+/* The customer portal owns one viewport-sized page scroller. */
+html:has([data-support-portal]),
+body:has([data-support-portal]),
+#root:has([data-support-portal]) {
+  height: 100%;
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+[data-support-portal] {
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: #94a3b8 #15191f;
+}
+[data-support-portal]::-webkit-scrollbar { width: 14px; }
+[data-support-portal]::-webkit-scrollbar-track { background: #15191f; }
+[data-support-portal]::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border: 3px solid #15191f;
+  border-radius: 8px;
+}
