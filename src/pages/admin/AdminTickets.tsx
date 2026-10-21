@@ -63,6 +63,7 @@ const selectStyle =
 
 export default function AdminTickets() {
   const { user } = useAuth();
+  const ownAssignee = user?.email?.toLowerCase() ?? "";
   const [tab, setTab] = useState<
     "tickets" | "toegang" | "kennisbank" | "mailbox"
   >("tickets");
@@ -334,6 +335,13 @@ export default function AdminTickets() {
             (!isOpenTicket(t) || t.assigned_to)
           )
             return false;
+          if (
+            queueFilter === "mine" &&
+            (!isOpenTicket(t) ||
+              !ownAssignee ||
+              t.assigned_to?.toLowerCase() !== ownAssignee)
+          )
+            return false;
           if (queueFilter === "overdue" && !isOverdue(t)) return false;
           if (filter !== "alle" && t.status !== filter) return false;
           const haystack = [
@@ -363,7 +371,16 @@ export default function AdminTickets() {
             Date.parse(b.last_activity_at) - Date.parse(a.last_activity_at)
           );
         }),
-    [tickets, filter, query, names, groupFilter, queueFilter, sortOrder],
+    [
+      tickets,
+      filter,
+      query,
+      names,
+      groupFilter,
+      queueFilter,
+      sortOrder,
+      ownAssignee,
+    ],
   );
 
   const count = (status: TicketStatus) =>
@@ -512,6 +529,7 @@ export default function AdminTickets() {
                   }}
                 >
                   <option value="open">Open werkvoorraad</option>
+                  <option value="mine">Mijn werkvoorraad</option>
                   <option value="unassigned">Nog niet toegewezen</option>
                   <option value="overdue">Streefdatum verstreken</option>
                   <option value="all">Alle meldingen</option>
@@ -808,6 +826,21 @@ export default function AdminTickets() {
                                 void saveField({ assigned_to: next || null });
                             }}
                           />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={
+                              savingTicket ||
+                              !ownAssignee ||
+                              selected.assigned_to === ownAssignee
+                            }
+                            onClick={() =>
+                              void saveField({ assigned_to: ownAssignee })
+                            }
+                          >
+                            Aan mij toewijzen
+                          </Button>
                         </div>
                       </aside>
                       <Tabs

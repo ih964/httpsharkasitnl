@@ -41,6 +41,7 @@ export function cleanReply(text: string) {
   return out
     .join("\n")
     .split(/\n-- ?\n/)[0]
+    .replace(/(?:\n[ \t]*_{5,}[ \t]*)+\s*$/, "")
     .trim()
     .slice(0, 10000);
 }
@@ -147,6 +148,89 @@ export async function importInbound(
   await client.query(
     "UPDATE harkas_support_private.inbound SET status='imported',reason='Gekoppeld aan ticket',ticket_id=$2 WHERE id=$1",
     [inboundId, ticketId],
+  );
+  return true;
+}
+// Only standalone messages can open tickets; unresolved replies stay in intake.
+export function isNewRequest(mail: ParsedMail) {
+  return (
+    !isAutomatic(mail) &&
+    mailReferences(mail).length === 0 &&
+    !/^\s*(re|fw|fwd|aw|antw)\s*:/i.test(mail.subject ?? "") &&
+    !/\bHIT-\d+\b/i.test(mail.subject ?? "")
+  );
+}
+export async function createTicketFromInbound(
+  client: PoolClient,
+  inboundId: string,
+) {
+  const primary = (
+    await client.query(
+      "SELECT EXISTS(SELECT 1 FROM public.harkas_resilience_state s CROSS JOIN public.harkas_failover_control c WHERE s.singleton AND c.resource='harkas-admin-db' AND s.role='primary' AND c.writer='supabase' AND s.epoch=c.epoch) allowed",
+    )
+  ).rows[0]?.allowed;
+  if (!primary)
+    throw new Error(
+      "Ticketimport gepauzeerd: database is niet de actieve primary.",
+    );
+  const row = (
+    await client.query(
+      "SELECT * FROM harkas_support_private.inbound WHERE id=$1 FOR UPDATE",
+      [inboundId],
+    )
+  ).rows[0];
+  if (!row || row.status !== "review") return false;
+  const contacts = (
+    await client.query(
+      "SELECT DISTINCT customer_id FROM public.support_portal_access WHERE lower(email)=$1",
+      [row.sender],
+    )
+  ).rows;
+  if (contacts.length !== 1) return false;
+  const recent =
+    (
+      await client.query(
+        "SELECT count(*)::int AS count FROM harkas_support_private.inbound WHERE sender=$1 AND status='imported' AND reason='Nieuw ticket uit e-mail' AND created_at > now()-interval '1 hour'",
+        [row.sender],
+      )
+    ).rows[0]?.count ?? 0;
+  if (recent >= 10) {
+    await client.query(
+      "UPDATE harkas_support_private.inbound SET reason='Meer dan 10 nieuwe meldingen per uur; beoordelen' WHERE id=$1",
+      [inboundId],
+    );
+    return false;
+  }
+  const subject =
+    row.subject.trim().length >= 3
+      ? row.subject.trim()
+      : "Nieuwe melding per e-mail";
+  const description =
+    row.body.trim().length >= 10
+      ? row.body
+      : (row.body ? row.body + "\n\n" : "") +
+        "Melding ontvangen per e-mail. Bekijk eventuele bijlagen.";
+  const ticket = (
+    await client.query(
+      "INSERT INTO public.support_tickets(customer_id,created_by,requester_email,subject,description,category) VALUES($1,$2,$3,$4,$5,'overig') RETURNING id",
+      [contacts[0].customer_id, randomUUID(), row.sender, subject, description],
+    )
+  ).rows[0];
+  // Existing ticket triggers queue the confirmation and staff notification atomically.
+  const files = (
+    await client.query(
+      "SELECT filename FROM harkas_support_private.inbound_files WHERE inbound_id=$1",
+      [inboundId],
+    )
+  ).rows;
+  for (const f of files)
+    await client.query(
+      "SELECT public.support_enqueue_notification_pair($1,NULL,'attachment_added',jsonb_build_object('filename',$2::text))",
+      [ticket.id, f.filename],
+    );
+  await client.query(
+    "UPDATE harkas_support_private.inbound SET status='imported',reason='Nieuw ticket uit e-mail',ticket_id=$2 WHERE id=$1",
+    [inboundId, ticket.id],
   );
   return true;
 }
@@ -282,6 +366,13 @@ export async function pollSupportMailbox(pool: Pool) {
             ).rows;
             if (candidates.length === 1 && safeFiles && (body || files.length))
               await importInbound(client, id, candidates[0].ticket_id);
+            if (
+              candidates.length === 0 &&
+              safeFiles &&
+              (body || files.length) &&
+              isNewRequest(mail)
+            )
+              await createTicketFromInbound(client, id);
             if (!safeFiles)
               await client.query(
                 "UPDATE harkas_support_private.inbound SET reason='Bijlage buiten toegestane bestandstypen/grootte; controleer originele mail' WHERE id=$1",

@@ -118,10 +118,12 @@ export default function SupportMailbox() {
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">
-        Alleen antwoorden met een geldige verwijzing naar onze ticketmail én een
-        geautoriseerde contactpersoon worden automatisch toegevoegd. Bij
-        handmatig koppelen keur je expliciet deze afzender en inhoud voor het
-        gekozen ticket goed; de afzender ontvangt een bevestiging.
+        Nieuwe mails van bekende contactpersonen met precies één
+        klantorganisatie worden automatisch een ticket. Antwoorden worden via de
+        verwijzing naar onze ticketmail gekoppeld. Onbekende afzenders en
+        onduidelijke koppelingen blijven hier ter beoordeling. Bij handmatig
+        koppelen keur je expliciet deze afzender en inhoud voor het gekozen
+        ticket goed; de afzender ontvangt een bevestiging.
       </p>
       {state?.intake.map((item) => (
         <details key={item.id} className="rounded-lg border p-3">

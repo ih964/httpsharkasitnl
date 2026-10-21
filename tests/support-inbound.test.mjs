@@ -16,8 +16,14 @@ try {
     packages: "external",
     logLevel: "silent",
   });
-  const { cleanReply, isAutomatic, mailReferences, importInbound } =
-    await import(pathToFileURL(dir + "/inbound.mjs"));
+  const {
+    cleanReply,
+    isAutomatic,
+    mailReferences,
+    importInbound,
+    isNewRequest,
+    createTicketFromInbound,
+  } = await import(pathToFileURL(dir + "/inbound.mjs"));
   let passed = 0;
   const test = async (name, fn) => {
     await fn();
@@ -152,6 +158,103 @@ try {
   await test("fenced database cannot import email", async () => {
     const f = fixture({ allowed: true, primary: false });
     await assert.rejects(() => importInbound(f.client, "i", "t"));
+    assert.ok(!f.queries.some((q) => q.sql.startsWith("INSERT")));
+  });
+  await test("Outlook separator before quoted header is removed", () => {
+    assert.equal(
+      cleanReply(
+        "Antwoord\n________________________________\nVan: Support\nVerzonden: vandaag\nOnderwerp: Ticket",
+      ),
+      "Antwoord",
+    );
+  });
+  await test("standalone mail only: replies and ticket subjects stay in review", async () => {
+    const fresh = await simpleParser(
+      "From: contact@example.invalid\r\nSubject: Nieuwe storing\r\n\r\nMijn probleem.",
+    );
+    assert.equal(isNewRequest(fresh), true);
+    assert.equal(isNewRequest(mail), false);
+    for (const subject of [
+      "Re: Nieuwe storing",
+      "Fwd: Bericht",
+      "[HIT-00003] Test",
+    ]) {
+      assert.equal(isNewRequest({ ...fresh, subject }), false);
+    }
+  });
+  const newFixture = (opts = {}) => {
+    const queries = [];
+    const client = {
+      query: async (sql, args) => {
+        queries.push({ sql, args });
+        if (sql.includes("SELECT EXISTS"))
+          return { rows: [{ allowed: opts.primary !== false }] };
+        if (sql.includes("SELECT * FROM harkas_support_private.inbound"))
+          return {
+            rows: [
+              {
+                status: opts.status ?? "review",
+                sender: "contact@example.invalid",
+                subject: "Nieuwe storing",
+                body: "De printer werkt niet.",
+              },
+            ],
+          };
+        if (sql.includes("SELECT DISTINCT customer_id"))
+          return {
+            rows: Array.from({ length: opts.contacts ?? 1 }, (_, i) => ({
+              customer_id: "c" + i,
+            })),
+          };
+        if (sql.includes("count(*)::int"))
+          return { rows: [{ count: opts.recent ?? 0 }] };
+        if (sql.startsWith("INSERT INTO public.support_tickets"))
+          return { rows: [{ id: "new-ticket" }] };
+        if (sql.includes("SELECT filename"))
+          return { rows: [{ filename: "test.pdf" }] };
+        return { rows: [] };
+      },
+    };
+    return { client, queries };
+  };
+  await test("known unique customer opens one ticket and retains attachments", async () => {
+    const f = newFixture();
+    assert.equal(await createTicketFromInbound(f.client, "i"), true);
+    assert.equal(
+      f.queries.filter((q) =>
+        q.sql.startsWith("INSERT INTO public.support_tickets"),
+      ).length,
+      1,
+    );
+    assert.ok(
+      f.queries.some(
+        (q) =>
+          q.sql.includes("support_enqueue_notification_pair") &&
+          q.args[1] === "test.pdf",
+      ),
+    );
+    assert.ok(
+      f.queries.some(
+        (q) =>
+          q.sql.includes("status='imported'") && q.args[1] === "new-ticket",
+      ),
+    );
+  });
+  for (const [name, opts] of [
+    ["unknown sender", { contacts: 0 }],
+    ["ambiguous customer", { contacts: 2 }],
+    ["already imported", { status: "imported" }],
+    ["rate limit", { recent: 10 }],
+  ]) {
+    await test(name + " cannot open a new ticket", async () => {
+      const f = newFixture(opts);
+      assert.equal(await createTicketFromInbound(f.client, "i"), false);
+      assert.ok(!f.queries.some((q) => q.sql.startsWith("INSERT")));
+    });
+  }
+  await test("fenced primary cannot create tickets", async () => {
+    const f = newFixture({ primary: false });
+    await assert.rejects(() => createTicketFromInbound(f.client, "i"));
     assert.ok(!f.queries.some((q) => q.sql.startsWith("INSERT")));
   });
   console.log(passed + " inbound tests passed");

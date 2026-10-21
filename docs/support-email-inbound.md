@@ -19,7 +19,9 @@ Een antwoord wordt automatisch klantzichtbaar aan een ticket toegevoegd als:
 - Er precies één afzender is die voorkomt in de contactpersonenlijst voor die klant.
 - De mail leesbare platte tekst of toegestane bijlagen bevat en geen automatisch antwoord is.
 
-Onbekende afzenders, nieuwe mails zonder betrouwbare koppeling, antwoorden op gesloten tickets, HTML-only berichten en onveilige/te grote bijlagen blijven in **Te beoordelen**. Medewerkers kunnen een bericht na inhoudelijke controle expliciet aan een ticket koppelen of zonder koppeling afhandelen. Deze handmatige toestemming maakt de inhoud zichtbaar en stuurt een bevestiging naar de afzender; de interface vraagt dit expliciet te bevestigen.
+Nieuwe losse mails van een goedgekeurd contactadres dat bij precies één klant hoort, maken automatisch een ticket met categorie Overig en prioriteit Normaal. De bestaande aanmaaktrigger verstuurt de bevestiging en servicedeskmelding. Maximaal tien nieuwe tickets per afzender per uur; meer berichten blijven ter beoordeling. Mails met antwoord-/doorstuuronderwerp, HIT-nummer of conversatiereferenties worden nooit als nieuwe melding behandeld.
+
+Onbekende afzenders, contactadressen met meerdere klanten, antwoorden op gesloten tickets, HTML-only berichten en onveilige/te grote bijlagen blijven in **Te beoordelen**. Medewerkers kunnen een bericht na inhoudelijke controle expliciet aan een ticket koppelen of zonder koppeling afhandelen. Deze handmatige toestemming maakt de inhoud zichtbaar en stuurt een bevestiging naar de afzender; de interface vraagt dit expliciet te bevestigen.
 
 Bij een geldige import worden de reactie en mailgebeurtenissen in dezelfde transactie opgeslagen. De bestaande heropeningsregel geldt bij wachten op klant/opgelost. De bevestiging van een e-mailreactie gaat naar de daadwerkelijke reageerder; medewerkers ontvangen de servicedeskmelding. Eigen automatisch verzonden ticketmails, bounces en afwezigheidsmeldingen worden niet opnieuw als reactie verwerkt.
 
