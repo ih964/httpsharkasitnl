@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Users, FileText, Euro, TrendingUp, Plus, Globe, Mail } from "lucide-react";
 
 interface DashboardStats {
@@ -33,6 +34,7 @@ const AdminDashboard = () => {
   const [expiringDomains, setExpiringDomains] = useState<ExpiringDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     fetchDashboardData();
@@ -121,9 +123,11 @@ const AdminDashboard = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-heading font-bold">Dashboard</h1>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => navigate("/admin/snelle-toegang")} variant="outline" size="sm">
-            <Mail className="h-4 w-4 mr-1" /> Mail & Hosting
-          </Button>
+          {isAdmin && (
+            <Button onClick={() => navigate("/admin/snelle-toegang")} variant="outline" size="sm">
+              <Mail className="h-4 w-4 mr-1" /> Mail & Hosting
+            </Button>
+          )}
           <Button onClick={() => navigate("/admin/customers")} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-1" /> Klant
           </Button>
