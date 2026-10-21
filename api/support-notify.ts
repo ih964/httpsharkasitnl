@@ -1,5 +1,4 @@
 import { Pool } from "pg";
-import { createHash } from "node:crypto";
 
 /**
  * Transactional ticket notification worker.
@@ -412,18 +411,30 @@ export default async function handler(req: any, res: any) {
       let authorized =
         !!process.env.CRON_SECRET &&
         req.headers.authorization === "Bearer " + process.env.CRON_SECRET;
-      const workerToken = req.headers["x-harkas-worker-token"];
+      const nonce = req.headers["x-harkas-worker-nonce"];
+      const issued = req.headers["x-harkas-worker-issued"];
+      const signature = req.headers["x-harkas-worker-signature"];
       if (
         !authorized &&
-        typeof workerToken === "string" &&
-        /^[0-9a-f]{64}$/.test(workerToken)
+        typeof nonce === "string" &&
+        /^[0-9a-f-]{36}$/.test(nonce) &&
+        typeof issued === "string" &&
+        /^\d{10}$/.test(issued) &&
+        typeof signature === "string" &&
+        /^[0-9a-f]{64}$/.test(signature)
       ) {
-        const hash = createHash("sha256").update(workerToken).digest("hex");
         const check = await db().query(
-          "SELECT EXISTS(SELECT 1 FROM harkas_support_private.worker_auth WHERE token_hash=$1) AS allowed",
-          [hash],
+          [
+            "INSERT INTO harkas_support_private.worker_invocations(nonce,issued_at)",
+            "SELECT $1::uuid,to_timestamp($2::bigint) FROM harkas_support_private.worker_auth w",
+            "JOIN vault.decrypted_secrets s ON s.id=w.secret_id",
+            "WHERE w.singleton AND abs(extract(epoch from now())-$2::bigint)<=120",
+            "AND encode(extensions.hmac($2::text||':'||$1::text,s.decrypted_secret,'sha256'),'hex')=$3",
+            "ON CONFLICT DO NOTHING RETURNING nonce",
+          ].join(" "),
+          [nonce, issued, signature],
         );
-        authorized = check.rows[0]?.allowed === true;
+        authorized = check.rows.length === 1;
       }
       if (!authorized) return res.status(401).json({ error: "Unauthorized" });
     } else {

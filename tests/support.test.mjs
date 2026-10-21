@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { build } from "esbuild";
 import { mkdir, rm } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
@@ -11,22 +11,23 @@ process.env.HARKAS_SUPABASE_PUBLISHABLE_KEY = "test-public-key";
 process.env.HARKAS_SUPABASE_DSN = "postgres://test.invalid/db";
 process.env.RESEND_API_KEY = "unit-test-only";
 const id = "11111111-1111-4111-8111-111111111111";
+const seen = new Set();
 let queries = [],
   events = [],
   sendMode = "success",
   sent = [];
 globalThis.__supportTestQuery = async (sql, args) => {
   queries.push({ sql, args });
-  if (sql.includes("harkas_support_private"))
-    return {
-      rows: [
-        {
-          allowed:
-            args[0] ===
-            createHash("sha256").update("a".repeat(64)).digest("hex"),
-        },
-      ],
-    };
+  if (sql.includes("worker_invocations")) {
+    const [nonce, issued, signature] = args;
+    const key = nonce + ":" + issued;
+    const valid =
+      createHmac("sha256", "test-secret")
+        .update(issued + ":" + nonce)
+        .digest("hex") === signature && !seen.has(key);
+    if (valid) seen.add(key);
+    return { rows: valid ? [{ nonce }] : [] };
+  }
   if (sql.includes("SELECT s.role"))
     return {
       rows: [
@@ -187,26 +188,28 @@ try {
       400,
     );
   });
-  await test("scheduler token requires a database hash match", async () => {
+  await test("scheduler signature requires a match and rejects replay", async () => {
     events = [];
+    const issued = String(Math.floor(Date.now() / 1000));
+    const signature = createHmac("sha256", "test-secret")
+      .update(issued + ":" + id)
+      .digest("hex");
+    const headers = {
+      "x-harkas-worker-nonce": id,
+      "x-harkas-worker-issued": issued,
+      "x-harkas-worker-signature": signature,
+    };
     assert.equal(
       (
         await call({
           method: "GET",
-          headers: { "x-harkas-worker-token": "b".repeat(64) },
+          headers: { ...headers, "x-harkas-worker-signature": "b".repeat(64) },
         })
       ).status,
       401,
     );
-    assert.equal(
-      (
-        await call({
-          method: "GET",
-          headers: { "x-harkas-worker-token": "a".repeat(64) },
-        })
-      ).status,
-      200,
-    );
+    assert.equal((await call({ method: "GET", headers })).status, 200);
+    assert.equal((await call({ method: "GET", headers })).status, 401);
   });
   await test("worker sends from support, escapes HTML and marks accepted", async () => {
     events = [event];
