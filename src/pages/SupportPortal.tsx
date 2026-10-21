@@ -538,17 +538,17 @@ export default function SupportPortal() {
           </DialogContent>
         </Dialog>
       )}
-      <main className="container mx-auto max-w-[1680px] px-4 py-5 sm:py-6">
-        <div className="mb-5">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
+      <main className="container mx-auto max-w-[1680px] px-4 py-4">
+        <div className="mb-3">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">
             Harkas IT support
           </p>
-          <h1 className="break-words font-heading text-2xl font-bold sm:text-3xl">
+          <h1 className="break-words font-heading text-2xl font-bold">
             {user
               ? `${greeting}${displayName ? `, ${displayName}` : ""}!`
               : "Jouw meldingen, altijd inzichtelijk."}
           </h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Meld een probleem, voeg een screenshot toe en volg de status. Je
             ziet uitsluitend tickets van organisaties waarvoor je toegang hebt.
           </p>
@@ -725,7 +725,7 @@ export default function SupportPortal() {
           </Card>
         ) : (
           <>
-            <details className="mb-4 rounded-lg border p-3">
+            <details className="mb-3 rounded-lg border px-3 py-2">
               <summary className="cursor-pointer text-sm font-semibold">
                 Kennisbank · zoek zelf een oplossing
               </summary>
@@ -733,7 +733,7 @@ export default function SupportPortal() {
                 <SupportKnowledge />
               </div>
             </details>
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <label
                   htmlFor="portal-account"
@@ -863,8 +863,8 @@ export default function SupportPortal() {
                         </span>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-5">
-                      <div className="grid items-start gap-5 xl:grid-cols-[230px_minmax(0,1fr)]">
+                    <CardContent className="space-y-4 p-4 pt-0">
+                      <div className="grid items-start gap-5 xl:grid-cols-[250px_minmax(0,1fr)]">
                         <aside
                           className="space-y-4 rounded-xl border bg-muted/20 p-4"
                           aria-label="Ticketgegevens"
@@ -872,12 +872,24 @@ export default function SupportPortal() {
                           <h3 className="text-sm font-semibold">
                             Ticketgegevens
                           </h3>
-                          <p className="text-xs text-muted-foreground">
-                            Behandelgroep:{" "}
-                            {treatmentGroups[selected.treatment_group]} ·
-                            Behandelaar:{" "}
-                            {selected.assigned_to || "Nog niet toegewezen"}
-                          </p>
+                          <dl className="space-y-3 text-sm">
+                            <div>
+                              <dt className="text-xs text-muted-foreground">
+                                Behandelgroep
+                              </dt>
+                              <dd className="mt-1 break-words font-medium">
+                                {treatmentGroups[selected.treatment_group]}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs text-muted-foreground">
+                                Behandelaar
+                              </dt>
+                              <dd className="mt-1 break-words font-medium">
+                                {selected.assigned_to || "Nog niet toegewezen"}
+                              </dd>
+                            </div>
+                          </dl>
                           {selected.due_at && (
                             <p className="text-sm">
                               Streefdatum: {formatTicketDate(selected.due_at)}
@@ -912,7 +924,7 @@ export default function SupportPortal() {
                             className="space-y-4"
                           >
                             <div
-                              className="max-h-[48vh] min-h-48 space-y-4 overflow-y-auto overscroll-contain pr-2"
+                              className="max-h-[48vh] xl:max-h-[clamp(160px,calc(100dvh-620px),440px)] space-y-4 overflow-y-auto overscroll-contain pr-2"
                               role="region"
                               aria-label="Ticketgesprek"
                               tabIndex={0}
@@ -976,7 +988,7 @@ export default function SupportPortal() {
                                   </Label>
                                   <Textarea
                                     id="portal-reply"
-                                    rows={4}
+                                    rows={3}
                                     maxLength={10000}
                                     value={reply}
                                     onChange={(e) => setReply(e.target.value)}

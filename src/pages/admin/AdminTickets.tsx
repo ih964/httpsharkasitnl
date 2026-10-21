@@ -370,13 +370,13 @@ export default function AdminTickets() {
     tickets.filter((t) => t.status === status).length;
 
   return (
-    <div className="mx-auto max-w-[1680px] space-y-5">
+    <div className="mx-auto max-w-[1680px] space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="mb-1 text-sm font-semibold uppercase tracking-widest text-primary">
             Servicedesk
           </p>
-          <h1 className="font-heading text-3xl font-bold">Supporttickets</h1>
+          <h1 className="font-heading text-2xl font-bold">Supporttickets</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Beheer meldingen en geef klanten beveiligde toegang tot hun eigen
             tickets.
@@ -406,7 +406,7 @@ export default function AdminTickets() {
           <AlertCircle className="h-5 w-5 shrink-0" /> {errorText}
         </div>
       )}
-      <div className="flex flex-wrap gap-2 border-b border-border pb-3">
+      <div className="flex flex-wrap gap-2 border-b border-border pb-2">
         <Button
           variant={tab === "tickets" ? "default" : "ghost"}
           onClick={() => setTab("tickets")}
@@ -456,14 +456,14 @@ export default function AdminTickets() {
                   );
                 }}
                 className={
-                  "rounded-xl border bg-card p-4 text-left transition-colors hover:bg-muted/40 " +
+                  "flex items-center justify-between gap-3 rounded-lg border bg-card px-4 py-2 text-left transition-colors hover:bg-muted/40 " +
                   (filter === status ? "border-primary" : "border-border")
                 }
               >
                 <p className="text-xs font-semibold text-muted-foreground">
                   {label}
                 </p>
-                <p className="mt-2 text-2xl font-bold">{count(status)}</p>
+                <p className="text-xl font-bold">{count(status)}</p>
               </button>
             ))}
           </div>
@@ -628,7 +628,7 @@ export default function AdminTickets() {
                 </CardContent>
               ) : (
                 <>
-                  <CardHeader className="space-y-2">
+                  <CardHeader className="space-y-1 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-sm font-bold text-primary">
                         {ticketNumber(selected.ticket_no)}
@@ -651,8 +651,8 @@ export default function AdminTickets() {
                       {formatTicketDate(selected.created_at)}
                     </p>
                   </CardHeader>
-                  <CardContent className="space-y-5">
-                    <div className="grid items-start gap-5 xl:grid-cols-[230px_minmax(0,1fr)]">
+                  <CardContent className="space-y-4 p-4 pt-0">
+                    <div className="grid items-start gap-5 xl:grid-cols-[260px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)]">
                       <aside
                         className="space-y-4 rounded-xl border bg-muted/20 p-4"
                         aria-label="Ticketgegevens"
@@ -829,7 +829,7 @@ export default function AdminTickets() {
                         </div>
                         <TabsContent value="conversation" className="space-y-4">
                           <div
-                            className="max-h-[48vh] min-h-48 space-y-4 overflow-y-auto overscroll-contain pr-2"
+                            className="max-h-[48vh] xl:max-h-[clamp(160px,calc(100dvh-650px),420px)] space-y-4 overflow-y-auto overscroll-contain pr-2"
                             role="region"
                             aria-label="Ticketgesprek"
                             tabIndex={0}
@@ -903,11 +903,8 @@ export default function AdminTickets() {
                               ))}
                             </section>
                           </div>
-                          <div className="border-t pt-4">
-                            <form
-                              onSubmit={addReply}
-                              className="space-y-3 border-t border-border pt-4"
-                            >
+                          <div className="border-t pt-3">
+                            <form onSubmit={addReply} className="space-y-2">
                               <Label htmlFor="admin-ticket-reply">
                                 Reactie toevoegen
                               </Label>
@@ -950,7 +947,7 @@ export default function AdminTickets() {
                               </p>
                               <Textarea
                                 id="admin-ticket-reply"
-                                rows={4}
+                                rows={3}
                                 maxLength={10000}
                                 value={reply}
                                 onChange={(e) => setReply(e.target.value)}
