@@ -34,11 +34,13 @@ Reageren via het portaal koppelt antwoorden direct aan het ticket. Antwoorden op
 - `tests/support-workflow.sql`: op het actieve Supabase-project geslaagd binnen een volledig teruggedraaide transactie. Controleert mailparen, interne privacy, routering, heropenen, klantisolatie, interne/gepubliceerde kennis en autorisatie van maildiagnostiek. Geen testtickets of e-mailgebeurtenissen blijven achter.
 - Supabase RLS en grants gecontroleerd. Mailpayloads zijn niet rechtstreeks leesbaar door portaalgebruikers; medewerkers krijgen alleen statusaantallen via een gecontroleerde functie.
 - Brede TypeScript-controle meldt bestaande fouten in `client.ts`, `AdminBtwOverzicht.tsx` en `AdminParking.tsx`; geen nieuwe ticketfouten gevonden. De productiebuild blijft slagen.
-- Browsercontrole achter een inlogscherm vereist een aangemelde Harkas Admin-sessie. TOPdesk-sessie blijft alleen-lezen.
+- Live browsercontrole met aangemelde Harkas Admin-sessie geslaagd. Eigen testticket `HIT-00002` op klantkaart Harkasit: openbare reactie en sluiten uitgevoerd; alle zes gegenereerde mailgebeurtenissen door de provider geaccepteerd. Resend bevestigt aflevering van zowel de klantreactiemail als de statusmail op `support@harkasit.nl`. De interne notitie veroorzaakt geen extra mail. Het testticket is afgesloten en blijft als controlebewijs beschikbaar.
+- Zelfstandige ondertekende Supabase-workeroproep gaf HTTP 200 terug; de vijfminutentaak staat actief. Eenmalige signatures worden in een afgeschermde tabel bijgehouden. Het Vault-geheim verschijnt niet in uitgaande requestheaders.
+- Productie op Vercel is READY, codecommit `74de84be328b0f2286942770e0edc9db1a5d0188`. Controle van de foutlogs van deze deployment: geen runtimefouten gevonden binnen het gecontroleerde venster. TOPdesk bleef alleen-lezen.
 
 ## Vervolg met prioriteit
 
-1. Bevestig een echte testmail in de supportmailbox en controleer provideraflevering; stel gesigneerde delivery/bounce-webhooks in wanneer die operationele terugkoppeling gewenst is.
+1. Stel gesigneerde delivery/bounce-webhooks in voor permanente operationele afleverstatus in de beheerinterface. Werkelijke aflevering is voor de praktijktest al bevestigd.
 2. Leg per beheercontract de servicekalender, responstijd, oplostijd en pauzevoorwaarden vast. Bouw daarna pas automatische SLA-deadlines en escalaties. Nu zijn deadlines expliciete planningsdoelen; wachten pauzeert ze niet automatisch.
 3. Vul eigen kennisartikelen aan en keur publieke publicatie bewust goed. Er wordt geen ZGA-kennis overgezet.
 4. Voeg veilig ingelezen mailboxreacties toe met verificatie van afzender, klantrechten, ticketkoppeling, deduplicatie en onderdrukking van automatische antwoordlussen. Verander de bestaande MX-records niet voor deze uitbreiding.
