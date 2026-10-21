@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Pool, PoolClient } from 'pg';
-import { buildQuotePdf } from '../src/lib/quotePdf';
-import { euro, nlDate, todayNL, type Quote } from '../src/lib/quotes';
+import { buildQuotePdf } from '../src/lib/quotePdf.js';
+import { euro, nlDate, todayNL, type Quote } from '../src/lib/quotes.js';
 
 export class QuoteEmailError extends Error {
   constructor(message: string, public status = 400) { super(message); }
