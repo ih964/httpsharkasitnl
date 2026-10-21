@@ -4,6 +4,9 @@ import { euro, nlDate, type Quote } from './quotes';
 /** Uses the immutable saved snapshots and server-calculated line amounts. */
 export function buildQuotePdf(q: Quote, logo?: Uint8Array) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+  // Stable bytes let a retried e-mail use exactly the same attachment.
+  doc.setCreationDate(new Date(`${q.quote_date}T12:00:00Z`));
+  doc.setFileId(q.id.replace(/-/g, '').toUpperCase());
   const left = 16, right = 194, bottom = 271;
   let y = 20;
   const text = (value: unknown) => String(value ?? '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');

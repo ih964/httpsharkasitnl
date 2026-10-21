@@ -106,7 +106,7 @@ const haClient:any = {
       ? authClient.from("user_module_access")
       : new HAQuery(table),
   rpc: (fn:string,args?:Record<string,unknown>)=>{
-    if (["save_quote", "set_quote_status", "convert_quote_to_invoice"].includes(fn)) return quoteRequest(fn, args);
+    if (["save_quote", "set_quote_status", "convert_quote_to_invoice", "send_quote_email"].includes(fn)) return quoteRequest(fn, args);
     const run=async()=>{
       try{
         const {data:{session}}=await authClient.auth.getSession();

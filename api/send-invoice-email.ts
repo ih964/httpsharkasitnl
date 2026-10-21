@@ -102,7 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .eq("id", invoiceId)
     .single();
 
-  if (invoiceError || !invoice) {
+  if (invoiceError || !invoice || invoice.deleted_at) {
     return res.status(404).json({ error: "Factuur niet gevonden." });
   }
   if (!invoice.pdf_storage_path) {

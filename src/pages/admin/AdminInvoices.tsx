@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Trash2, Pencil, Upload, Download, Eye, Loader2, Mail, FileDown } from "lucide-react";
+import { invoiceLineAmounts, invoiceTotals } from "@/lib/invoiceAmounts";
 
 interface Invoice {
   id: string;
@@ -34,6 +35,7 @@ interface Invoice {
   emailed_at: string | null;
   emailed_to: string | null;
   emailed_cc: string | null;
+  edit_version: number;
 }
 
 interface Customer {
@@ -53,6 +55,7 @@ interface InvoiceItem {
   quantity: number;
   price: number;
   vat_percentage: number;
+  subtotal?: number;
 }
 
 const emptyItem: InvoiceItem = { description: "", quantity: 1, price: 0, vat_percentage: 21 };
@@ -107,6 +110,9 @@ const AdminInvoices = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftId, setDraftId] = useState(() => crypto.randomUUID());
+  const [editVersion, setEditVersion] = useState(0);
+  const [saving, setSaving] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailInvoice, setEmailInvoice] = useState<Invoice | null>(null);
@@ -154,24 +160,10 @@ const AdminInvoices = () => {
 
   const customerMap = Object.fromEntries(customers.map(c => [c.id, c.name + (c.company_name ? ` (${c.company_name})` : "")]));
 
-  const calcLineSubtotal = (item: InvoiceItem) => Math.round(item.quantity * item.price * 100) / 100;
-  const calcLineVat = (item: InvoiceItem) => {
-    const sub = calcLineSubtotal(item);
-    return Math.round((sub * item.vat_percentage / 100) * 100) / 100;
-  };
-  const calcLineTotal = (item: InvoiceItem) => {
-    return Math.round((calcLineSubtotal(item) + calcLineVat(item)) * 100) / 100;
-  };
-
-  const calcTotals = (items: InvoiceItem[]) => {
-    const subtotal = items.reduce((s, i) => s + calcLineSubtotal(i), 0);
-    const vatTotal = items.reduce((s, i) => s + calcLineVat(i), 0);
-    return {
-      subtotal: Math.round(subtotal * 100) / 100,
-      vat_total: Math.round(vatTotal * 100) / 100,
-      total: Math.round((subtotal + vatTotal) * 100) / 100,
-    };
-  };
+  const calcLineSubtotal = (item: InvoiceItem) => invoiceLineAmounts(item).subtotal;
+  const calcLineVat = (item: InvoiceItem) => invoiceLineAmounts(item).vat_total;
+  const calcLineTotal = (item: InvoiceItem) => invoiceLineAmounts(item).total;
+  const calcTotals = invoiceTotals;
 
   const generatePdf = async (invoiceId: string) => {
     setGeneratingPdf(invoiceId);
@@ -188,7 +180,6 @@ const AdminInvoices = () => {
         throw new Error(data.error);
       }
       if (data?.pdf_path) {
-        await supabase.from("invoices").update({ pdf_storage_path: data.pdf_path }).eq("id", invoiceId);
         await fetchData();
         return data.pdf_path;
       }
@@ -202,95 +193,36 @@ const AdminInvoices = () => {
   };
 
   const handleSave = async () => {
-    const totals = calcTotals(formItems);
-    const date = new Date(formDate);
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const damageAmount = formHasDamage ? Math.round(Math.max(0, formDamageAmount) * 100) / 100 : 0;
-
-    const damageFields = {
-      has_damage: formHasDamage,
-      damage_amount: damageAmount,
-      damage_description: formHasDamage ? (formDamageDescription || null) : null,
-    };
-
-    let invoiceId = editingId;
-
-    if (editingId) {
-      const { error } = await supabase.from("invoices").update({
-        customer_id: formCustomerId || null,
-        invoice_date: formDate,
-        due_date: formDueDate || null,
-        status: formStatus,
-        invoice_year: year,
-        invoice_month: month,
-        notes: formNotes || null,
-        ...totals,
-        ...damageFields,
-      }).eq("id", editingId);
-
-      if (error) { toast({ title: "Fout", description: error.message, variant: "destructive" }); return; }
-
-      await supabase.from("invoice_items").delete().eq("invoice_id", editingId);
-      const itemsPayload = formItems.filter(i => i.description).map(i => ({
-        invoice_id: editingId,
-        description: i.description,
-        quantity: i.quantity,
-        price: i.price,
-        vat_percentage: i.vat_percentage,
-        subtotal: calcLineSubtotal(i),
-      }));
-      if (itemsPayload.length > 0) await supabase.from("invoice_items").insert(itemsPayload);
-
-      await supabase.from("activity_logs").insert({ type: "invoice_updated", reference_id: editingId, description: `Factuur bijgewerkt` });
-      toast({ title: "Factuur bijgewerkt" });
-    } else {
-      const { data: numData, error: numError } = await supabase.rpc("generate_invoice_number", { p_year: year });
-      if (numError) { toast({ title: "Fout", description: numError.message, variant: "destructive" }); return; }
-
-      const { data: inv, error } = await supabase.from("invoices").insert({
-        invoice_number: numData,
-        customer_id: formCustomerId || null,
-        invoice_date: formDate,
-        due_date: formDueDate || null,
-        status: formStatus,
-        source_type: "generated",
-        invoice_year: year,
-        invoice_month: month,
-        notes: formNotes || null,
-        ...totals,
-        ...damageFields,
-      }).select("id").single();
-
-      if (error) { toast({ title: "Fout", description: error.message, variant: "destructive" }); return; }
-      invoiceId = inv.id;
-
-      const itemsPayload = formItems.filter(i => i.description).map(i => ({
-        invoice_id: inv.id,
-        description: i.description,
-        quantity: i.quantity,
-        price: i.price,
-        vat_percentage: i.vat_percentage,
-        subtotal: calcLineSubtotal(i),
-      }));
-      if (itemsPayload.length > 0) await supabase.from("invoice_items").insert(itemsPayload);
-
-      await supabase.from("activity_logs").insert({ type: "invoice_created", reference_id: inv.id, description: `Factuur ${numData} aangemaakt` });
-      toast({ title: `Factuur ${numData} aangemaakt` });
+    if (saving) return;
+    if (!formDate || !formItems.length || formItems.some(i => !i.description.trim()) || !Number.isFinite(calcTotals(formItems).total)) {
+      toast({ title: "Controleer de factuur", description: "Vul een datum en geldige factuurregels in.", variant: "destructive" }); return;
     }
-
-    // Auto-generate PDF
-    if (invoiceId) {
-      await generatePdf(invoiceId);
-    }
-
-    resetForm();
-    setDialogOpen(false);
-    fetchData();
+    setSaving(true);
+    try {
+      const { data: invoice, error } = await supabase.rpc("save_invoice", { p_invoice: {
+        id: editingId || draftId, expected_version: editVersion,
+        customer_id: formCustomerId || null, invoice_date: formDate, due_date: formDueDate || null,
+        status: formStatus, notes: formNotes || null,
+        has_damage: formHasDamage, damage_amount: formHasDamage ? formDamageAmount : 0,
+        damage_description: formHasDamage ? formDamageDescription || null : null,
+        items: formItems.map(({ description, quantity, price, vat_percentage }) => ({ description, quantity, price, vat_percentage })),
+      } });
+      if (error || !invoice?.id) throw new Error(error?.message || "Geen bevestiging ontvangen. Vernieuw het overzicht voordat je opnieuw probeert.");
+      toast({ title: editingId ? "Factuur bijgewerkt" : `Factuur ${invoice.invoice_number} aangemaakt` });
+      setEditingId(invoice.id); setEditVersion(invoice.edit_version);
+      if (invoice.source_type !== 'uploaded') await generatePdf(invoice.id);
+      resetForm(); setDialogOpen(false); await fetchData();
+    } catch (e) {
+      toast({ title: "Factuur niet opgeslagen", description: e instanceof Error ? e.message : "Controleer de gegevens en probeer opnieuw.", variant: "destructive" });
+    } finally { setSaving(false); }
   };
 
   const handleEdit = async (inv: Invoice) => {
+    if (saving) return;
+    const { data: items, error: itemsError } = await supabase.from("invoice_items").select("*").eq("invoice_id", inv.id);
+    if (itemsError) { toast({ title: "Factuurregels niet geladen", description: itemsError.message, variant: "destructive" }); return; }
     setEditingId(inv.id);
+    setEditVersion(inv.edit_version);
     setFormCustomerId(inv.customer_id ?? "");
     setFormDate(inv.invoice_date);
     setFormDueDate(inv.due_date ?? "");
@@ -300,9 +232,8 @@ const AdminInvoices = () => {
     setFormDamageAmount(inv.damage_amount);
     setFormDamageDescription(inv.damage_description ?? "");
 
-    const { data: items } = await supabase.from("invoice_items").select("*").eq("invoice_id", inv.id);
     if (items && items.length > 0) {
-      setFormItems(items.map(i => ({ description: i.description, quantity: Number(i.quantity), price: Number(i.price), vat_percentage: Number(i.vat_percentage) })));
+      setFormItems(items.map(i => ({ description: i.description, quantity: Number(i.quantity), price: Number(i.price), vat_percentage: Number(i.vat_percentage), subtotal: i.subtotal == null ? undefined : Number(i.subtotal) })));
     } else {
       setFormItems([{ ...emptyItem }]);
     }
@@ -497,6 +428,8 @@ const AdminInvoices = () => {
 
   const resetForm = () => {
     setEditingId(null);
+    setDraftId(crypto.randomUUID());
+    setEditVersion(0);
     setFormCustomerId("");
     setFormDate(new Date().toISOString().split("T")[0]);
     setFormDueDate("");
@@ -517,9 +450,7 @@ const AdminInvoices = () => {
   };
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
-    const newItems = [...formItems];
-    (newItems[index] as any)[field] = value;
-    setFormItems(newItems);
+    setFormItems(old => old.map((item, i) => i === index ? { ...item, [field]: value, ...(['quantity', 'price'].includes(field) ? { subtotal: undefined } : {}) } : item));
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -616,13 +547,13 @@ const AdminInvoices = () => {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+          <Dialog open={dialogOpen} onOpenChange={o => { if (saving) return; setDialogOpen(o); if (!o) resetForm(); }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Nieuwe factuur</Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editingId ? "Factuur bewerken" : "Nieuwe factuur"}</DialogTitle></DialogHeader>
-              <div className="space-y-4 py-4">
+              <fieldset disabled={saving} className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Klant</Label>
@@ -801,8 +732,8 @@ const AdminInvoices = () => {
 
                 <div className="space-y-2"><Label>Notities</Label><Input value={formNotes} onChange={e => setFormNotes(e.target.value)} /></div>
 
-                <Button onClick={handleSave} className="w-full">{editingId ? "Opslaan" : "Factuur aanmaken"}</Button>
-              </div>
+                <Button onClick={handleSave} className="w-full" disabled={saving}>{saving ? "Opslaan…" : editingId ? "Opslaan" : "Factuur aanmaken"}</Button>
+              </fieldset>
             </DialogContent>
           </Dialog>
         </div>
