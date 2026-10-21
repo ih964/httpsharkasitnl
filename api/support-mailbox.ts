@@ -127,6 +127,22 @@ export default async function handler(req: any, res: any) {
     }
     if (!staff)
       return res.status(403).json({ error: "Alleen servicedeskmedewerkers" });
+    if (req.method === "GET" && action === "workqueue") {
+      const result = await db().query(`
+        WITH recent AS (
+          SELECT id,status FROM public.support_tickets ORDER BY last_activity_at DESC LIMIT 500
+        )
+        SELECT t.id FROM recent t
+        LEFT JOIN LATERAL (
+          SELECT sender_type FROM public.support_ticket_messages
+          WHERE ticket_id=t.id AND NOT is_internal
+          ORDER BY created_at DESC,id DESC LIMIT 1
+        ) m ON true
+        WHERE t.status NOT IN ('opgelost','gesloten')
+          AND coalesce(m.sender_type,'klant')='klant'
+      `);
+      return res.json({ awaitingReply: result.rows.map((row) => row.id) });
+    }
     if (req.method === "GET") {
       const m = (
         await db().query(

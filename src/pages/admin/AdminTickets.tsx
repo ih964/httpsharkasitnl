@@ -1,3 +1,4 @@
+import { mailboxRequest } from "@/lib/supportMailbox";
 import ReplyComposer from "@/components/support/ReplyComposer";
 import TicketConversation from "@/components/support/TicketConversation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -62,6 +63,8 @@ export default function AdminTickets() {
   const [tab, setTab] = useState<
     "tickets" | "toegang" | "kennisbank" | "mailbox"
   >("tickets");
+  const [awaitingReply, setAwaitingReply] = useState<Set<string>>(new Set());
+  const [queueAvailable, setQueueAvailable] = useState(false);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [access, setAccess] = useState<PortalAccess[]>([]);
@@ -89,34 +92,45 @@ export default function AdminTickets() {
     [customers],
   );
 
-  const reload = async () => {
-    setLoading(true);
+  const reload = async (silent = false) => {
+    if (!silent) setLoading(true);
     setErrorText("");
-    const [ticketResult, accessResult, customerResult] = await Promise.all([
-      portalSupabase
-        .from("support_tickets")
-        .select("*")
-        .order("last_activity_at", { ascending: false })
-        .limit(500),
-      portalSupabase
-        .from("support_portal_access")
-        .select("*")
-        .order("customer_label"),
-      supabase
-        .from("customers")
-        .select("id,name,company_name,email")
-        .order("name"),
-    ]);
+    const [ticketResult, accessResult, customerResult, queueResult] =
+      await Promise.all([
+        portalSupabase
+          .from("support_tickets")
+          .select("*")
+          .order("last_activity_at", { ascending: false })
+          .limit(500),
+        portalSupabase
+          .from("support_portal_access")
+          .select("*")
+          .order("customer_label"),
+        supabase
+          .from("customers")
+          .select("id,name,company_name,email")
+          .order("name"),
+        mailboxRequest("?action=workqueue")
+          .then((r) => r.json())
+          .then((data) => ({ ids: data.awaitingReply as string[], error: "" }))
+          .catch(() => ({
+            ids: [] as string[],
+            error: "Reactiewerkvoorraad tijdelijk niet beschikbaar",
+          })),
+      ]);
     const failures = [
       ticketResult.error?.message,
       accessResult.error?.message,
       customerResult.error?.message,
+      queueResult.error,
     ].filter(Boolean);
     if (failures.length)
       setErrorText(
         "Niet alle supportgegevens konden worden opgehaald: " +
           failures.join("; "),
       );
+    setQueueAvailable(!queueResult.error);
+    if (!queueResult.error) setAwaitingReply(new Set(queueResult.ids));
     if (!ticketResult.error) {
       const rows = (ticketResult.data ?? []) as SupportTicket[];
       setTickets(rows);
@@ -142,6 +156,8 @@ export default function AdminTickets() {
 
   useEffect(() => {
     void reload();
+    const timer = window.setInterval(() => void reload(true), 30000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const loadMessages = async (ticketId: string) => {
@@ -284,6 +300,11 @@ export default function AdminTickets() {
         .filter((t) => {
           if (groupFilter !== "alle" && t.treatment_group !== groupFilter)
             return false;
+          if (
+            queueFilter === "awaiting" &&
+            (!isOpenTicket(t) || !awaitingReply.has(t.id))
+          )
+            return false;
           if (queueFilter === "open" && !isOpenTicket(t)) return false;
           if (
             queueFilter === "unassigned" &&
@@ -335,6 +356,7 @@ export default function AdminTickets() {
       queueFilter,
       sortOrder,
       ownAssignee,
+      awaitingReply,
     ],
   );
 
@@ -409,33 +431,76 @@ export default function AdminTickets() {
       {tab === "kennisbank" && <SupportKnowledge isStaff />}
       {tab === "tickets" ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {(
-              [
-                ["nieuw", "Nieuwe tickets"],
-                ["in_behandeling", "In behandeling"],
-                ["wacht_op_klant", "Wacht op klant"],
-                ["opgelost", "Opgelost"],
-              ] as [TicketStatus, string][]
-            ).map(([status, label]) => (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {[
+              {
+                key: "new",
+                label: "Nieuwe tickets",
+                count: count("nieuw"),
+                queue: "all",
+                status: "nieuw",
+              },
+              {
+                key: "awaiting",
+                label: "Wacht op onze reactie",
+                count: queueAvailable
+                  ? tickets.filter(
+                      (t) => isOpenTicket(t) && awaitingReply.has(t.id),
+                    ).length
+                  : "—",
+                queue: "awaiting",
+                status: "alle",
+              },
+              {
+                key: "unassigned",
+                label: "Niet toegewezen",
+                count: tickets.filter((t) => isOpenTicket(t) && !t.assigned_to)
+                  .length,
+                queue: "unassigned",
+                status: "alle",
+              },
+              {
+                key: "mine",
+                label: "Mijn werkvoorraad",
+                count: tickets.filter(
+                  (t) =>
+                    isOpenTicket(t) &&
+                    ownAssignee &&
+                    t.assigned_to?.toLowerCase() === ownAssignee,
+                ).length,
+                queue: "mine",
+                status: "alle",
+              },
+              {
+                key: "customer",
+                label: "Wacht op klant",
+                count: count("wacht_op_klant"),
+                queue: "all",
+                status: "wacht_op_klant",
+              },
+            ].map((item) => (
               <button
                 type="button"
-                key={status}
+                key={item.key}
+                disabled={item.key === "awaiting" && !queueAvailable}
+                aria-pressed={
+                  queueFilter === item.queue && filter === item.status
+                }
                 onClick={() => {
-                  setQueueFilter("all");
-                  setFilter((current) =>
-                    current === status ? "alle" : status,
-                  );
+                  setQueueFilter(item.queue);
+                  setFilter(item.status as "alle" | TicketStatus);
+                  setQuery("");
+                  setGroupFilter("alle");
                 }}
                 className={
-                  "flex items-center justify-between gap-3 rounded-lg border bg-card px-4 py-2 text-left transition-colors hover:bg-muted/40 " +
-                  (filter === status ? "border-primary" : "border-border")
+                  "flex items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 text-left transition-colors hover:bg-muted/40 disabled:opacity-50 " +
+                  (queueFilter === item.queue && filter === item.status
+                    ? "border-primary"
+                    : "border-border")
                 }
               >
-                <p className="text-xs font-semibold text-muted-foreground">
-                  {label}
-                </p>
-                <p className="text-xl font-bold">{count(status)}</p>
+                <span className="text-xs font-semibold">{item.label}</span>
+                <span className="text-xl font-bold">{item.count}</span>
               </button>
             ))}
           </div>
@@ -484,6 +549,9 @@ export default function AdminTickets() {
                   }}
                 >
                   <option value="open">Open werkvoorraad</option>
+                  <option value="awaiting" disabled={!queueAvailable}>
+                    Wacht op onze reactie
+                  </option>
                   <option value="mine">Mijn werkvoorraad</option>
                   <option value="unassigned">Nog niet toegewezen</option>
                   <option value="overdue">Streefdatum verstreken</option>
@@ -515,9 +583,8 @@ export default function AdminTickets() {
                   <option value="activity">Laatste activiteit</option>
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  Maximaal 500 recent actieve tickets. Streefdatums zijn
-                  planningsdoelen; contractuele SLA's gelden alleen volgens
-                  afspraak.
+                  Maximaal 500 recent actieve tickets. Automatisch bijgewerkt
+                  iedere 30 seconden. Streefdatums zijn interne planningsdoelen.
                 </p>
               </CardHeader>
               <CardContent className="max-h-[65vh] space-y-2 overflow-auto">
@@ -564,6 +631,13 @@ export default function AdminTickets() {
                         {treatmentGroups[t.treatment_group]} ·{" "}
                         {t.assigned_to || "Niet toegewezen"}
                       </p>
+                      {queueAvailable &&
+                        awaitingReply.has(t.id) &&
+                        isOpenTicket(t) && (
+                          <p className="mt-2 text-xs font-semibold text-primary">
+                            Klant wacht op reactie
+                          </p>
+                        )}
                       {t.due_at && (
                         <p
                           className={
