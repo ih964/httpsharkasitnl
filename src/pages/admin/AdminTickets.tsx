@@ -179,9 +179,13 @@ export default function AdminTickets() {
 
   useEffect(() => {
     if (selected?.id) void loadMessages(selected.id);
-  }, [selected?.id]);
+  }, [selected?.id, selected?.last_activity_at]);
 
   const openTicket = (ticket: SupportTicket) => {
+    if (selected?.id === ticket.id) {
+      void loadMessages(ticket.id);
+      return;
+    }
     setSelected(ticket);
     setMessages([]);
   };

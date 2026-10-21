@@ -242,6 +242,10 @@ export default function SupportPortal() {
   }, [accountId, loadTickets]);
 
   const openTicket = (ticket: SupportTicket) => {
+    if (selected?.id === ticket.id) {
+      void loadMessages(ticket.id);
+      return;
+    }
     setSelected(ticket);
     setMessages([]);
   };
