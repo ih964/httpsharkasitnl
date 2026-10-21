@@ -167,7 +167,45 @@ export default function TicketConversation({
       })),
   ].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
+      <div
+        className="space-y-6"
+        role="region"
+        aria-label="Ticketgesprek en bijlagen"
+        tabIndex={0}
+      >
+        <section aria-label="Oorspronkelijke melding" className="overflow-hidden rounded-xl border border-blue-300 bg-blue-50 text-blue-950">
+          <div className="border-b border-blue-200 bg-blue-100 px-4 py-3">
+            <h3 className="text-base font-semibold">Oorspronkelijke melding</h3>
+          </div>
+        <article
+          className="p-4"
+        >
+          <div className="mb-2 flex flex-wrap justify-between gap-2 text-xs">
+            <strong>
+              {authorLabel(ticket.created_by, false, true)}
+            </strong>
+            <span>{formatTicketDate(ticket.created_at)}</span>
+          </div>
+          <p className="whitespace-pre-wrap break-words text-sm">
+            {ticket.description}
+          </p>
+        </article>
+        </section>
+        {children && (
+          <section aria-label="Reactie en bijlage toevoegen" className="overflow-hidden rounded-xl border border-sky-500/60 bg-background shadow-sm">
+            <div className="border-b border-sky-500/30 bg-sky-500/10 px-4 py-3">
+              <h3 className="text-base font-semibold">Reactie en bijlage toevoegen</h3>
+            </div>
+            <div className="px-4 pb-4 [&>div]:border-0">{children}</div>
+          </section>
+        )}
+        <section aria-label="Verdere conversatie" className="overflow-hidden rounded-xl border border-border bg-muted/20">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/40 px-4 py-3">
+            <h3 className="text-base font-semibold">Verdere conversatie</h3>
+            <span className="text-xs text-muted-foreground">Nieuwste reactie bovenaan</span>
+          </div>
+          <div className="space-y-3 p-4">
       <div
         className="flex flex-wrap gap-2 text-xs"
         aria-label="Kleuren van het gesprek"
@@ -184,28 +222,8 @@ export default function TicketConversation({
           </span>
         )}
       </div>
-      <div
-        className="space-y-3"
-        role="region"
-        aria-label="Ticketgesprek en bijlagen"
-        tabIndex={0}
-      >
-        <article
-          className={"rounded-xl border border-l-4 p-4 " + customerStyle}
-        >
-          <div className="mb-2 flex flex-wrap justify-between gap-2 text-xs">
-            <strong>
-              {authorLabel(ticket.created_by, false, true)} · Oorspronkelijke
-              melding
-            </strong>
-            <span>{formatTicketDate(ticket.created_at)}</span>
-          </div>
-          <p className="whitespace-pre-wrap break-words text-sm">
-            {ticket.description}
-          </p>
-        </article>
-        {children}
-        <h3 className="text-sm font-semibold">Reacties · nieuwste bovenaan</h3>
+
+        {!loading && entries.length === 0 && <p className="text-sm text-muted-foreground">Er zijn nog geen reacties.</p>}
         {loading && (
           <p className="text-sm text-muted-foreground">Reacties laden...</p>
         )}
@@ -290,6 +308,8 @@ export default function TicketConversation({
             )}
           </article>
         ))}
+          </div>
+        </section>
       </div>
     </div>
   );
