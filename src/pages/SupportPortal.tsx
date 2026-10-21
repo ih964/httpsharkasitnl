@@ -1,3 +1,4 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TicketHistory from "@/components/support/TicketHistory";
 import SupportKnowledge from "@/components/support/SupportKnowledge";
 import { treatmentGroups } from "@/lib/support";
@@ -53,9 +54,13 @@ const emptyForm = {
 };
 
 function portalGreeting() {
-  const hour = Number(new Intl.DateTimeFormat("nl-NL", {
-    timeZone: "Europe/Amsterdam", hour: "numeric", hourCycle: "h23",
-  }).format(new Date()));
+  const hour = Number(
+    new Intl.DateTimeFormat("nl-NL", {
+      timeZone: "Europe/Amsterdam",
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(new Date()),
+  );
   if (hour < 6) return "Goedenacht";
   if (hour < 12) return "Goedemorgen";
   if (hour < 18) return "Goedemiddag";
@@ -65,18 +70,33 @@ function portalGreeting() {
 export default function SupportPortal() {
   const { user, isAdmin, isLoading, signOut } = useAuth();
   const [greeting, setGreeting] = useState(portalGreeting);
-  const displayName = [user?.user_metadata?.full_name, user?.user_metadata?.name,
-    user?.user_metadata?.display_name, user?.user_metadata?.preferred_username]
-    .find((value): value is string => typeof value === "string" && value.trim().length > 0)
-    ?.trim() || user?.email?.split("@")[0] || "";
+  const displayName =
+    [
+      user?.user_metadata?.full_name,
+      user?.user_metadata?.name,
+      user?.user_metadata?.display_name,
+      user?.user_metadata?.preferred_username,
+    ]
+      .find(
+        (value): value is string =>
+          typeof value === "string" && value.trim().length > 0,
+      )
+      ?.trim() ||
+    user?.email?.split("@")[0] ||
+    "";
 
   useEffect(() => {
-    const timer = window.setInterval(() => setGreeting(portalGreeting()), 60_000);
+    const timer = window.setInterval(
+      () => setGreeting(portalGreeting()),
+      60_000,
+    );
     return () => window.clearInterval(timer);
   }, []);
 
   const [email, setEmail] = useState("");
-  const [loginMethod, setLoginMethod] = useState<"password" | "link">("password");
+  const [loginMethod, setLoginMethod] = useState<"password" | "link">(
+    "password",
+  );
   const [password, setPassword] = useState("");
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -208,8 +228,11 @@ export default function SupportPortal() {
     const refresh = async () => {
       if (document.hidden || busy) return;
       busy = true;
-      try { await loadTickets(accountId, true); }
-      finally { busy = false; }
+      try {
+        await loadTickets(accountId, true);
+      } finally {
+        busy = false;
+      }
     };
     const timer = window.setInterval(() => void refresh(), 15_000);
     window.addEventListener("focus", refresh);
@@ -230,12 +253,18 @@ export default function SupportPortal() {
     const address = email.trim().toLowerCase();
     if (!address) return;
     setSendingLogin(true);
-    const { data: preparation, error: prepareError } = await portalSupabase.functions.invoke("support-prepare-login", {
-      body: { email: address },
-    });
+    const { data: preparation, error: prepareError } =
+      await portalSupabase.functions.invoke("support-prepare-login", {
+        body: { email: address },
+      });
     if (prepareError) {
       setSendingLogin(false);
-      toast({ title: "Inloglink aanvragen mislukt", description: "Inloggen voorbereiden mislukt. Probeer het later opnieuw of neem contact op met support@harkasit.nl.", variant: "destructive" });
+      toast({
+        title: "Inloglink aanvragen mislukt",
+        description:
+          "Inloggen voorbereiden mislukt. Probeer het later opnieuw of neem contact op met support@harkasit.nl.",
+        variant: "destructive",
+      });
       return;
     }
     if (preparation?.invited) {
@@ -267,29 +296,57 @@ export default function SupportPortal() {
     if (sendingLogin) return;
     setSendingLogin(true);
     try {
-      const { error } = await portalSupabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+      const { error } = await portalSupabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
       if (error) throw error;
       setPassword("");
     } catch {
-      toast({ title: "Inloggen niet gelukt", description: "Controleer je e-mailadres en wachtwoord, of gebruik een e-maillink.", variant: "destructive" });
-    } finally { setSendingLogin(false); }
+      toast({
+        title: "Inloggen niet gelukt",
+        description:
+          "Controleer je e-mailadres en wachtwoord, of gebruik een e-maillink.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingLogin(false);
+    }
   };
 
   const savePassword = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user || savingPassword) return;
     setPasswordError("");
-    if (newPassword.length < 12) { setPasswordError("Gebruik minimaal 12 tekens."); return; }
-    if (newPassword !== confirmPassword) { setPasswordError("De wachtwoorden komen niet overeen."); return; }
+    if (newPassword.length < 12) {
+      setPasswordError("Gebruik minimaal 12 tekens.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("De wachtwoorden komen niet overeen.");
+      return;
+    }
     setSavingPassword(true);
     try {
-      const { error } = await portalSupabase.auth.updateUser({ password: newPassword });
+      const { error } = await portalSupabase.auth.updateUser({
+        password: newPassword,
+      });
       if (error) throw error;
-      setNewPassword(""); setConfirmPassword(""); setPasswordOpen(false);
-      toast({ title: "Wachtwoord opgeslagen", description: "Je kunt voortaan met je e-mailadres en wachtwoord inloggen. De e-maillink blijft ook beschikbaar." });
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordOpen(false);
+      toast({
+        title: "Wachtwoord opgeslagen",
+        description:
+          "Je kunt voortaan met je e-mailadres en wachtwoord inloggen. De e-maillink blijft ook beschikbaar.",
+      });
     } catch {
-      setPasswordError("Opslaan is niet gelukt. Gebruik een sterk, nieuw wachtwoord. Blijft dit gebeuren? Log opnieuw in via een e-maillink en probeer het nogmaals.");
-    } finally { setSavingPassword(false); }
+      setPasswordError(
+        "Opslaan is niet gelukt. Gebruik een sterk, nieuw wachtwoord. Blijft dit gebeuren? Log opnieuw in via een e-maillink en probeer het nogmaals.",
+      );
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   const createTicket = async (event: React.FormEvent) => {
@@ -388,7 +445,15 @@ export default function SupportPortal() {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Website
               </Link>
             </Button>
-            {user && <Button variant="outline" size="sm" onClick={() => setPasswordOpen(true)}>Wachtwoord instellen</Button>}
+            {user && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPasswordOpen(true)}
+              >
+                Wachtwoord instellen
+              </Button>
+            )}
             {user && (
               <Button
                 variant="outline"
@@ -401,32 +466,87 @@ export default function SupportPortal() {
           </div>
         </div>
       </header>
-      {user && <Dialog open={passwordOpen} onOpenChange={(open) => {
-        if (savingPassword) return;
-        setPasswordOpen(open); setNewPassword(""); setConfirmPassword(""); setPasswordError("");
-      }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Wachtwoord instellen of wijzigen</DialogTitle></DialogHeader>
-          <form onSubmit={savePassword} className="space-y-4">
-            <p className="text-sm text-muted-foreground">Kies een wachtwoord voor {user.email}. Inloggen via e-mail blijft mogelijk.</p>
-            <Input type="text" autoComplete="username" value={user.email ?? ""} readOnly className="sr-only" tabIndex={-1} aria-label="E-mailadres" />
-            <div className="space-y-2"><Label htmlFor="new-password">Nieuw wachtwoord</Label>
-              <Input id="new-password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={savingPassword} />
-              <p className="text-xs text-muted-foreground">Minimaal 12 tekens. Gebruik bij voorkeur een unieke wachtzin.</p></div>
-            <div className="space-y-2"><Label htmlFor="confirm-password">Herhaal wachtwoord</Label>
-              <Input id="confirm-password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={savingPassword} /></div>
-            {passwordError && <p role="alert" className="text-sm text-destructive">{passwordError}</p>}
-            <Button type="submit" disabled={savingPassword}>{savingPassword ? "Opslaan..." : "Wachtwoord opslaan"}</Button>
-          </form>
-        </DialogContent>
-      </Dialog>}
-      <main className="container mx-auto max-w-6xl px-4 py-8 sm:py-12">
-        <div className="mb-8">
+      {user && (
+        <Dialog
+          open={passwordOpen}
+          onOpenChange={(open) => {
+            if (savingPassword) return;
+            setPasswordOpen(open);
+            setNewPassword("");
+            setConfirmPassword("");
+            setPasswordError("");
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Wachtwoord instellen of wijzigen</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={savePassword} className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Kies een wachtwoord voor {user.email}. Inloggen via e-mail
+                blijft mogelijk.
+              </p>
+              <Input
+                type="text"
+                autoComplete="username"
+                value={user.email ?? ""}
+                readOnly
+                className="sr-only"
+                tabIndex={-1}
+                aria-label="E-mailadres"
+              />
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nieuw wachtwoord</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={12}
+                  maxLength={128}
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={savingPassword}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Minimaal 12 tekens. Gebruik bij voorkeur een unieke wachtzin.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Herhaal wachtwoord</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={12}
+                  maxLength={128}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={savingPassword}
+                />
+              </div>
+              {passwordError && (
+                <p role="alert" className="text-sm text-destructive">
+                  {passwordError}
+                </p>
+              )}
+              <Button type="submit" disabled={savingPassword}>
+                {savingPassword ? "Opslaan..." : "Wachtwoord opslaan"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+      <main className="container mx-auto max-w-[1680px] px-4 py-5 sm:py-6">
+        <div className="mb-5">
           <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
             Harkas IT support
           </p>
-          <h1 className="break-words font-heading text-3xl font-bold sm:text-4xl">
-            {user ? `${greeting}${displayName ? `, ${displayName}` : ""}!` : "Jouw meldingen, altijd inzichtelijk."}
+          <h1 className="break-words font-heading text-2xl font-bold sm:text-3xl">
+            {user
+              ? `${greeting}${displayName ? `, ${displayName}` : ""}!`
+              : "Jouw meldingen, altijd inzichtelijk."}
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
             Meld een probleem, voeg een screenshot toe en volg de status. Je
@@ -459,14 +579,46 @@ export default function SupportPortal() {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={loginMethod === "password" ? loginWithPassword : requestLogin} className="space-y-4">
+                <form
+                  onSubmit={
+                    loginMethod === "password"
+                      ? loginWithPassword
+                      : requestLogin
+                  }
+                  className="space-y-4"
+                >
                   <div className="grid grid-cols-2 gap-2">
-                    <Button type="button" variant={loginMethod === "password" ? "default" : "outline"} aria-pressed={loginMethod === "password"} disabled={sendingLogin} onClick={() => { setLoginMethod("password"); setPassword(""); }}>Met wachtwoord</Button>
-                    <Button type="button" variant={loginMethod === "link" ? "default" : "outline"} aria-pressed={loginMethod === "link"} disabled={sendingLogin} onClick={() => { setLoginMethod("link"); setPassword(""); }}>Via e-maillink</Button>
+                    <Button
+                      type="button"
+                      variant={
+                        loginMethod === "password" ? "default" : "outline"
+                      }
+                      aria-pressed={loginMethod === "password"}
+                      disabled={sendingLogin}
+                      onClick={() => {
+                        setLoginMethod("password");
+                        setPassword("");
+                      }}
+                    >
+                      Met wachtwoord
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={loginMethod === "link" ? "default" : "outline"}
+                      aria-pressed={loginMethod === "link"}
+                      disabled={sendingLogin}
+                      onClick={() => {
+                        setLoginMethod("link");
+                        setPassword("");
+                      }}
+                    >
+                      Via e-maillink
+                    </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Gebruik het e-mailadres waarvoor Harkas IT jouw organisatie
-                    toegang heeft gegeven. Nog geen wachtwoord? Log in via een e-maillink en kies daarna Wachtwoord instellen.
+                    toegang heeft gegeven. Nog geen wachtwoord? Log in via een
+                    e-maillink en kies daarna Wachtwoord instellen.
                   </p>
                   <div className="space-y-2">
                     <Label htmlFor="portal-email">E-mailadres</Label>
@@ -480,12 +632,37 @@ export default function SupportPortal() {
                       placeholder="naam@bedrijf.nl"
                     />
                   </div>
-                  {loginMethod === "password" && <div className="space-y-2">
-                    <Label htmlFor="portal-password">Wachtwoord</Label>
-                    <Input id="portal-password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                    <Button type="button" variant="link" className="h-auto p-0" onClick={() => { setLoginMethod("link"); setPassword(""); }}>Wachtwoord vergeten of nog niet ingesteld?</Button>
-                  </div>}
-                  {loginMethod === "link" && <p className="text-sm text-muted-foreground">Met de persoonlijke e-maillink log je zonder wachtwoord in. Daarna kun je via Wachtwoord instellen een nieuw wachtwoord kiezen.</p>}
+                  {loginMethod === "password" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="portal-password">Wachtwoord</Label>
+                      <Input
+                        id="portal-password"
+                        type="password"
+                        autoComplete="current-password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto p-0"
+                        onClick={() => {
+                          setLoginMethod("link");
+                          setPassword("");
+                        }}
+                      >
+                        Wachtwoord vergeten of nog niet ingesteld?
+                      </Button>
+                    </div>
+                  )}
+                  {loginMethod === "link" && (
+                    <p className="text-sm text-muted-foreground">
+                      Met de persoonlijke e-maillink log je zonder wachtwoord
+                      in. Daarna kun je via Wachtwoord instellen een nieuw
+                      wachtwoord kiezen.
+                    </p>
+                  )}
                   <Button
                     type="submit"
                     className="w-full"
@@ -493,7 +670,9 @@ export default function SupportPortal() {
                   >
                     {sendingLogin
                       ? "Even geduld..."
-                      : loginMethod === "password" ? "Inloggen" : "Stuur mij een inloglink"}
+                      : loginMethod === "password"
+                        ? "Inloggen"
+                        : "Stuur mij een inloglink"}
                   </Button>
                 </form>
               )}
@@ -546,9 +725,14 @@ export default function SupportPortal() {
           </Card>
         ) : (
           <>
-            <div className="mb-5">
-              <SupportKnowledge />
-            </div>
+            <details className="mb-4 rounded-lg border p-3">
+              <summary className="cursor-pointer text-sm font-semibold">
+                Kennisbank · zoek zelf een oplossing
+              </summary>
+              <div className="mt-3">
+                <SupportKnowledge />
+              </div>
+            </details>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <label
@@ -582,7 +766,7 @@ export default function SupportPortal() {
                 {errorText}
               </p>
             )}
-            <div className="grid gap-5 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.4fr)]">
+            <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] items-start">
               <Card className="min-w-0">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -592,7 +776,7 @@ export default function SupportPortal() {
                     </span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="max-h-[65vh] space-y-2 overflow-y-auto">
                   {loading ? (
                     <p className="text-sm text-muted-foreground">
                       Tickets laden...
@@ -680,107 +864,161 @@ export default function SupportPortal() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-5">
-                      <p className="text-xs text-muted-foreground">
-                        Behandelgroep:{" "}
-                        {treatmentGroups[selected.treatment_group]} ·
-                        Behandelaar:{" "}
-                        {selected.assigned_to || "Nog niet toegewezen"}
-                      </p>
-                      {selected.due_at && (
-                        <p className="text-sm">
-                          Streefdatum: {formatTicketDate(selected.due_at)}
-                        </p>
-                      )}
-                      {selected.sla_label && (
-                        <p className="text-sm">
-                          Serviceafspraak: {selected.sla_label}
-                        </p>
-                      )}
-                      <TicketHistory
-                        key={"history-" + selected.id}
-                        ticketId={selected.id}
-                        version={selected.updated_at}
-                      />
-                      <div className="rounded-xl bg-muted/40 p-4">
-                        <p className="mb-2 text-xs font-semibold text-muted-foreground">
-                          {formatTicketDate(selected.created_at)} ·
-                          Oorspronkelijke melding
-                        </p>
-                        <p className="whitespace-pre-wrap break-words text-sm">
-                          {selected.description}
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        <h3 className="font-semibold">Reacties</h3>
-                        {loadingMessages && (
-                          <p className="text-sm text-muted-foreground">
-                            Gesprek laden...
+                      <div className="grid items-start gap-5 xl:grid-cols-[230px_minmax(0,1fr)]">
+                        <aside
+                          className="space-y-4 rounded-xl border bg-muted/20 p-4"
+                          aria-label="Ticketgegevens"
+                        >
+                          <h3 className="text-sm font-semibold">
+                            Ticketgegevens
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            Behandelgroep:{" "}
+                            {treatmentGroups[selected.treatment_group]} ·
+                            Behandelaar:{" "}
+                            {selected.assigned_to || "Nog niet toegewezen"}
                           </p>
-                        )}
-                        {!loadingMessages && messages.length === 0 && (
-                          <p className="text-sm text-muted-foreground">
-                            Nog geen reacties.
-                          </p>
-                        )}
-                        {messages.map((m) => (
-                          <div
-                            key={m.id}
-                            className={
-                              "rounded-xl border p-3 " +
-                              (m.sender_type === "medewerker"
-                                ? "border-primary/30 bg-primary/5"
-                                : "border-border")
-                            }
-                          >
-                            <div className="mb-2 flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
-                              <span className="font-semibold">
-                                {m.sender_type === "medewerker"
-                                  ? "Harkas IT"
-                                  : "Klant"}
-                              </span>
-                              <span>{formatTicketDate(m.created_at)}</span>
-                            </div>
-                            <p className="whitespace-pre-wrap break-words text-sm">
-                              {m.body}
+                          {selected.due_at && (
+                            <p className="text-sm">
+                              Streefdatum: {formatTicketDate(selected.due_at)}
                             </p>
+                          )}
+                          {selected.sla_label && (
+                            <p className="text-sm">
+                              Serviceafspraak: {selected.sla_label}
+                            </p>
+                          )}
+                        </aside>
+                        <Tabs
+                          defaultValue="conversation"
+                          key={"workspace-" + selected.id}
+                          className="min-w-0"
+                        >
+                          <div className="overflow-x-auto border-b pb-2">
+                            <TabsList className="w-max justify-start">
+                              <TabsTrigger value="conversation">
+                                Gesprek
+                              </TabsTrigger>
+                              <TabsTrigger value="attachments">
+                                Bijlagen
+                              </TabsTrigger>
+                              <TabsTrigger value="history">
+                                Historie
+                              </TabsTrigger>
+                            </TabsList>
                           </div>
-                        ))}
-                      </div>
-                      {user && (
-                        <TicketAttachments
-                          key={"attachments-" + selected.id}
-                          ticketId={selected.id}
-                          userId={user.id}
-                          closed={selected.status === "gesloten"}
-                        />
-                      )}
-                      {selected.status !== "gesloten" ? (
-                        <form onSubmit={sendReply} className="space-y-2">
-                          <Label htmlFor="portal-reply">
-                            Aanvullende reactie
-                          </Label>
-                          <Textarea
-                            id="portal-reply"
-                            rows={4}
-                            maxLength={10000}
-                            value={reply}
-                            onChange={(e) => setReply(e.target.value)}
-                            placeholder="Beschrijf wat je hebt geprobeerd of voeg informatie toe..."
-                          />
-                          <Button
-                            type="submit"
-                            disabled={replying || !reply.trim()}
+                          <TabsContent
+                            value="conversation"
+                            className="space-y-4"
                           >
-                            <Send className="mr-2 h-4 w-4" />{" "}
-                            {replying ? "Opslaan..." : "Reactie versturen"}
-                          </Button>
-                        </form>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Dit ticket is gesloten. Maak een nieuwe melding als je
-                          opnieuw hulp nodig hebt.
-                        </p>
-                      )}
+                            <div
+                              className="max-h-[48vh] min-h-48 space-y-4 overflow-y-auto overscroll-contain pr-2"
+                              role="region"
+                              aria-label="Ticketgesprek"
+                              tabIndex={0}
+                            >
+                              <div className="rounded-xl bg-muted/40 p-4">
+                                <p className="mb-2 text-xs font-semibold text-muted-foreground">
+                                  {formatTicketDate(selected.created_at)} ·
+                                  Oorspronkelijke melding
+                                </p>
+                                <p className="whitespace-pre-wrap break-words text-sm">
+                                  {selected.description}
+                                </p>
+                              </div>
+                              <div className="space-y-3">
+                                <h3 className="font-semibold">Reacties</h3>
+                                {loadingMessages && (
+                                  <p className="text-sm text-muted-foreground">
+                                    Gesprek laden...
+                                  </p>
+                                )}
+                                {!loadingMessages && messages.length === 0 && (
+                                  <p className="text-sm text-muted-foreground">
+                                    Nog geen reacties.
+                                  </p>
+                                )}
+                                {messages.map((m) => (
+                                  <div
+                                    key={m.id}
+                                    className={
+                                      "rounded-xl border p-3 " +
+                                      (m.sender_type === "medewerker"
+                                        ? "border-primary/30 bg-primary/5"
+                                        : "border-border")
+                                    }
+                                  >
+                                    <div className="mb-2 flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
+                                      <span className="font-semibold">
+                                        {m.sender_type === "medewerker"
+                                          ? "Harkas IT"
+                                          : "Klant"}
+                                      </span>
+                                      <span>
+                                        {formatTicketDate(m.created_at)}
+                                      </span>
+                                    </div>
+                                    <p className="whitespace-pre-wrap break-words text-sm">
+                                      {m.body}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="border-t pt-4">
+                              {selected.status !== "gesloten" ? (
+                                <form
+                                  onSubmit={sendReply}
+                                  className="space-y-2"
+                                >
+                                  <Label htmlFor="portal-reply">
+                                    Aanvullende reactie
+                                  </Label>
+                                  <Textarea
+                                    id="portal-reply"
+                                    rows={4}
+                                    maxLength={10000}
+                                    value={reply}
+                                    onChange={(e) => setReply(e.target.value)}
+                                    placeholder="Beschrijf wat je hebt geprobeerd of voeg informatie toe..."
+                                  />
+                                  <Button
+                                    type="submit"
+                                    disabled={replying || !reply.trim()}
+                                  >
+                                    <Send className="mr-2 h-4 w-4" />{" "}
+                                    {replying
+                                      ? "Opslaan..."
+                                      : "Reactie versturen"}
+                                  </Button>
+                                </form>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">
+                                  Dit ticket is gesloten. Maak een nieuwe
+                                  melding als je opnieuw hulp nodig hebt.
+                                </p>
+                              )}
+                            </div>
+                          </TabsContent>
+                          <TabsContent value="attachments">
+                            {user && (
+                              <TicketAttachments
+                                key={"attachments-" + selected.id}
+                                ticketId={selected.id}
+                                userId={user.id}
+                                closed={selected.status === "gesloten"}
+                              />
+                            )}
+                          </TabsContent>
+                          <TabsContent value="history">
+                            <TicketHistory
+                              key={"history-" + selected.id}
+                              ticketId={selected.id}
+                              version={selected.updated_at}
+                            />
+                          </TabsContent>
+                        </Tabs>
+                      </div>
                     </CardContent>
                   </>
                 )}

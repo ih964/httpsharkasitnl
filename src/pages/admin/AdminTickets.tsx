@@ -1,3 +1,4 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SupportMailbox from "@/components/support/SupportMailbox";
 import { useEffect, useMemo, useState } from "react";
 import { supabase, portalSupabase } from "@/integrations/supabase/client";
@@ -369,7 +370,7 @@ export default function AdminTickets() {
     tickets.filter((t) => t.status === status).length;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-[1680px] space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="mb-1 text-sm font-semibold uppercase tracking-widest text-primary">
@@ -466,7 +467,7 @@ export default function AdminTickets() {
               </button>
             ))}
           </div>
-          <div className="grid gap-5 xl:grid-cols-[minmax(310px,0.9fr)_minmax(0,1.5fr)]">
+          <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] items-start">
             <Card className="min-w-0">
               <CardHeader className="space-y-3">
                 <CardTitle className="flex items-center justify-between">
@@ -546,7 +547,7 @@ export default function AdminTickets() {
                   afspraak.
                 </p>
               </CardHeader>
-              <CardContent className="max-h-[750px] space-y-2 overflow-auto">
+              <CardContent className="max-h-[65vh] space-y-2 overflow-auto">
                 {loading ? (
                   <p className="py-8 text-center text-sm text-muted-foreground">
                     <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />{" "}
@@ -651,312 +652,365 @@ export default function AdminTickets() {
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-5">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="admin-ticket-status">Status</Label>
-                        <select
-                          id="admin-ticket-status"
-                          className={selectStyle}
-                          disabled={savingTicket}
-                          value={selected.status}
-                          onChange={(e) =>
-                            void saveField({
-                              status: e.target.value as TicketStatus,
-                            })
-                          }
-                        >
-                          {Object.entries(ticketStatuses).map(
-                            ([key, label]) => (
-                              <option key={key} value={key}>
-                                {label}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="admin-ticket-priority">
-                          Prioriteit
-                        </Label>
-                        <select
-                          id="admin-ticket-priority"
-                          className={selectStyle}
-                          disabled={savingTicket}
-                          value={selected.priority}
-                          onChange={(e) =>
-                            void saveField({
-                              priority: e.target.value as TicketPriority,
-                            })
-                          }
-                        >
-                          {Object.entries(ticketPriorities).map(
-                            ([key, label]) => (
-                              <option key={key} value={key}>
-                                {label}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="ticket-group">Behandelgroep</Label>
-                        <select
-                          id="ticket-group"
-                          disabled={savingTicket}
-                          className={selectStyle}
-                          value={selected.treatment_group}
-                          onChange={(e) =>
-                            void saveField({ treatment_group: e.target.value })
-                          }
-                        >
-                          {Object.entries(treatmentGroups).map(([k, v]) => (
-                            <option key={k} value={k}>
-                              {v}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="ticket-due">
-                          Streefdatum (lokale tijd)
-                        </Label>
-                        <Input
-                          id="ticket-due"
-                          type="datetime-local"
-                          disabled={savingTicket}
-                          key={selected.id + (selected.due_at ?? "")}
-                          defaultValue={
-                            selected.due_at
-                              ? new Date(
-                                  Date.parse(selected.due_at) -
-                                    new Date(
-                                      selected.due_at,
-                                    ).getTimezoneOffset() *
-                                      60000,
-                                )
-                                  .toISOString()
-                                  .slice(0, 16)
-                              : ""
-                          }
-                          onBlur={(e) => {
-                            if (
-                              e.target.value &&
-                              !Number.isFinite(
-                                new Date(e.target.value).getTime(),
-                              )
-                            )
-                              return;
-                            const value = e.target.value
-                              ? new Date(e.target.value).toISOString()
-                              : null;
-                            if (
-                              value !==
-                              (selected.due_at
-                                ? new Date(selected.due_at).toISOString()
-                                : null)
-                            )
-                              void saveField({ due_at: value });
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ticket-sla">
-                        Serviceafspraak / SLA-referentie (optioneel)
-                      </Label>
-                      <Input
-                        id="ticket-sla"
-                        maxLength={160}
-                        disabled={savingTicket}
-                        key={selected.id + (selected.sla_label ?? "")}
-                        defaultValue={selected.sla_label ?? ""}
-                        placeholder="Alleen een daadwerkelijk overeengekomen afspraak"
-                        onBlur={(e) => {
-                          const v = e.target.value.trim() || null;
-                          if (v !== selected.sla_label)
-                            void saveField({ sla_label: v });
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="admin-ticket-owner">
-                        Behandelaar (optioneel)
-                      </Label>
-                      <Input
-                        disabled={savingTicket}
-                        maxLength={160}
-                        id="admin-ticket-owner"
-                        placeholder="Naam behandelaar"
-                        key={selected.id + (selected.assigned_to ?? "")}
-                        defaultValue={selected.assigned_to ?? ""}
-                        onBlur={(e) => {
-                          const next = e.target.value.trim();
-                          if (next !== (selected.assigned_to ?? ""))
-                            void saveField({ assigned_to: next || null });
-                        }}
-                      />
-                    </div>
-                    <div className="rounded-xl bg-muted/40 p-4">
-                      <div className="mb-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                        <span>
-                          {ticketCategories[selected.category] ??
-                            selected.category}
-                        </span>
-                        <span>
-                          Prioriteit: {ticketPriorities[selected.priority]}
-                        </span>
-                        <span>
-                          <Clock3 className="inline h-3 w-3" />{" "}
-                          {formatTicketDate(selected.created_at)}
-                        </span>
-                      </div>
-                      <p className="whitespace-pre-wrap break-words text-sm">
-                        {selected.description}
-                      </p>
-                    </div>
-                    <TicketHistory
-                      key={"history-" + selected.id}
-                      ticketId={selected.id}
-                      version={selected.updated_at}
-                    />
-                    <TicketMailStatus
-                      key={"mail-" + selected.id}
-                      ticketId={selected.id}
-                      version={selected.updated_at}
-                    />
-                    <section className="space-y-3">
-                      <h3 className="font-semibold">
-                        Gesprek en interne notities
-                      </h3>
-                      {loadingMessages && (
-                        <p className="text-sm text-muted-foreground">
-                          Reacties laden...
-                        </p>
-                      )}
-                      {!loadingMessages && messages.length === 0 && (
-                        <p className="text-sm text-muted-foreground">
-                          Nog geen reacties.
-                        </p>
-                      )}
-                      {messages.map((m) => (
-                        <div
-                          key={m.id}
-                          className={
-                            "rounded-xl border p-3 " +
-                            (m.is_internal
-                              ? "border-amber-500/40 bg-amber-500/5"
-                              : m.sender_type === "medewerker"
-                                ? "border-primary/30 bg-primary/5"
-                                : "border-border")
-                          }
-                        >
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                            <span className="font-semibold">
-                              {m.is_internal
-                                ? "Interne notitie"
-                                : m.sender_type === "medewerker"
-                                  ? "Harkas IT"
-                                  : "Klant"}{" "}
-                              {m.is_internal && (
-                                <Badge variant="outline">Alleen intern</Badge>
-                              )}
-                            </span>
-                            <span>{formatTicketDate(m.created_at)}</span>
-                          </div>
-                          <p className="whitespace-pre-wrap break-words text-sm">
-                            {m.body}
-                          </p>
-                        </div>
-                      ))}
-                    </section>
-                    {user && (
-                      <TicketAttachments
-                        key={"attachments-" + selected.id}
-                        ticketId={selected.id}
-                        userId={user.id}
-                        isStaff
-                      />
-                    )}
-                    <form
-                      onSubmit={addReply}
-                      className="space-y-3 border-t border-border pt-4"
-                    >
-                      <Label htmlFor="admin-ticket-reply">
-                        Reactie toevoegen
-                      </Label>
-                      <select
-                        aria-label="Standaardantwoord invoegen"
-                        className={selectStyle}
-                        value=""
-                        onChange={(e) => {
-                          const text =
-                            replyTemplates[
-                              e.target.value as keyof typeof replyTemplates
-                            ];
-                          if (text)
-                            setReply((current) =>
-                              current ? current + "\n\n" + text : text,
-                            );
-                        }}
+                    <div className="grid items-start gap-5 xl:grid-cols-[230px_minmax(0,1fr)]">
+                      <aside
+                        className="space-y-4 rounded-xl border bg-muted/20 p-4"
+                        aria-label="Ticketgegevens"
                       >
-                        <option value="">
-                          Voeg een standaardantwoord toe...
-                        </option>
-                        <option value="ontvangst">
-                          Ontvangst en onderzoek
-                        </option>
-                        <option value="informatie">
-                          Meer informatie nodig
-                        </option>
-                        <option value="leverancier">
-                          Wachten op leverancier
-                        </option>
-                        <option value="oplossing">
-                          Oplossing laten bevestigen
-                        </option>
-                      </select>
-                      <p className="text-xs text-muted-foreground">
-                        {isInternal
-                          ? "Alleen medewerkers zien deze notitie. Er wordt geen klantmail verstuurd."
-                          : "De klant ontvangt deze reactie ook per e-mail van support@harkasit.nl."}
-                      </p>
-                      <Textarea
-                        id="admin-ticket-reply"
-                        rows={4}
-                        maxLength={10000}
-                        value={reply}
-                        onChange={(e) => setReply(e.target.value)}
-                        placeholder={
-                          isInternal
-                            ? "Interne notitie, onzichtbaar voor de klant..."
-                            : "Typ je reactie voor de klant..."
-                        }
-                      />
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <label className="flex items-center gap-2 text-sm">
-                          <Checkbox
-                            checked={isInternal}
-                            onCheckedChange={(value) =>
-                              setIsInternal(value === true)
-                            }
+                        <h3 className="text-sm font-semibold">
+                          Ticketgegevens
+                        </h3>
+                        <div className="grid gap-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="admin-ticket-status">Status</Label>
+                            <select
+                              id="admin-ticket-status"
+                              className={selectStyle}
+                              disabled={savingTicket}
+                              value={selected.status}
+                              onChange={(e) =>
+                                void saveField({
+                                  status: e.target.value as TicketStatus,
+                                })
+                              }
+                            >
+                              {Object.entries(ticketStatuses).map(
+                                ([key, label]) => (
+                                  <option key={key} value={key}>
+                                    {label}
+                                  </option>
+                                ),
+                              )}
+                            </select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="admin-ticket-priority">
+                              Prioriteit
+                            </Label>
+                            <select
+                              id="admin-ticket-priority"
+                              className={selectStyle}
+                              disabled={savingTicket}
+                              value={selected.priority}
+                              onChange={(e) =>
+                                void saveField({
+                                  priority: e.target.value as TicketPriority,
+                                })
+                              }
+                            >
+                              {Object.entries(ticketPriorities).map(
+                                ([key, label]) => (
+                                  <option key={key} value={key}>
+                                    {label}
+                                  </option>
+                                ),
+                              )}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="grid gap-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="ticket-group">Behandelgroep</Label>
+                            <select
+                              id="ticket-group"
+                              disabled={savingTicket}
+                              className={selectStyle}
+                              value={selected.treatment_group}
+                              onChange={(e) =>
+                                void saveField({
+                                  treatment_group: e.target.value,
+                                })
+                              }
+                            >
+                              {Object.entries(treatmentGroups).map(([k, v]) => (
+                                <option key={k} value={k}>
+                                  {v}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="ticket-due">
+                              Streefdatum (lokale tijd)
+                            </Label>
+                            <Input
+                              id="ticket-due"
+                              type="datetime-local"
+                              disabled={savingTicket}
+                              key={selected.id + (selected.due_at ?? "")}
+                              defaultValue={
+                                selected.due_at
+                                  ? new Date(
+                                      Date.parse(selected.due_at) -
+                                        new Date(
+                                          selected.due_at,
+                                        ).getTimezoneOffset() *
+                                          60000,
+                                    )
+                                      .toISOString()
+                                      .slice(0, 16)
+                                  : ""
+                              }
+                              onBlur={(e) => {
+                                if (
+                                  e.target.value &&
+                                  !Number.isFinite(
+                                    new Date(e.target.value).getTime(),
+                                  )
+                                )
+                                  return;
+                                const value = e.target.value
+                                  ? new Date(e.target.value).toISOString()
+                                  : null;
+                                if (
+                                  value !==
+                                  (selected.due_at
+                                    ? new Date(selected.due_at).toISOString()
+                                    : null)
+                                )
+                                  void saveField({ due_at: value });
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="ticket-sla">
+                            Serviceafspraak / SLA-referentie (optioneel)
+                          </Label>
+                          <Input
+                            id="ticket-sla"
+                            maxLength={160}
+                            disabled={savingTicket}
+                            key={selected.id + (selected.sla_label ?? "")}
+                            defaultValue={selected.sla_label ?? ""}
+                            placeholder="Alleen een daadwerkelijk overeengekomen afspraak"
+                            onBlur={(e) => {
+                              const v = e.target.value.trim() || null;
+                              if (v !== selected.sla_label)
+                                void saveField({ sla_label: v });
+                            }}
                           />
-                          Interne notitie
-                        </label>
-                        <Button
-                          type="submit"
-                          disabled={!reply.trim() || replying}
-                        >
-                          <Send className="mr-2 h-4 w-4" />
-                          {replying
-                            ? "Opslaan..."
-                            : isInternal
-                              ? "Notitie opslaan"
-                              : "Reactie plaatsen"}
-                        </Button>
-                      </div>
-                    </form>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="admin-ticket-owner">
+                            Behandelaar (optioneel)
+                          </Label>
+                          <Input
+                            disabled={savingTicket}
+                            maxLength={160}
+                            id="admin-ticket-owner"
+                            placeholder="Naam behandelaar"
+                            key={selected.id + (selected.assigned_to ?? "")}
+                            defaultValue={selected.assigned_to ?? ""}
+                            onBlur={(e) => {
+                              const next = e.target.value.trim();
+                              if (next !== (selected.assigned_to ?? ""))
+                                void saveField({ assigned_to: next || null });
+                            }}
+                          />
+                        </div>
+                      </aside>
+                      <Tabs
+                        defaultValue="conversation"
+                        key={"workspace-" + selected.id}
+                        className="min-w-0"
+                      >
+                        <div className="overflow-x-auto border-b pb-2">
+                          <TabsList className="w-max justify-start">
+                            <TabsTrigger value="conversation">
+                              Gesprek
+                            </TabsTrigger>
+                            <TabsTrigger value="attachments">
+                              Bijlagen
+                            </TabsTrigger>
+                            <TabsTrigger value="history">Historie</TabsTrigger>{" "}
+                            <TabsTrigger value="mail">E-mailstatus</TabsTrigger>
+                          </TabsList>
+                        </div>
+                        <TabsContent value="conversation" className="space-y-4">
+                          <div
+                            className="max-h-[48vh] min-h-48 space-y-4 overflow-y-auto overscroll-contain pr-2"
+                            role="region"
+                            aria-label="Ticketgesprek"
+                            tabIndex={0}
+                          >
+                            <div className="rounded-xl bg-muted/40 p-4">
+                              <div className="mb-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                <span>
+                                  {ticketCategories[selected.category] ??
+                                    selected.category}
+                                </span>
+                                <span>
+                                  Prioriteit:{" "}
+                                  {ticketPriorities[selected.priority]}
+                                </span>
+                                <span>
+                                  <Clock3 className="inline h-3 w-3" />{" "}
+                                  {formatTicketDate(selected.created_at)}
+                                </span>
+                              </div>
+                              <p className="whitespace-pre-wrap break-words text-sm">
+                                {selected.description}
+                              </p>
+                            </div>
+                            <section className="space-y-3">
+                              <h3 className="font-semibold">
+                                Gesprek en interne notities
+                              </h3>
+                              {loadingMessages && (
+                                <p className="text-sm text-muted-foreground">
+                                  Reacties laden...
+                                </p>
+                              )}
+                              {!loadingMessages && messages.length === 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                  Nog geen reacties.
+                                </p>
+                              )}
+                              {messages.map((m) => (
+                                <div
+                                  key={m.id}
+                                  className={
+                                    "rounded-xl border p-3 " +
+                                    (m.is_internal
+                                      ? "border-amber-500/40 bg-amber-500/5"
+                                      : m.sender_type === "medewerker"
+                                        ? "border-primary/30 bg-primary/5"
+                                        : "border-border")
+                                  }
+                                >
+                                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                                    <span className="font-semibold">
+                                      {m.is_internal
+                                        ? "Interne notitie"
+                                        : m.sender_type === "medewerker"
+                                          ? "Harkas IT"
+                                          : "Klant"}{" "}
+                                      {m.is_internal && (
+                                        <Badge variant="outline">
+                                          Alleen intern
+                                        </Badge>
+                                      )}
+                                    </span>
+                                    <span>
+                                      {formatTicketDate(m.created_at)}
+                                    </span>
+                                  </div>
+                                  <p className="whitespace-pre-wrap break-words text-sm">
+                                    {m.body}
+                                  </p>
+                                </div>
+                              ))}
+                            </section>
+                          </div>
+                          <div className="border-t pt-4">
+                            <form
+                              onSubmit={addReply}
+                              className="space-y-3 border-t border-border pt-4"
+                            >
+                              <Label htmlFor="admin-ticket-reply">
+                                Reactie toevoegen
+                              </Label>
+                              <select
+                                aria-label="Standaardantwoord invoegen"
+                                className={selectStyle}
+                                value=""
+                                onChange={(e) => {
+                                  const text =
+                                    replyTemplates[
+                                      e.target
+                                        .value as keyof typeof replyTemplates
+                                    ];
+                                  if (text)
+                                    setReply((current) =>
+                                      current ? current + "\n\n" + text : text,
+                                    );
+                                }}
+                              >
+                                <option value="">
+                                  Voeg een standaardantwoord toe...
+                                </option>
+                                <option value="ontvangst">
+                                  Ontvangst en onderzoek
+                                </option>
+                                <option value="informatie">
+                                  Meer informatie nodig
+                                </option>
+                                <option value="leverancier">
+                                  Wachten op leverancier
+                                </option>
+                                <option value="oplossing">
+                                  Oplossing laten bevestigen
+                                </option>
+                              </select>
+                              <p className="text-xs text-muted-foreground">
+                                {isInternal
+                                  ? "Alleen medewerkers zien deze notitie. Er wordt geen klantmail verstuurd."
+                                  : "De klant ontvangt deze reactie ook per e-mail van support@harkasit.nl."}
+                              </p>
+                              <Textarea
+                                id="admin-ticket-reply"
+                                rows={4}
+                                maxLength={10000}
+                                value={reply}
+                                onChange={(e) => setReply(e.target.value)}
+                                placeholder={
+                                  isInternal
+                                    ? "Interne notitie, onzichtbaar voor de klant..."
+                                    : "Typ je reactie voor de klant..."
+                                }
+                              />
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <label className="flex items-center gap-2 text-sm">
+                                  <Checkbox
+                                    checked={isInternal}
+                                    onCheckedChange={(value) =>
+                                      setIsInternal(value === true)
+                                    }
+                                  />
+                                  Interne notitie
+                                </label>
+                                <Button
+                                  type="submit"
+                                  disabled={!reply.trim() || replying}
+                                >
+                                  <Send className="mr-2 h-4 w-4" />
+                                  {replying
+                                    ? "Opslaan..."
+                                    : isInternal
+                                      ? "Notitie opslaan"
+                                      : "Reactie plaatsen"}
+                                </Button>
+                              </div>
+                            </form>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="attachments">
+                          {user && (
+                            <TicketAttachments
+                              key={"attachments-" + selected.id}
+                              ticketId={selected.id}
+                              userId={user.id}
+                              isStaff
+                            />
+                          )}
+                        </TabsContent>
+                        <TabsContent value="history">
+                          <TicketHistory
+                            key={"history-" + selected.id}
+                            ticketId={selected.id}
+                            version={selected.updated_at}
+                          />
+                        </TabsContent>
+                        <TabsContent value="mail">
+                          <TicketMailStatus
+                            key={"mail-" + selected.id}
+                            ticketId={selected.id}
+                            version={selected.updated_at}
+                          />
+                        </TabsContent>
+                      </Tabs>
+                    </div>
                   </CardContent>
                 </>
               )}
