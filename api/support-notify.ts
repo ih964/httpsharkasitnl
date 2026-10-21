@@ -374,7 +374,9 @@ async function deliver(entry: EventRow): Promise<boolean> {
         text,
         html,
         headers: {
-          "Message-ID": storedReference,
+          "Message-ID": storedReference.replace("<hit.", "<event."),
+          "In-Reply-To": storedReference,
+          References: storedReference,
           "Auto-Submitted": "auto-generated",
           "X-Harkas-Support": "notification",
         },

@@ -125,7 +125,8 @@ export async function importInbound(
     [
       ticketId,
       randomUUID(),
-      row.body || "De klant heeft bijlagen per e-mail aangeleverd.",
+      row.body ||
+        "De klant heeft per e-mail gereageerd; aanvullende inhoud staat in de oorspronkelijke mail.",
     ],
   );
   const files = (
@@ -232,9 +233,11 @@ export async function pollSupportMailbox(pool: Pool) {
         const files = mail.attachments.filter(
           (a) => a.contentDisposition !== "inline",
         );
-        const safeFiles = files.every(
-          (a) => allowedMime.has(a.contentType) && a.size <= 10 * 1024 * 1024,
-        );
+        const safeFiles =
+          files.length <= 10 &&
+          files.every(
+            (a) => allowedMime.has(a.contentType) && a.size <= 10 * 1024 * 1024,
+          );
         await client.query("BEGIN");
         try {
           const record = await client.query(
@@ -252,10 +255,12 @@ export async function pollSupportMailbox(pool: Pool) {
           );
           if (record.rows[0] && !auto) {
             const id = record.rows[0].id;
-            for (const f of files.filter(
-              (a) =>
-                allowedMime.has(a.contentType) && a.size <= 10 * 1024 * 1024,
-            ))
+            for (const f of files
+              .slice(0, 10)
+              .filter(
+                (a) =>
+                  allowedMime.has(a.contentType) && a.size <= 10 * 1024 * 1024,
+              ))
               await client.query(
                 "INSERT INTO harkas_support_private.inbound_files(inbound_id,filename,mime_type,size_bytes,data) VALUES($1,$2,$3,$4,$5)",
                 [

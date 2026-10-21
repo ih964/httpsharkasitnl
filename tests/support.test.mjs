@@ -28,7 +28,8 @@ globalThis.__supportTestQuery = async (sql, args) => {
     if (valid) seen.add(key);
     return { rows: valid ? [{ nonce }] : [] };
   }
-  if(sql.includes("INSERT INTO harkas_support_private.mail_refs"))return {rows:[{reference:"<hit."+id+"@harkasit.nl>"}]};
+  if (sql.includes("INSERT INTO harkas_support_private.mail_refs"))
+    return { rows: [{ reference: "<hit." + id + "@harkasit.nl>" }] };
   if (sql.includes("SELECT s.role"))
     return {
       rows: [
@@ -230,8 +231,19 @@ try {
     );
     assert.equal(sent[0].payload.reply_to, "support@harkasit.nl");
     assert.match(sent[0].payload.html, /&lt;script&gt;/);
-    assert.match(sent[0].payload.html, /<a href='https:\/\/www.harkasit.nl\/support\?ticket=/);
+    assert.match(
+      sent[0].payload.html,
+      /<a href='https:\/\/www.harkasit.nl\/support\?ticket=/,
+    );
     assert.match(sent[0].payload.html, />Ticket openen<\/a>/);
+    assert.equal(
+      sent[0].payload.headers.References,
+      "<hit." + id + "@harkasit.nl>",
+    );
+    assert.equal(
+      sent[0].payload.headers["In-Reply-To"],
+      sent[0].payload.headers.References,
+    );
     assert.ok(queries.some((q) => q.sql.includes("SET state='sent'")));
     assert.equal(
       sent[0].headers["Idempotency-Key"],

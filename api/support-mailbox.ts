@@ -115,18 +115,17 @@ export default async function handler(req: any, res: any) {
         const box = await imap.mailboxOpen("INBOX", { readOnly: true });
         validity = String(box.uidValidity);
       } catch {
-        return res
-          .status(400)
-          .json({
-            error:
-              "Aanmelden bij de supportmailbox mislukt. Controleer het wachtwoord.",
-          });
+        return res.status(400).json({
+          error:
+            "Aanmelden bij de supportmailbox mislukt. Controleer het wachtwoord.",
+        });
       } finally {
         await imap.logout().catch(() => {});
       }
       const client = await db().connect();
       try {
         await client.query("BEGIN");
+        await client.query("SELECT pg_advisory_xact_lock(710212026)");
         const old = (
           await client.query(
             "SELECT secret_id FROM harkas_support_private.mailbox WHERE singleton FOR UPDATE",
