@@ -19,12 +19,9 @@ type FileEntry = {
   is_internal?: boolean;
   storage_path?: string;
 };
-const customerStyle =
-  "border-blue-300 bg-blue-50 text-blue-950";
-const staffStyle =
-  "border-emerald-300 bg-emerald-50 text-emerald-950";
-const internalStyle =
-  "border-amber-300 bg-amber-50 text-amber-950";
+const customerStyle = "border-blue-300 bg-blue-50 text-blue-950";
+const staffStyle = "border-emerald-300 bg-emerald-50 text-emerald-950";
+const internalStyle = "border-amber-300 bg-amber-50 text-amber-950";
 
 export default function TicketConversation({
   ticket,
@@ -39,6 +36,48 @@ export default function TicketConversation({
   userId?: string;
   isStaff?: boolean;
 }) {
+  const [authors, setAuthors] = useState<
+    Record<string, { label: string; is_self: boolean }>
+  >({});
+  useEffect(() => {
+    let active = true;
+    void mailboxRequest(
+      "?action=authors&ticketId=" + encodeURIComponent(ticket.id),
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        if (active)
+          setAuthors(
+            Object.fromEntries(
+              (data.authors ?? []).map(
+                (a: { author_id: string; label: string; is_self: boolean }) => [
+                  a.author_id,
+                  a,
+                ],
+              ),
+            ),
+          );
+      })
+      .catch(() => {
+        /* Keep safe fallback labels if the lookup is unavailable. */
+      });
+    return () => {
+      active = false;
+    };
+  }, [ticket.id, ticket.last_activity_at, messages.length]);
+  const authorLabel = (authorId: string, staff: boolean, original = false) => {
+    const author = authors[authorId];
+    if (!isStaff && !staff && (author?.is_self || authorId === userId))
+      return "Jij";
+    const label =
+      author?.label ||
+      (original
+        ? ticket.requester_email
+        : staff
+          ? "Medewerker"
+          : "Afzender onbekend");
+    return staff ? `${label} · Harkas IT` : label;
+  };
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
@@ -151,7 +190,10 @@ export default function TicketConversation({
           className={"rounded-xl border border-l-4 p-4 " + customerStyle}
         >
           <div className="mb-2 flex flex-wrap justify-between gap-2 text-xs">
-            <strong>Klant · Oorspronkelijke melding</strong>
+            <strong>
+              {authorLabel(ticket.created_by, false, true)} · Oorspronkelijke
+              melding
+            </strong>
             <span>{formatTicketDate(ticket.created_at)}</span>
           </div>
           <p className="whitespace-pre-wrap break-words text-sm">
@@ -186,10 +228,10 @@ export default function TicketConversation({
               <strong>
                 {message
                   ? message.is_internal
-                    ? "Harkas IT · Interne notitie · Alleen intern"
+                    ? `${authorLabel(message.author_id, true)} · Interne notitie · Alleen intern`
                     : message.sender_type === "medewerker"
-                      ? "Harkas IT"
-                      : "Klant"
+                      ? authorLabel(message.author_id, true)
+                      : authorLabel(message.author_id, false)
                   : file?.is_internal
                     ? "Bijlage · Alleen intern"
                     : file?.storage_path

@@ -52,7 +52,10 @@ export default async function handler(req: any, res: any) {
       ])
     ).rows[0]?.allowed;
     const action = String(req.query?.action ?? req.body?.action ?? "status");
-    if (req.method === "GET" && ["files", "download"].includes(action)) {
+    if (
+      req.method === "GET" &&
+      ["files", "download", "authors"].includes(action)
+    ) {
       const ticketId = String(req.query.ticketId ?? "");
       if (!uuid(ticketId))
         return res.status(400).json({ error: "Ongeldig ticket" });
@@ -62,6 +65,37 @@ export default async function handler(req: any, res: any) {
       );
       if (!allowed.rows.length)
         return res.status(403).json({ error: "Geen toegang" });
+      if (action === "authors") {
+        const authors = await db().query(
+          `WITH participants AS (
+             SELECT t.created_by author_id, 'klant' sender_type, t.requester_email fallback_email
+             FROM public.support_tickets t WHERE t.id=$1
+             UNION
+             SELECT m.author_id, m.sender_type,
+               CASE WHEN m.sender_type='klant' THEN (
+                 SELECT e.payload->>'requester_email' FROM public.support_email_events e
+                 WHERE e.ticket_id=m.ticket_id AND e.actor_id=m.author_id
+                   AND e.kind='customer_reply' AND e.recipient_type='customer'
+                 ORDER BY e.created_at DESC LIMIT 1
+               ) END
+             FROM public.support_ticket_messages m
+             WHERE m.ticket_id=$1 AND ($2::boolean OR NOT m.is_internal)
+           ), identities AS (
+             SELECT p.author_id, p.sender_type,
+               coalesce(nullif(trim(u.raw_user_meta_data->>'full_name'),''),
+                        nullif(trim(u.raw_user_meta_data->>'name'),''),
+                        nullif(trim(u.raw_user_meta_data->>'display_name'),'')) display_name,
+               coalesce(u.email,p.fallback_email) email
+             FROM participants p LEFT JOIN auth.users u ON u.id=p.author_id
+           )
+           SELECT author_id,
+             left(coalesce(display_name,email,CASE WHEN sender_type='medewerker' THEN 'Medewerker' ELSE 'Afzender onbekend' END),200) label,
+             (author_id=$3::uuid OR lower(email)=$4) is_self
+           FROM identities`,
+          [ticketId, staff, user.id, user.email],
+        );
+        return res.json({ authors: authors.rows });
+      }
       if (action === "files") {
         const r = await db().query(
           "SELECT f.id,f.filename,f.mime_type,f.size_bytes,i.created_at FROM harkas_support_private.inbound_files f JOIN harkas_support_private.inbound i ON i.id=f.inbound_id WHERE i.ticket_id=$1 AND i.status='imported' ORDER BY i.created_at",
