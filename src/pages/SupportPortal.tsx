@@ -52,8 +52,29 @@ const emptyForm = {
   priority: "normaal" as TicketPriority,
 };
 
+function portalGreeting() {
+  const hour = Number(new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam", hour: "numeric", hourCycle: "h23",
+  }).format(new Date()));
+  if (hour < 6) return "Goedenacht";
+  if (hour < 12) return "Goedemorgen";
+  if (hour < 18) return "Goedemiddag";
+  return "Goedenavond";
+}
+
 export default function SupportPortal() {
   const { user, isAdmin, isLoading, signOut } = useAuth();
+  const [greeting, setGreeting] = useState(portalGreeting);
+  const displayName = [user?.user_metadata?.full_name, user?.user_metadata?.name,
+    user?.user_metadata?.display_name, user?.user_metadata?.preferred_username]
+    .find((value): value is string => typeof value === "string" && value.trim().length > 0)
+    ?.trim() || user?.email?.split("@")[0] || "";
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setGreeting(portalGreeting()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const [email, setEmail] = useState("");
   const [sendingLogin, setSendingLogin] = useState(false);
   const [loginSent, setLoginSent] = useState(false);
@@ -330,8 +351,8 @@ export default function SupportPortal() {
           <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
             Harkas IT support
           </p>
-          <h1 className="font-heading text-3xl font-bold sm:text-4xl">
-            Jouw meldingen, altijd inzichtelijk.
+          <h1 className="break-words font-heading text-3xl font-bold sm:text-4xl">
+            {user ? `${greeting}${displayName ? `, ${displayName}` : ""}!` : "Jouw meldingen, altijd inzichtelijk."}
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
             Meld een probleem, voeg een screenshot toe en volg de status. Je
