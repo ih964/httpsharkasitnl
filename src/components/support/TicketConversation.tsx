@@ -183,7 +183,7 @@ export default function TicketConversation({
         )}
       </div>
       <div
-        className="max-h-[48vh] xl:max-h-[clamp(240px,calc(100dvh-600px),520px)] space-y-3 overflow-y-auto overscroll-contain pr-2"
+        className="space-y-3"
         role="region"
         aria-label="Ticketgesprek en bijlagen"
         tabIndex={0}
