@@ -1,3 +1,4 @@
+import TicketConversation from "@/components/support/TicketConversation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TicketHistory from "@/components/support/TicketHistory";
 import SupportKnowledge from "@/components/support/SupportKnowledge";
@@ -923,60 +924,13 @@ export default function SupportPortal() {
                             value="conversation"
                             className="space-y-4"
                           >
-                            <div
-                              className="max-h-[48vh] xl:max-h-[clamp(160px,calc(100dvh-620px),440px)] space-y-4 overflow-y-auto overscroll-contain pr-2"
-                              role="region"
-                              aria-label="Ticketgesprek"
-                              tabIndex={0}
-                            >
-                              <div className="rounded-xl bg-muted/40 p-4">
-                                <p className="mb-2 text-xs font-semibold text-muted-foreground">
-                                  {formatTicketDate(selected.created_at)} ·
-                                  Oorspronkelijke melding
-                                </p>
-                                <p className="whitespace-pre-wrap break-words text-sm">
-                                  {selected.description}
-                                </p>
-                              </div>
-                              <div className="space-y-3">
-                                <h3 className="font-semibold">Reacties</h3>
-                                {loadingMessages && (
-                                  <p className="text-sm text-muted-foreground">
-                                    Gesprek laden...
-                                  </p>
-                                )}
-                                {!loadingMessages && messages.length === 0 && (
-                                  <p className="text-sm text-muted-foreground">
-                                    Nog geen reacties.
-                                  </p>
-                                )}
-                                {messages.map((m) => (
-                                  <div
-                                    key={m.id}
-                                    className={
-                                      "rounded-xl border p-3 " +
-                                      (m.sender_type === "medewerker"
-                                        ? "border-primary/30 bg-primary/5"
-                                        : "border-border")
-                                    }
-                                  >
-                                    <div className="mb-2 flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
-                                      <span className="font-semibold">
-                                        {m.sender_type === "medewerker"
-                                          ? "Harkas IT"
-                                          : "Klant"}
-                                      </span>
-                                      <span>
-                                        {formatTicketDate(m.created_at)}
-                                      </span>
-                                    </div>
-                                    <p className="whitespace-pre-wrap break-words text-sm">
-                                      {m.body}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
+                            <TicketConversation
+                              key={"conversation-" + selected.id}
+                              ticket={selected}
+                              messages={messages}
+                              loading={loadingMessages}
+                              userId={user?.id}
+                            />
                             <div className="border-t pt-4">
                               {selected.status !== "gesloten" ? (
                                 <form

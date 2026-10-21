@@ -44,6 +44,8 @@ type Props = {
   userId: string;
   isStaff?: boolean;
   closed?: boolean;
+  uploadOnly?: boolean;
+  onUploaded?: () => void;
 };
 
 export default function TicketAttachments({
@@ -51,6 +53,8 @@ export default function TicketAttachments({
   userId,
   isStaff = false,
   closed = false,
+  uploadOnly = false,
+  onUploaded,
 }: Props) {
   const [items, setItems] = useState<Attachment[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -80,9 +84,9 @@ export default function TicketAttachments({
     setItems([]);
     setFile(null);
     setLoading(true);
-    void load();
+    if (!uploadOnly) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketId]);
+  }, [ticketId, uploadOnly]);
 
   const upload = async () => {
     if (!file || busy) return;
@@ -140,7 +144,8 @@ export default function TicketAttachments({
       // A customer-visible attachment is a ticket update; a private staff file is not.
       if (!(isStaff && internal)) void notifySupportChange(ticketId);
       toast({ title: "Bijlage toegevoegd" });
-      await load();
+      onUploaded?.();
+      if (!uploadOnly) await load();
     } catch (e: unknown) {
       toast({
         title: "Upload mislukt",
@@ -165,44 +170,48 @@ export default function TicketAttachments({
 
   return (
     <div className="space-y-3">
-      <h3 className="font-semibold flex items-center gap-2">
-        <Paperclip className="h-4 w-4" /> Bijlagen
-      </h3>
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Bijlagen laden...</p>
-      ) : items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Geen via het portaal geüploade bijlagen.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
-            >
-              <div className="min-w-0">
-                <p className="break-all text-sm font-medium">
-                  {item.original_name}
-                </p>
-                {item.is_internal && (
-                  <span className="text-xs text-amber-600">Intern · </span>
-                )}
-                <span className="text-xs text-muted-foreground">
-                  {Math.max(1, Math.round(item.size_bytes / 1024))} kB ·{" "}
-                  {formatTicketDate(item.created_at)}
-                </span>
-              </div>
-              <AttachmentActions
-                filename={item.original_name}
-                mimeType={item.mime_type}
-                loadFile={() => loadFile(item)}
-              />
+      {!uploadOnly && (
+        <>
+          <h3 className="font-semibold flex items-center gap-2">
+            <Paperclip className="h-4 w-4" /> Bijlagen
+          </h3>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Bijlagen laden...</p>
+          ) : items.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Geen via het portaal geüploade bijlagen.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="break-all text-sm font-medium">
+                      {item.original_name}
+                    </p>
+                    {item.is_internal && (
+                      <span className="text-xs text-amber-600">Intern · </span>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {Math.max(1, Math.round(item.size_bytes / 1024))} kB ·{" "}
+                      {formatTicketDate(item.created_at)}
+                    </span>
+                  </div>
+                  <AttachmentActions
+                    filename={item.original_name}
+                    mimeType={item.mime_type}
+                    loadFile={() => loadFile(item)}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+          <InboundAttachments ticketId={ticketId} />
+        </>
       )}
-      <InboundAttachments ticketId={ticketId} />
       {(!closed || isStaff) && (
         <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border p-3">
           <Input

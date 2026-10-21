@@ -1,3 +1,4 @@
+import TicketConversation from "@/components/support/TicketConversation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SupportMailbox from "@/components/support/SupportMailbox";
 import { useEffect, useMemo, useState } from "react";
@@ -861,81 +862,14 @@ export default function AdminTickets() {
                           </TabsList>
                         </div>
                         <TabsContent value="conversation" className="space-y-4">
-                          <div
-                            className="max-h-[48vh] xl:max-h-[clamp(160px,calc(100dvh-650px),420px)] space-y-4 overflow-y-auto overscroll-contain pr-2"
-                            role="region"
-                            aria-label="Ticketgesprek"
-                            tabIndex={0}
-                          >
-                            <div className="rounded-xl bg-muted/40 p-4">
-                              <div className="mb-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                <span>
-                                  {ticketCategories[selected.category] ??
-                                    selected.category}
-                                </span>
-                                <span>
-                                  Prioriteit:{" "}
-                                  {ticketPriorities[selected.priority]}
-                                </span>
-                                <span>
-                                  <Clock3 className="inline h-3 w-3" />{" "}
-                                  {formatTicketDate(selected.created_at)}
-                                </span>
-                              </div>
-                              <p className="whitespace-pre-wrap break-words text-sm">
-                                {selected.description}
-                              </p>
-                            </div>
-                            <section className="space-y-3">
-                              <h3 className="font-semibold">
-                                Gesprek en interne notities
-                              </h3>
-                              {loadingMessages && (
-                                <p className="text-sm text-muted-foreground">
-                                  Reacties laden...
-                                </p>
-                              )}
-                              {!loadingMessages && messages.length === 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                  Nog geen reacties.
-                                </p>
-                              )}
-                              {messages.map((m) => (
-                                <div
-                                  key={m.id}
-                                  className={
-                                    "rounded-xl border p-3 " +
-                                    (m.is_internal
-                                      ? "border-amber-500/40 bg-amber-500/5"
-                                      : m.sender_type === "medewerker"
-                                        ? "border-primary/30 bg-primary/5"
-                                        : "border-border")
-                                  }
-                                >
-                                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                                    <span className="font-semibold">
-                                      {m.is_internal
-                                        ? "Interne notitie"
-                                        : m.sender_type === "medewerker"
-                                          ? "Harkas IT"
-                                          : "Klant"}{" "}
-                                      {m.is_internal && (
-                                        <Badge variant="outline">
-                                          Alleen intern
-                                        </Badge>
-                                      )}
-                                    </span>
-                                    <span>
-                                      {formatTicketDate(m.created_at)}
-                                    </span>
-                                  </div>
-                                  <p className="whitespace-pre-wrap break-words text-sm">
-                                    {m.body}
-                                  </p>
-                                </div>
-                              ))}
-                            </section>
-                          </div>
+                          <TicketConversation
+                            key={"conversation-" + selected.id}
+                            ticket={selected}
+                            messages={messages}
+                            loading={loadingMessages}
+                            userId={user?.id}
+                            isStaff
+                          />
                           <div className="border-t pt-3">
                             <form onSubmit={addReply} className="space-y-2">
                               <Label htmlFor="admin-ticket-reply">
