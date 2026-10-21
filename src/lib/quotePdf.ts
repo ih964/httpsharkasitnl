@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { euro, nlDate, type Quote } from './quotes';
+import { euro, nlDate, type Quote } from './quotes.js';
 
 /** Uses the immutable saved snapshots and server-calculated line amounts. */
 export function buildQuotePdf(q: Quote, logo?: Uint8Array) {

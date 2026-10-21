@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from 'pg';
-import { QuoteEmailError, sendQuoteEmail } from '../server/quote-email';
+import { QuoteEmailError, sendQuoteEmail } from '../server/quote-email.js';
 
 type Request = { method?: string; headers: Record<string, string | string[] | undefined>; body?: { action?: string; args?: Record<string, unknown> } };
 type Response = { status: (code: number) => Response; json: (body: unknown) => void; setHeader: (name: string, value: string) => void };
