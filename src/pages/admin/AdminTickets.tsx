@@ -368,7 +368,7 @@ export default function AdminTickets() {
     tickets.filter((t) => t.status === status).length;
 
   return (
-    <div className="mx-auto max-w-[1680px] space-y-3">
+    <div data-support-page className="mx-auto max-w-[1680px] space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="mb-1 text-sm font-semibold uppercase tracking-widest text-primary">

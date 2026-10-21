@@ -290,3 +290,18 @@
     box-shadow: 0 0 60px hsl(205 65% 40% / 0.4);
   }
 }
+/* Support conversations grow with the document, with one visible page scrollbar.
+   Avoid overflow-x:hidden on wrappers: it also creates an auto Y scroll container. */
+html:has([data-support-page]) {
+  overflow-x: clip;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+}
+body:has([data-support-page]),
+#root:has([data-support-page]),
+main:has([data-support-page]) {
+  overflow: visible;
+  height: auto;
+  max-height: none;
+}

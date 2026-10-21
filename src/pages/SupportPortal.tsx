@@ -399,7 +399,7 @@ export default function SupportPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div data-support-page className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="container mx-auto flex min-h-20 items-center justify-between gap-3 px-4 py-3">
           <Link to="/" className="flex items-center gap-3">
