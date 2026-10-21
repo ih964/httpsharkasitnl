@@ -1,0 +1,31 @@
+name: Harkas IT Website Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/components/Portfolio.tsx"
+      - "src/components/Navbar.tsx"
+      - "src/components/Footer.tsx"
+      - ".github/workflows/website-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build website
+        run: npm run build
