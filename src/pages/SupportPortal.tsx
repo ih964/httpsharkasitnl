@@ -1,3 +1,4 @@
+import ReplyComposer from "@/components/support/ReplyComposer";
 import TicketConversation from "@/components/support/TicketConversation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TicketHistory from "@/components/support/TicketHistory";
@@ -27,7 +28,6 @@ import {
   Loader2,
   LogOut,
   Plus,
-  Send,
   ShieldCheck,
 } from "lucide-react";
 import TicketAttachments from "@/components/support/TicketAttachments";
@@ -116,8 +116,6 @@ export default function SupportPortal() {
   const [newOpen, setNewOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [reply, setReply] = useState("");
-  const [replying, setReplying] = useState(false);
   const [errorText, setErrorText] = useState("");
 
   useEffect(() => {
@@ -245,7 +243,6 @@ export default function SupportPortal() {
 
   const openTicket = (ticket: SupportTicket) => {
     setSelected(ticket);
-    setReply("");
     setMessages([]);
   };
 
@@ -395,34 +392,6 @@ export default function SupportPortal() {
     setForm(emptyForm);
     await loadTickets(accountId);
     openTicket(data as SupportTicket);
-  };
-
-  const sendReply = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!selected || !user || !reply.trim() || replying) return;
-    setReplying(true);
-    const { error } = await portalSupabase
-      .from("support_ticket_messages")
-      .insert({
-        ticket_id: selected.id,
-        author_id: user.id,
-        sender_type: "klant",
-        body: reply.trim().slice(0, 10000),
-        is_internal: false,
-      });
-    setReplying(false);
-    if (error) {
-      toast({
-        title: "Reactie niet opgeslagen",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-    setReply("");
-    void notifySupportChange(selected.id);
-    await Promise.all([loadMessages(selected.id), loadTickets(accountId)]);
-    toast({ title: "Reactie toegevoegd" });
   };
 
   return (
@@ -933,31 +902,19 @@ export default function SupportPortal() {
                             />
                             <div className="border-t pt-4">
                               {selected.status !== "gesloten" ? (
-                                <form
-                                  onSubmit={sendReply}
-                                  className="space-y-2"
-                                >
-                                  <Label htmlFor="portal-reply">
-                                    Aanvullende reactie
-                                  </Label>
-                                  <Textarea
-                                    id="portal-reply"
-                                    rows={3}
-                                    maxLength={10000}
-                                    value={reply}
-                                    onChange={(e) => setReply(e.target.value)}
-                                    placeholder="Beschrijf wat je hebt geprobeerd of voeg informatie toe..."
+                                user && (
+                                  <ReplyComposer
+                                    key={"reply-" + selected.id}
+                                    ticketId={selected.id}
+                                    userId={user.id}
+                                    onSent={() =>
+                                      Promise.all([
+                                        loadMessages(selected.id),
+                                        loadTickets(accountId),
+                                      ])
+                                    }
                                   />
-                                  <Button
-                                    type="submit"
-                                    disabled={replying || !reply.trim()}
-                                  >
-                                    <Send className="mr-2 h-4 w-4" />{" "}
-                                    {replying
-                                      ? "Opslaan..."
-                                      : "Reactie versturen"}
-                                  </Button>
-                                </form>
+                                )
                               ) : (
                                 <p className="text-sm text-muted-foreground">
                                   Dit ticket is gesloten. Maak een nieuwe

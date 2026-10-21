@@ -1,3 +1,4 @@
+import ReplyComposer from "@/components/support/ReplyComposer";
 import TicketConversation from "@/components/support/TicketConversation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SupportMailbox from "@/components/support/SupportMailbox";
@@ -8,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
@@ -22,7 +22,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Send,
   ShieldCheck,
   Trash2,
   Users,
@@ -46,12 +45,7 @@ import {
 import TicketHistory from "@/components/support/TicketHistory";
 import SupportKnowledge from "@/components/support/SupportKnowledge";
 import TicketMailStatus from "@/components/support/TicketMailStatus";
-import {
-  treatmentGroups,
-  isOpenTicket,
-  isOverdue,
-  replyTemplates,
-} from "@/lib/support";
+import { treatmentGroups, isOpenTicket, isOverdue } from "@/lib/support";
 
 type Customer = {
   id: string;
@@ -82,9 +76,6 @@ export default function AdminTickets() {
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [savingTicket, setSavingTicket] = useState(false);
-  const [reply, setReply] = useState("");
-  const [isInternal, setIsInternal] = useState(false);
-  const [replying, setReplying] = useState(false);
   const [newCustomerId, setNewCustomerId] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [granting, setGranting] = useState(false);
@@ -176,8 +167,6 @@ export default function AdminTickets() {
 
   const openTicket = (ticket: SupportTicket) => {
     setSelected(ticket);
-    setReply("");
-    setIsInternal(false);
     setMessages([]);
   };
 
@@ -224,41 +213,6 @@ export default function AdminTickets() {
     setSelected(updated);
     setTickets((list) => list.map((t) => (t.id === updated.id ? updated : t)));
     toast({ title: "Ticket bijgewerkt" });
-  };
-
-  const addReply = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!selected || !user || !reply.trim() || replying) return;
-    setReplying(true);
-    const { error } = await portalSupabase
-      .from("support_ticket_messages")
-      .insert({
-        ticket_id: selected.id,
-        author_id: user.id,
-        sender_type: "medewerker",
-        body: reply.trim().slice(0, 10000),
-        is_internal: isInternal,
-      });
-    setReplying(false);
-    if (error) {
-      toast({
-        title: "Reactie niet opgeslagen",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-    setReply("");
-    // Internal notes stay private and never cause a customer notification.
-    if (!isInternal) void notifySupportChange(selected.id);
-    setIsInternal(false);
-    await Promise.all([loadMessages(selected.id), reload()]);
-    toast({
-      title: "Reactie opgeslagen",
-      description: isInternal
-        ? "Alleen zichtbaar voor medewerkers."
-        : "Zichtbaar in het klantenportaal.",
-    });
   };
 
   const addAccess = async (event: React.FormEvent) => {
@@ -871,82 +825,20 @@ export default function AdminTickets() {
                             isStaff
                           />
                           <div className="border-t pt-3">
-                            <form onSubmit={addReply} className="space-y-2">
-                              <Label htmlFor="admin-ticket-reply">
-                                Reactie toevoegen
-                              </Label>
-                              <select
-                                aria-label="Standaardantwoord invoegen"
-                                className={selectStyle}
-                                value=""
-                                onChange={(e) => {
-                                  const text =
-                                    replyTemplates[
-                                      e.target
-                                        .value as keyof typeof replyTemplates
-                                    ];
-                                  if (text)
-                                    setReply((current) =>
-                                      current ? current + "\n\n" + text : text,
-                                    );
-                                }}
-                              >
-                                <option value="">
-                                  Voeg een standaardantwoord toe...
-                                </option>
-                                <option value="ontvangst">
-                                  Ontvangst en onderzoek
-                                </option>
-                                <option value="informatie">
-                                  Meer informatie nodig
-                                </option>
-                                <option value="leverancier">
-                                  Wachten op leverancier
-                                </option>
-                                <option value="oplossing">
-                                  Oplossing laten bevestigen
-                                </option>
-                              </select>
-                              <p className="text-xs text-muted-foreground">
-                                {isInternal
-                                  ? "Alleen medewerkers zien deze notitie. Er wordt geen klantmail verstuurd."
-                                  : "De klant ontvangt deze reactie ook per e-mail van support@harkasit.nl."}
-                              </p>
-                              <Textarea
-                                id="admin-ticket-reply"
-                                rows={3}
-                                maxLength={10000}
-                                value={reply}
-                                onChange={(e) => setReply(e.target.value)}
-                                placeholder={
-                                  isInternal
-                                    ? "Interne notitie, onzichtbaar voor de klant..."
-                                    : "Typ je reactie voor de klant..."
+                            {user && (
+                              <ReplyComposer
+                                key={"reply-" + selected.id}
+                                ticketId={selected.id}
+                                userId={user.id}
+                                isStaff
+                                onSent={() =>
+                                  Promise.all([
+                                    loadMessages(selected.id),
+                                    reload(),
+                                  ])
                                 }
                               />
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <label className="flex items-center gap-2 text-sm">
-                                  <Checkbox
-                                    checked={isInternal}
-                                    onCheckedChange={(value) =>
-                                      setIsInternal(value === true)
-                                    }
-                                  />
-                                  Interne notitie
-                                </label>
-                                <Button
-                                  type="submit"
-                                  disabled={!reply.trim() || replying}
-                                >
-                                  <Send className="mr-2 h-4 w-4" />
-                                  {replying
-                                    ? "Opslaan..."
-                                    : isInternal
-                                      ? "Notitie opslaan"
-                                      : "Reactie plaatsen"}
-                                </Button>
-                              </div>
-                            </form>
+                            )}
                           </div>
                         </TabsContent>
                         <TabsContent value="attachments">

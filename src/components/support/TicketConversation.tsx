@@ -8,7 +8,6 @@ import {
   type TicketMessage,
 } from "@/lib/support";
 import AttachmentActions from "./AttachmentActions";
-import TicketAttachments from "./TicketAttachments";
 
 type FileEntry = {
   id: string;
@@ -18,6 +17,7 @@ type FileEntry = {
   created_at: string;
   is_internal?: boolean;
   storage_path?: string;
+  message_id?: string;
 };
 const customerStyle = "border-blue-300 bg-blue-50 text-blue-950";
 const staffStyle = "border-emerald-300 bg-emerald-50 text-emerald-950";
@@ -80,7 +80,7 @@ export default function TicketConversation({
   };
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [error, setError] = useState("");
-  const [revision, setRevision] = useState(0);
+
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -88,7 +88,7 @@ export default function TicketConversation({
         portalSupabase
           .from("support_ticket_files")
           .select(
-            "id,original_name,mime_type,size_bytes,created_at,is_internal,storage_path",
+            "id,original_name,mime_type,size_bytes,created_at,is_internal,storage_path,message_id",
           )
           .eq("ticket_id", ticket.id)
           .then(({ data, error }) => {
@@ -121,7 +121,7 @@ export default function TicketConversation({
       active = false;
       window.clearInterval(timer);
     };
-  }, [ticket.id, ticket.last_activity_at, revision]);
+  }, [ticket.id, ticket.last_activity_at]);
 
   const loadFile = async (file: FileEntry) => {
     if (file.storage_path) {
@@ -154,7 +154,7 @@ export default function TicketConversation({
         file: null,
       })),
     ...files
-      .filter((f) => isStaff || !f.is_internal)
+      .filter((f) => !f.message_id && (isStaff || !f.is_internal))
       .map((file) => ({
         id: "file-" + file.id,
         date: file.created_at,
@@ -245,6 +245,25 @@ export default function TicketConversation({
                 {message.body}
               </p>
             )}
+            {message &&
+              files
+                .filter(
+                  (f) =>
+                    f.message_id === message.id && (isStaff || !f.is_internal),
+                )
+                .map((f) => (
+                  <div
+                    key={f.id}
+                    className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-current/20 p-3"
+                  >
+                    <span className="break-all text-sm">{f.filename}</span>
+                    <AttachmentActions
+                      filename={f.filename}
+                      mimeType={f.mime_type}
+                      loadFile={() => loadFile(f)}
+                    />
+                  </div>
+                ))}
             {file && (
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -266,22 +285,6 @@ export default function TicketConversation({
           </article>
         ))}
       </div>
-      {userId && (isStaff || ticket.status !== "gesloten") && (
-        <details className="rounded-lg border px-3 py-2">
-          <summary className="cursor-pointer text-sm font-medium">
-            Bijlage toevoegen aan dit gesprek
-          </summary>
-          <div className="pt-3">
-            <TicketAttachments
-              ticketId={ticket.id}
-              userId={userId}
-              isStaff={isStaff}
-              uploadOnly
-              onUploaded={() => setRevision((r) => r + 1)}
-            />
-          </div>
-        </details>
-      )}
     </div>
   );
 }
