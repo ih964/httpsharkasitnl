@@ -9,6 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Download, Eye } from "lucide-react";
 
+// Fixed colors keep actions readable inside both light message cards and dark panels.
+const actionClassName = "border-slate-600 bg-slate-800 text-white hover:border-slate-500 hover:bg-slate-700 hover:text-white focus-visible:ring-sky-500 disabled:opacity-100 disabled:bg-slate-700 disabled:text-slate-300";
+
 type Props = {
   filename: string;
   mimeType: string;
@@ -89,22 +92,24 @@ export default function AttachmentActions({
           type="button"
           size="sm"
           variant="outline"
+          className={actionClassName}
           disabled={busy}
           onClick={() => void run(true)}
           aria-label={"Openen: " + filename}
         >
-          <Eye className="mr-2 h-4 w-4" />
+          <Eye className="h-4 w-4" />
           Openen
         </Button>
         <Button
           type="button"
           size="sm"
           variant="outline"
+          className={actionClassName}
           disabled={busy}
           onClick={() => void run(false)}
           aria-label={"Downloaden: " + filename}
         >
-          <Download className="mr-2 h-4 w-4" />
+          <Download className="h-4 w-4" />
           Downloaden
         </Button>
       </div>
@@ -154,10 +159,11 @@ export default function AttachmentActions({
           <Button
             type="button"
             variant="outline"
+          className={actionClassName}
             disabled={busy}
             onClick={() => void run(false)}
           >
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="h-4 w-4" />
             Downloaden
           </Button>
         </DialogContent>
