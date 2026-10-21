@@ -47,7 +47,7 @@ const serviceLinks = [
 
 const mainLinks = [
   { name: "Sectoren", href: "/#sectoren" },
-  { name: "Cases", href: "/#portfolio" },
+  { name: "Portfolio", href: "/#portfolio" },
   { name: "Over ons", href: "/over-ons" },
   { name: "Klantenportaal", href: "/support" },
   { name: "Contact", href: "/#contact" },
