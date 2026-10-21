@@ -50,7 +50,7 @@ const Footer = () => {
             <h3 className="font-semibold mb-5">Harkas IT</h3>
             <div className="space-y-3">
               <a href="/#sectoren" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Sectoren</a>
-              <a href="/#portfolio" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Cases</a>
+              <a href="/#portfolio" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Portfolio</a>
               <Link to="/over-ons" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Over ons</Link>
               <a href="/#prijzen" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Offerte & werkwijze</a>
               <Link to="/it-check" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">IT-zelfcheck</Link>
