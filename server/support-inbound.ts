@@ -108,7 +108,6 @@ export async function importInbound(
     )
   ).rows[0];
   if (!ticket) throw new Error("Ticket bestaat niet.");
-  if (requireReference && ticket.status === "gesloten") return false;
   const allowed = await client.query(
     "SELECT 1 FROM public.support_portal_access WHERE customer_id=$1 AND lower(email)=$2",
     [ticket.customer_id, row.sender],
@@ -121,6 +120,15 @@ export async function importInbound(
       [ticketId],
     )
   ).rows.map((r) => r.id);
+  // The caller wraps import in a transaction; the ticket row is locked above.
+  // Only an approved contact (or explicit staff intake approval) reaches this point.
+  // Reopening and its notification commit atomically with the reply.
+  if (["opgelost", "gesloten"].includes(ticket.status)) {
+    await client.query(
+      "UPDATE public.support_tickets SET status='in_behandeling' WHERE id=$1",
+      [ticketId],
+    );
+  }
   await client.query(
     "INSERT INTO public.support_ticket_messages(ticket_id,author_id,sender_type,body,is_internal) VALUES($1,$2,'klant',$3,false)",
     [
