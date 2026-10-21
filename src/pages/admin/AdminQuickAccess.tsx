@@ -198,12 +198,23 @@ const AdminQuickAccess = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={() => void openPlesk()} disabled={openingPlesk}>
-              {openingPlesk
-                ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                : <ExternalLink className="mr-2 h-4 w-4" />}
-              {ssoStatus === "configured" ? "Plesk openen met automatische aanmelding" : "Plesk openen"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => void openPlesk()} disabled={openingPlesk}>
+                {openingPlesk
+                  ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  : <ExternalLink className="mr-2 h-4 w-4" />}
+                {ssoStatus === "configured" ? "Plesk openen met automatische aanmelding" : "Plesk openen"}
+              </Button>
+              <Button variant="outline" asChild>
+                <a
+                  href="https://my.cloud86.io/clientarea.php?action=productdetails&id=16509"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" /> Plesk via Mijn Cloud86
+                </a>
+              </Button>
+            </div>
             <p className="text-sm text-muted-foreground">
               {ssoStatus === "configured"
                 ? "Automatisch aanmelden gebruikt een eenmalig Plesk-sessietoken. Je wachtwoord wordt niet naar de browser gestuurd."
@@ -229,7 +240,7 @@ const AdminQuickAccess = () => {
                 </a>
               ))}
               <a
-                href="https://my.cloud86.io/clientarea.php"
+                href="https://my.cloud86.io/clientarea.php?action=productdetails&id=16509"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -237,7 +248,7 @@ const AdminQuickAccess = () => {
                 <Globe className="h-5 w-5 shrink-0 text-primary" />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold">Mijn Cloud86</span>
-                  <span className="block text-xs text-muted-foreground">Hostingpakketten en account</span>
+                  <span className="block text-xs text-muted-foreground">Harkas IT-hostingpakket en Plesk-aanmelding</span>
                 </span>
                 <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
               </a>
