@@ -171,7 +171,7 @@ const ProjectPreview = ({ project }: { project: Project }) => {
           alt={"Voorbeeldweergave van de website " + project.name}
           loading="lazy"
           onError={() => setImageFailed(true)}
-          className="absolute inset-x-0 bottom-0 top-9 h-[calc(100%-2.25rem)] w-full object-cover object-top"
+          className="absolute inset-x-0 bottom-0 top-9 h-[calc(100%_-_2.25rem)] w-full object-cover object-top"
         />
       )}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/35 to-transparent" />
