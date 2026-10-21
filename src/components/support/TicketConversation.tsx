@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Paperclip } from "lucide-react";
 import { portalSupabase } from "@/integrations/supabase/client";
 import { mailboxRequest } from "@/lib/supportMailbox";
@@ -30,12 +30,14 @@ export default function TicketConversation({
   loading,
   userId,
   isStaff = false,
+  children,
 }: {
   ticket: SupportTicket;
   messages: TicketMessage[];
   loading: boolean;
   userId?: string;
   isStaff?: boolean;
+  children?: ReactNode;
 }) {
   const [authors, setAuthors] = useState<
     Record<string, { label: string; is_self: boolean }>
@@ -163,7 +165,7 @@ export default function TicketConversation({
         message: null,
         file,
       })),
-  ].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  ].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   return (
     <div className="space-y-3">
       <div
@@ -202,6 +204,8 @@ export default function TicketConversation({
             {ticket.description}
           </p>
         </article>
+        {children}
+        <h3 className="text-sm font-semibold">Reacties · nieuwste bovenaan</h3>
         {loading && (
           <p className="text-sm text-muted-foreground">Reacties laden...</p>
         )}

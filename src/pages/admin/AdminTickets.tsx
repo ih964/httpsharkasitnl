@@ -901,7 +901,7 @@ export default function AdminTickets() {
                             loading={loadingMessages}
                             userId={user?.id}
                             isStaff
-                          />
+                          >
                           <div className="border-t pt-3">
                             {user && (
                               <ReplyComposer
@@ -918,6 +918,7 @@ export default function AdminTickets() {
                               />
                             )}
                           </div>
+                          </TicketConversation>
                         </TabsContent>
                         <TabsContent value="attachments">
                           {user && (

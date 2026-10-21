@@ -903,7 +903,7 @@ export default function SupportPortal() {
                               messages={messages}
                               loading={loadingMessages}
                               userId={user?.id}
-                            />
+                            >
                             <div className="border-t pt-4">
                               {selected.status !== "gesloten" ? (
                                 user && (
@@ -926,7 +926,8 @@ export default function SupportPortal() {
                                 </p>
                               )}
                             </div>
-                          </TabsContent>
+                          </TicketConversation>
+                        </TabsContent>
                           <TabsContent value="attachments">
                             {user && (
                               <TicketAttachments

@@ -305,3 +305,16 @@ main:has([data-support-page]) {
   height: auto;
   max-height: none;
 }
+
+/* Keep the document viewport bounded while the support content grows. */
+html:has([data-support-page]) {
+  height: 100%;
+  scrollbar-color: #64748b #15191f;
+}
+html:has([data-support-page])::-webkit-scrollbar { width: 14px; }
+html:has([data-support-page])::-webkit-scrollbar-track { background: #15191f; }
+html:has([data-support-page])::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border: 3px solid #15191f;
+  border-radius: 8px;
+}
