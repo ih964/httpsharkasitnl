@@ -22,7 +22,7 @@ De achterliggende TOPdesk SLA-contracten, actieregels en alle beheerdersinstelli
 
 Iedere nieuwe melding, publieke klant- of medewerkerreactie, zichtbare bijlage en wijziging van status, prioriteit, behandelaar, behandelgroep, onderwerp, categorie, omschrijving, streefdatum of serviceafspraak maakt in dezelfde databasetransactie een onveranderlijke e-mailgebeurtenis voor de aanmelder en de servicedesk. Een update met ongewijzigde waarden maakt geen nieuwe gebeurtenis. Een wijziging van meerdere velden kan meerdere afzonderlijke berichten opleveren. Interne reacties en interne bijlagen maken nooit een klantmail of klantzichtbare historie.
 
-Verzending wordt direct na de portaalactie geprobeerd; een beveiligde Vercel Cron Job probeert de resterende wachtrij elke vijf minuten. De worker gebruikt vaste idempotentiesleutels, acht gebeurtenissen per ronde en opeenvolgende providerrequests. Zes mislukte pogingen worden als fout zichtbaar; er is geen onbegrensde, stilzwijgende retry. De status ‘Geaccepteerd door mailprovider’ betekent nadrukkelijk geen bewezen aflevering in de inbox. Definitieve afleverstatus/webhookverwerking is een vervolgstap.
+Verzending wordt direct na de portaalactie geprobeerd; de bestaande Supabase scheduler probeert met een in Vault bewaard token de resterende wachtrij elke vijf minuten. Vercel Hobby staat alleen dagelijkse taken toe; de dagelijkse Vercel-taak blijft als extra vangnet staan. De worker gebruikt vaste idempotentiesleutels, acht gebeurtenissen per ronde en opeenvolgende providerrequests. Zes mislukte pogingen worden als fout zichtbaar; er is geen onbegrensde, stilzwijgende retry. De status ‘Geaccepteerd door mailprovider’ betekent nadrukkelijk geen bewezen aflevering in de inbox. Definitieve afleverstatus/webhookverwerking is een vervolgstap.
 
 Reageren via het portaal koppelt antwoorden direct aan het ticket. Antwoorden op de mailbox worden nog niet automatisch als ticketreactie ingelezen. Reply-To verwijst naar de bestaande supportmailbox. Het domein `harkasit.nl` is bij de controle in Resend geverifieerd en geschikt voor verzenden.
 
@@ -30,7 +30,7 @@ Reageren via het portaal koppelt antwoorden direct aan het ticket. Antwoorden op
 
 - Productiebuild geslaagd.
 - Gewijzigde React-componenten en ondersteuningsbibliotheek door ESLint gecontroleerd.
-- `node tests/support.test.mjs`: acht gedragstests voor nummering, deadlines, leesbare mailinhoud, headers, authenticatie, HTML-escaping, afzender/Reply-To en provider-retry. Provider en database in deze tests zijn gemockt; er worden geen e-mails verstuurd.
+- `node tests/support.test.mjs`: negen gedragstests voor nummering, deadlines, leesbare mailinhoud, headers, authenticatie, HTML-escaping, afzender/Reply-To, provider-retry en de verificatie van het schedulertoken. Provider en database in deze tests zijn gemockt; er worden geen e-mails verstuurd.
 - `tests/support-workflow.sql`: op het actieve Supabase-project geslaagd binnen een volledig teruggedraaide transactie. Controleert mailparen, interne privacy, routering, heropenen, klantisolatie, interne/gepubliceerde kennis en autorisatie van maildiagnostiek. Geen testtickets of e-mailgebeurtenissen blijven achter.
 - Supabase RLS en grants gecontroleerd. Mailpayloads zijn niet rechtstreeks leesbaar door portaalgebruikers; medewerkers krijgen alleen statusaantallen via een gecontroleerde functie.
 - Brede TypeScript-controle meldt bestaande fouten in `client.ts`, `AdminBtwOverzicht.tsx` en `AdminParking.tsx`; geen nieuwe ticketfouten gevonden. De productiebuild blijft slagen.

@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { createHash } from "node:crypto";
 
 /**
  * Transactional ticket notification worker.
@@ -117,10 +118,25 @@ function detailValue(p: Details, key: string) {
   const raw = value(p, key);
   if (!raw) return "Niet ingesteld";
   if (p.field === "streefdatum" && Number.isFinite(Date.parse(raw))) {
-    return new Intl.DateTimeFormat("nl-NL", {dateStyle:"medium",timeStyle:"short",timeZone:"Europe/Amsterdam"}).format(new Date(raw));
+    return new Intl.DateTimeFormat("nl-NL", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "Europe/Amsterdam",
+    }).format(new Date(raw));
   }
   if (p.field === "categorie") return named(CATEGORY, raw);
-  if (p.field === "behandelgroep") return named({servicedesk:"Servicedesk",cloud:"Cloud & Microsoft 365",werkplek:"Werkplek & netwerk",security:"Cybersecurity",web:"Websites & applicaties",administratie:"Administratie"}, raw);
+  if (p.field === "behandelgroep")
+    return named(
+      {
+        servicedesk: "Servicedesk",
+        cloud: "Cloud & Microsoft 365",
+        werkplek: "Werkplek & netwerk",
+        security: "Cybersecurity",
+        web: "Websites & applicaties",
+        administratie: "Administratie",
+      },
+      raw,
+    );
   return raw;
 }
 
@@ -393,12 +409,23 @@ export default async function handler(req: any, res: any) {
     let userId: string | null = null;
     let ticketId: string | null = null;
     if (isCron) {
+      let authorized =
+        !!process.env.CRON_SECRET &&
+        req.headers.authorization === "Bearer " + process.env.CRON_SECRET;
+      const workerToken = req.headers["x-harkas-worker-token"];
       if (
-        !process.env.CRON_SECRET ||
-        req.headers.authorization !== "Bearer " + process.env.CRON_SECRET
+        !authorized &&
+        typeof workerToken === "string" &&
+        /^[0-9a-f]{64}$/.test(workerToken)
       ) {
-        return res.status(401).json({ error: "Unauthorized" });
+        const hash = createHash("sha256").update(workerToken).digest("hex");
+        const check = await db().query(
+          "SELECT EXISTS(SELECT 1 FROM harkas_support_private.worker_auth WHERE token_hash=$1) AS allowed",
+          [hash],
+        );
+        authorized = check.rows[0]?.allowed === true;
       }
+      if (!authorized) return res.status(401).json({ error: "Unauthorized" });
     } else {
       userId = await authenticatedUser(String(req.headers.authorization || ""));
       if (!userId) return res.status(401).json({ error: "Unauthorized" });
@@ -418,13 +445,11 @@ export default async function handler(req: any, res: any) {
       result.push(await deliver(item));
       await new Promise((resolve) => setTimeout(resolve, 600));
     }
-    return res
-      .status(200)
-      .json({
-        ok: true,
-        processed: items.length,
-        accepted_by_provider: result.filter(Boolean).length,
-      });
+    return res.status(200).json({
+      ok: true,
+      processed: items.length,
+      accepted_by_provider: result.filter(Boolean).length,
+    });
   } catch (error) {
     console.error(
       "[ticket-mail] request failed",
