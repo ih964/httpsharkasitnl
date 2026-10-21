@@ -20,11 +20,11 @@ type FileEntry = {
   storage_path?: string;
 };
 const customerStyle =
-  "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40";
+  "border-blue-300 bg-blue-50 text-blue-950";
 const staffStyle =
-  "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40";
+  "border-emerald-300 bg-emerald-50 text-emerald-950";
 const internalStyle =
-  "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40";
+  "border-amber-300 bg-amber-50 text-amber-950";
 
 export default function TicketConversation({
   ticket,
