@@ -28,6 +28,7 @@ globalThis.__supportTestQuery = async (sql, args) => {
     if (valid) seen.add(key);
     return { rows: valid ? [{ nonce }] : [] };
   }
+  if(sql.includes("INSERT INTO harkas_support_private.mail_refs"))return {rows:[{reference:"<hit."+id+"@harkasit.nl>"}]};
   if (sql.includes("SELECT s.role"))
     return {
       rows: [
@@ -66,6 +67,7 @@ try {
     outfile: dir + "/api.mjs",
     bundle: true,
     platform: "node",
+    packages: "external",
     format: "esm",
     plugins: [
       {
@@ -90,6 +92,7 @@ try {
     outfile: dir + "/support.mjs",
     bundle: true,
     platform: "node",
+    packages: "external",
     format: "esm",
     logLevel: "silent",
   });
@@ -227,6 +230,8 @@ try {
     );
     assert.equal(sent[0].payload.reply_to, "support@harkasit.nl");
     assert.match(sent[0].payload.html, /&lt;script&gt;/);
+    assert.match(sent[0].payload.html, /<a href='https:\/\/www.harkasit.nl\/support\?ticket=/);
+    assert.match(sent[0].payload.html, />Ticket openen<\/a>/);
     assert.ok(queries.some((q) => q.sql.includes("SET state='sent'")));
     assert.equal(
       sent[0].headers["Idempotency-Key"],

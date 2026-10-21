@@ -1,3 +1,4 @@
+import SupportMailbox from "@/components/support/SupportMailbox";
 import { useEffect, useMemo, useState } from "react";
 import { supabase, portalSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,9 +62,9 @@ const selectStyle =
 
 export default function AdminTickets() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<"tickets" | "toegang" | "kennisbank">(
-    "tickets",
-  );
+  const [tab, setTab] = useState<
+    "tickets" | "toegang" | "kennisbank" | "mailbox"
+  >("tickets");
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [access, setAccess] = useState<PortalAccess[]>([]);
@@ -423,8 +424,15 @@ export default function AdminTickets() {
         >
           Kennisbank
         </Button>
+        <Button
+          variant={tab === "mailbox" ? "default" : "ghost"}
+          onClick={() => setTab("mailbox")}
+        >
+          Mailbox & intake
+        </Button>
       </div>
 
+      {tab === "mailbox" && <SupportMailbox />}
       {tab === "kennisbank" && <SupportKnowledge isStaff />}
       {tab === "tickets" ? (
         <>

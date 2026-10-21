@@ -1,3 +1,4 @@
+import InboundAttachments from "./InboundAttachments";
 import { useEffect, useState } from "react";
 import { portalSupabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -126,6 +127,7 @@ export default function TicketAttachments({ ticketId, userId, isStaff = false, c
           ))}
         </div>
       )}
+      <InboundAttachments ticketId={ticketId} />
       {(!closed || isStaff) && (
         <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border p-3">
           <Input id={"support-upload-" + ticketId} type="file" accept=".png,.jpg,.jpeg,.webp,.pdf,.txt"

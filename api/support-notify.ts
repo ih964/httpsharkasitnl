@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { pollSupportMailbox } from "../server/support-inbound.js";
 
 /**
  * Transactional ticket notification worker.
@@ -231,7 +232,7 @@ function body(event: EventRow) {
     "",
     "Alle berichten en wijzigingen worden ook in het ticket bewaard.",
     "Interne medewerkersnotities worden nooit gedeeld met klanten.",
-    "Reageer via het portaal zodat je antwoord direct bij het juiste ticket staat.",
+    "Je kunt op deze e-mail antwoorden of reageren via het portaal. Bewaar het ticketnummer en de oorspronkelijke e-mailconversatie.",
     "Servicedesk: support@harkasit.nl",
   ].join("\n");
 }
@@ -323,6 +324,25 @@ async function claim(
   }
 }
 
+export function supportMailHtml(event: EventRow) {
+  const url =
+    SITE_URL +
+    (event.recipient_type === "customer" ? "/support" : "/admin/tickets") +
+    "?ticket=" +
+    entryId(event);
+  return (
+    "<!doctype html><html lang='nl'><body style='padding:24px;background:#f8fafc;color:#0f172a;font-family:Arial,sans-serif'><div style='max-width:660px;margin:auto;background:white;padding:28px;border-radius:14px;border:1px solid #e2e8f0'><h2>Harkas IT Servicedesk</h2><div style='white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;font-size:14px'>" +
+    htmlEscape(body(event)) +
+    "</div><p><a href='" +
+    htmlEscape(url) +
+    "' style='display:inline-block;padding:14px 22px;background:#0369a1;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold'>Ticket openen</a></p><p style='font-size:12px'>Of open: <a href='" +
+    htmlEscape(url) +
+    "'>" +
+    htmlEscape(url) +
+    "</a></p></div></body></html>"
+  );
+}
+
 async function deliver(entry: EventRow): Promise<boolean> {
   const addr =
     entry.recipient_type === "staff"
@@ -333,13 +353,12 @@ async function deliver(entry: EventRow): Promise<boolean> {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr))
       throw new Error("Invalid recipient address");
     const text = body(entry);
-    const html =
-      "<!doctype html><html lang='nl'><body style='margin:0;padding:24px;background:#f8fafc;color:#0f172a;font-family:Arial,sans-serif'>" +
-      "<div style='max-width:660px;margin:0 auto;background:white;padding:28px;border-radius:14px;border:1px solid #e2e8f0'>" +
-      "<h2 style='margin-top:0;color:#0f172a'>Harkas IT Servicedesk</h2>" +
-      "<pre style='font-family:Arial,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;font-size:14px'>" +
-      htmlEscape(text) +
-      "</pre></div></body></html>";
+    const html = supportMailHtml(entry);
+    const storedReference = "<hit." + entry.id + "@harkasit.nl>";
+    await db().query(
+      "INSERT INTO harkas_support_private.mail_refs(reference,event_id,ticket_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
+      [storedReference, entry.id, entry.ticket_id],
+    );
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -354,6 +373,11 @@ async function deliver(entry: EventRow): Promise<boolean> {
         subject: title(entry),
         text,
         html,
+        headers: {
+          "Message-ID": storedReference,
+          "Auto-Submitted": "auto-generated",
+          "X-Harkas-Support": "notification",
+        },
       }),
       signal: AbortSignal.timeout(10000),
     });
@@ -362,6 +386,27 @@ async function deliver(entry: EventRow): Promise<boolean> {
     } | null;
     if (!response.ok || !outcome?.id)
       throw new Error("Mail provider HTTP " + response.status);
+    // Persist the provider's actual Message-ID too; some providers rewrite it.
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      const meta = await fetch(
+        "https://api.resend.com/emails/" + encodeURIComponent(outcome.id),
+        {
+          headers: { Authorization: "Bearer " + process.env.RESEND_API_KEY },
+          signal: AbortSignal.timeout(8000),
+        },
+      );
+      if (meta.ok) {
+        const detail = await meta.json();
+        if (typeof detail.message_id === "string")
+          await db().query(
+            "INSERT INTO harkas_support_private.mail_refs(reference,event_id,ticket_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
+            [detail.message_id, entry.id, entry.ticket_id],
+          );
+      }
+    } catch {
+      /* explicit outgoing reference remains available */
+    }
     await db().query(
       "UPDATE public.support_email_events SET state='sent',provider_message_id=$2,sent_at=now(),last_error=NULL WHERE id=$1 AND state='processing'",
       [entry.id, outcome.id],
@@ -450,6 +495,7 @@ export default async function handler(req: any, res: any) {
       }
       ticketId = supplied;
     }
+    if (isCron) await pollSupportMailbox(db());
     const items = await claim(ticketId, userId, isCron);
     const result: boolean[] = [];
     for (const item of items) {
