@@ -147,9 +147,9 @@ export default function SupportPortal() {
     void loadAccounts();
   }, [loadAccounts]);
 
-  const loadTickets = useCallback(async (customerId: string) => {
+  const loadTickets = useCallback(async (customerId: string, quiet = false) => {
     if (!customerId) return;
-    setLoading(true);
+    if (!quiet) setLoading(true);
     const { data, error } = await portalSupabase
       .from("support_tickets")
       .select("*")
@@ -171,7 +171,7 @@ export default function SupportPortal() {
           ) ?? null,
       );
     }
-    setLoading(false);
+    if (!quiet) setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -181,7 +181,7 @@ export default function SupportPortal() {
     if (accountId) void loadTickets(accountId);
   }, [accountId, loadTickets]);
 
-  const loadMessages = async (ticketId: string) => {
+  const loadMessages = useCallback(async (ticketId: string) => {
     setLoadingMessages(true);
     const { data, error } = await portalSupabase
       .from("support_ticket_messages")
@@ -196,11 +196,28 @@ export default function SupportPortal() {
       });
     else setMessages((data ?? []) as TicketMessage[]);
     setLoadingMessages(false);
-  };
+  }, []);
 
   useEffect(() => {
     if (selected?.id) void loadMessages(selected.id);
-  }, [selected?.id]);
+  }, [selected?.id, selected?.last_activity_at, loadMessages]);
+
+  useEffect(() => {
+    if (!accountId) return;
+    let busy = false;
+    const refresh = async () => {
+      if (document.hidden || busy) return;
+      busy = true;
+      try { await loadTickets(accountId, true); }
+      finally { busy = false; }
+    };
+    const timer = window.setInterval(() => void refresh(), 15_000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [accountId, loadTickets]);
 
   const openTicket = (ticket: SupportTicket) => {
     setSelected(ticket);
@@ -680,7 +697,7 @@ export default function SupportPortal() {
                         </p>
                       )}
                       <TicketHistory
-                        key={selected.id}
+                        key={"history-" + selected.id}
                         ticketId={selected.id}
                         version={selected.updated_at}
                       />
@@ -731,7 +748,7 @@ export default function SupportPortal() {
                       </div>
                       {user && (
                         <TicketAttachments
-                          key={selected.id}
+                          key={"attachments-" + selected.id}
                           ticketId={selected.id}
                           userId={user.id}
                           closed={selected.status === "gesloten"}

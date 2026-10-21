@@ -331,8 +331,8 @@ export function supportMailHtml(event: EventRow) {
     "?ticket=" +
     entryId(event);
   return (
-    "<!doctype html><html lang='nl'><body style='padding:24px;background:#f8fafc;color:#0f172a;font-family:Arial,sans-serif'><div style='max-width:660px;margin:auto;background:white;padding:28px;border-radius:14px;border:1px solid #e2e8f0'><h2>Harkas IT Servicedesk</h2><div style='white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;font-size:14px'>" +
-    htmlEscape(body(event)) +
+    "<!doctype html><html lang='nl'><body style='padding:24px;background:#f8fafc;color:#0f172a;font-family:Arial,sans-serif'><div style='max-width:660px;margin:auto;background:white;padding:28px;border-radius:14px;border:1px solid #e2e8f0'><h2>Harkas IT Servicedesk</h2><div style='overflow-wrap:anywhere;line-height:1.6;font-size:14px'>" +
+    htmlEscape(body(event)).replace(/\r?\n/g, "<br />") +
     "</div><p><a href='" +
     htmlEscape(url) +
     "' style='display:inline-block;padding:14px 22px;background:#0369a1;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold'>Ticket openen</a></p><p style='font-size:12px'>Of open: <a href='" +

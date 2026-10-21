@@ -817,7 +817,7 @@ export default function AdminTickets() {
                       </p>
                     </div>
                     <TicketHistory
-                      key={selected.id}
+                      key={"history-" + selected.id}
                       ticketId={selected.id}
                       version={selected.updated_at}
                     />
@@ -873,7 +873,7 @@ export default function AdminTickets() {
                     </section>
                     {user && (
                       <TicketAttachments
-                        key={selected.id}
+                        key={"attachments-" + selected.id}
                         ticketId={selected.id}
                         userId={user.id}
                         isStaff
