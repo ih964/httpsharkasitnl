@@ -89,7 +89,12 @@ export default async function handler(req: any, res: any) {
              FROM participants p LEFT JOIN auth.users u ON u.id=p.author_id
            )
            SELECT author_id,
-             left(coalesce(display_name,email,CASE WHEN sender_type='medewerker' THEN 'Medewerker' ELSE 'Afzender onbekend' END),200) label,
+             CASE WHEN sender_type='medewerker' THEN 'Support@harkasit.nl · Harkas IT Beheer'
+             ELSE left(coalesce((
+               SELECT nullif(trim(c.name),'') FROM public.customers c
+               JOIN public.support_tickets t ON t.customer_id=c.id
+               WHERE t.id=$1 AND lower(trim(c.email))=lower(trim(identities.email))
+             ),display_name,email,'Afzender onbekend'),200) END label,
              (author_id=$3::uuid OR lower(email)=$4) is_self
            FROM identities`,
           [ticketId, staff, user.id, user.email],

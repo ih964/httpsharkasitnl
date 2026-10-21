@@ -19,6 +19,7 @@ type FileEntry = {
   storage_path?: string;
   message_id?: string;
 };
+const STAFF_LABEL = "Support@harkasit.nl · Harkas IT Beheer";
 const customerStyle = "border-blue-300 bg-blue-50 text-blue-950";
 const staffStyle = "border-emerald-300 bg-emerald-50 text-emerald-950";
 const internalStyle = "border-amber-300 bg-amber-50 text-amber-950";
@@ -66,6 +67,7 @@ export default function TicketConversation({
     };
   }, [ticket.id, ticket.last_activity_at, messages.length]);
   const authorLabel = (authorId: string, staff: boolean, original = false) => {
+    if (staff) return STAFF_LABEL;
     const author = authors[authorId];
     if (!isStaff && !staff && (author?.is_self || authorId === userId))
       return "Jij";
@@ -76,7 +78,7 @@ export default function TicketConversation({
         : staff
           ? "Medewerker"
           : "Afzender onbekend");
-    return staff ? `${label} · Harkas IT` : label;
+    return label;
   };
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [error, setError] = useState("");
@@ -172,7 +174,7 @@ export default function TicketConversation({
           Klant
         </span>
         <span className={"rounded-full border px-2 py-1 " + staffStyle}>
-          Harkas IT
+          {STAFF_LABEL}
         </span>
         {isStaff && (
           <span className={"rounded-full border px-2 py-1 " + internalStyle}>
