@@ -76,6 +76,13 @@ export default function SupportPortal() {
   }, []);
 
   const [email, setEmail] = useState("");
+  const [loginMethod, setLoginMethod] = useState<"password" | "link">("password");
+  const [password, setPassword] = useState("");
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
   const [sendingLogin, setSendingLogin] = useState(false);
   const [loginSent, setLoginSent] = useState(false);
   const [accounts, setAccounts] = useState<PortalAccess[]>([]);
@@ -238,6 +245,36 @@ export default function SupportPortal() {
     }
   };
 
+  const loginWithPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (sendingLogin) return;
+    setSendingLogin(true);
+    try {
+      const { error } = await portalSupabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+      if (error) throw error;
+      setPassword("");
+    } catch {
+      toast({ title: "Inloggen niet gelukt", description: "Controleer je e-mailadres en wachtwoord, of gebruik een e-maillink.", variant: "destructive" });
+    } finally { setSendingLogin(false); }
+  };
+
+  const savePassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!user || savingPassword) return;
+    setPasswordError("");
+    if (newPassword.length < 12) { setPasswordError("Gebruik minimaal 12 tekens."); return; }
+    if (newPassword !== confirmPassword) { setPasswordError("De wachtwoorden komen niet overeen."); return; }
+    setSavingPassword(true);
+    try {
+      const { error } = await portalSupabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setNewPassword(""); setConfirmPassword(""); setPasswordOpen(false);
+      toast({ title: "Wachtwoord opgeslagen", description: "Je kunt voortaan met je e-mailadres en wachtwoord inloggen. De e-maillink blijft ook beschikbaar." });
+    } catch {
+      setPasswordError("Opslaan is niet gelukt. Gebruik een sterk, nieuw wachtwoord. Blijft dit gebeuren? Log opnieuw in via een e-maillink en probeer het nogmaals.");
+    } finally { setSavingPassword(false); }
+  };
+
   const createTicket = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user || !accountId || saving) return;
@@ -328,12 +365,13 @@ export default function SupportPortal() {
               </span>
             </span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button asChild variant="ghost" size="sm">
               <Link to="/">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Website
               </Link>
             </Button>
+            {user && <Button variant="outline" size="sm" onClick={() => setPasswordOpen(true)}>Wachtwoord instellen</Button>}
             {user && (
               <Button
                 variant="outline"
@@ -346,6 +384,25 @@ export default function SupportPortal() {
           </div>
         </div>
       </header>
+      {user && <Dialog open={passwordOpen} onOpenChange={(open) => {
+        if (savingPassword) return;
+        setPasswordOpen(open); setNewPassword(""); setConfirmPassword(""); setPasswordError("");
+      }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Wachtwoord instellen of wijzigen</DialogTitle></DialogHeader>
+          <form onSubmit={savePassword} className="space-y-4">
+            <p className="text-sm text-muted-foreground">Kies een wachtwoord voor {user.email}. Inloggen via e-mail blijft mogelijk.</p>
+            <Input type="text" autoComplete="username" value={user.email ?? ""} readOnly className="sr-only" tabIndex={-1} aria-label="E-mailadres" />
+            <div className="space-y-2"><Label htmlFor="new-password">Nieuw wachtwoord</Label>
+              <Input id="new-password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={savingPassword} />
+              <p className="text-xs text-muted-foreground">Minimaal 12 tekens. Gebruik bij voorkeur een unieke wachtzin.</p></div>
+            <div className="space-y-2"><Label htmlFor="confirm-password">Herhaal wachtwoord</Label>
+              <Input id="confirm-password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={savingPassword} /></div>
+            {passwordError && <p role="alert" className="text-sm text-destructive">{passwordError}</p>}
+            <Button type="submit" disabled={savingPassword}>{savingPassword ? "Opslaan..." : "Wachtwoord opslaan"}</Button>
+          </form>
+        </DialogContent>
+      </Dialog>}
       <main className="container mx-auto max-w-6xl px-4 py-8 sm:py-12">
         <div className="mb-8">
           <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
@@ -385,31 +442,41 @@ export default function SupportPortal() {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={requestLogin} className="space-y-4">
+                <form onSubmit={loginMethod === "password" ? loginWithPassword : requestLogin} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button type="button" variant={loginMethod === "password" ? "default" : "outline"} aria-pressed={loginMethod === "password"} disabled={sendingLogin} onClick={() => { setLoginMethod("password"); setPassword(""); }}>Met wachtwoord</Button>
+                    <Button type="button" variant={loginMethod === "link" ? "default" : "outline"} aria-pressed={loginMethod === "link"} disabled={sendingLogin} onClick={() => { setLoginMethod("link"); setPassword(""); }}>Via e-maillink</Button>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     Gebruik het e-mailadres waarvoor Harkas IT jouw organisatie
-                    toegang heeft gegeven. Je hebt geen wachtwoord nodig.
+                    toegang heeft gegeven. Nog geen wachtwoord? Log in via een e-maillink en kies daarna Wachtwoord instellen.
                   </p>
                   <div className="space-y-2">
-                    <Label htmlFor="portal-email">Zakelijk e-mailadres</Label>
+                    <Label htmlFor="portal-email">E-mailadres</Label>
                     <Input
                       id="portal-email"
                       type="email"
-                      autoComplete="email"
+                      autoComplete="username"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="naam@bedrijf.nl"
                     />
                   </div>
+                  {loginMethod === "password" && <div className="space-y-2">
+                    <Label htmlFor="portal-password">Wachtwoord</Label>
+                    <Input id="portal-password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <Button type="button" variant="link" className="h-auto p-0" onClick={() => { setLoginMethod("link"); setPassword(""); }}>Wachtwoord vergeten of nog niet ingesteld?</Button>
+                  </div>}
+                  {loginMethod === "link" && <p className="text-sm text-muted-foreground">Met de persoonlijke e-maillink log je zonder wachtwoord in. Daarna kun je via Wachtwoord instellen een nieuw wachtwoord kiezen.</p>}
                   <Button
                     type="submit"
                     className="w-full"
                     disabled={sendingLogin}
                   >
                     {sendingLogin
-                      ? "Link aanvragen..."
-                      : "Stuur mij een inloglink"}
+                      ? "Even geduld..."
+                      : loginMethod === "password" ? "Inloggen" : "Stuur mij een inloglink"}
                   </Button>
                 </form>
               )}
