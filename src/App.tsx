@@ -37,6 +37,7 @@ import AdminPasswords from "./pages/admin/AdminPasswords";
 import AdminFuelPrices from "./pages/admin/AdminFuelPrices";
 import AdminParking from "./pages/admin/AdminParking";
 import AdminTickets from "./pages/admin/AdminTickets";
+import AdminQuickAccess from "./pages/admin/AdminQuickAccess";
 import SupportPortal from "./pages/SupportPortal";
 import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
@@ -83,6 +84,7 @@ const App = () => (
               <Route path="factuur-maker" element={<ModuleRoute module="factuur_maker"><InvoiceMakerForceLeftRight /></ModuleRoute>} />
               <Route path="customers" element={<ModuleRoute module="customers"><AdminCustomers /></ModuleRoute>} />
               <Route path="tickets" element={<ModuleRoute module="tickets"><AdminTickets /></ModuleRoute>} />
+              <Route path="snelle-toegang" element={<ModuleRoute adminOnly><AdminQuickAccess /></ModuleRoute>} />
               <Route path="btw-overzicht" element={<ModuleRoute module="btw_overzicht"><AdminBtwOverzicht /></ModuleRoute>} />
               <Route path="domeinen" element={<ModuleRoute module="domains"><AdminDomains /></ModuleRoute>} />
               <Route path="uren" element={<ModuleRoute module="time_entries"><AdminTimeEntriesWithPeriod /></ModuleRoute>} />
