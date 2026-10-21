@@ -2,7 +2,7 @@ import { portalSupabase } from "@/integrations/supabase/client";
 
 /**
  * Delivery is best-effort here; the database transaction has already created
- * an immutable notification event. A protected daily cron retries the outbox.
+ * an immutable notification event. A protected scheduled worker retries the outbox.
  */
 export async function notifySupportChange(ticketId: string): Promise<void> {
   try {

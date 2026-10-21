@@ -35,7 +35,7 @@
   "crons": [
     {
       "path": "/api/support-notify",
-      "schedule": "7 8 * * *"
+      "schedule": "*/5 * * * *"
     }
   ]
 }
