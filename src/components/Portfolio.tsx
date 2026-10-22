@@ -42,6 +42,7 @@ const projects: Project[] = [
     category: "Contentwebsite",
     description: "Website gericht op nieuws, informatie en content rondom de brandweer.",
     url: "https://brandweerinside.nl/",
+    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://brandweerinside.nl/",
     monogram: "B",
   },
   {
@@ -49,6 +50,7 @@ const projects: Project[] = [
     category: "Bedrijfswebsite",
     description: "Online presentatie van ongediertebestrijdingsdiensten met duidelijke informatie en contactmogelijkheden.",
     url: "https://dejagerongediertebestrijding.nl/",
+    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://dejagerongediertebestrijding.nl/",
     monogram: "D",
   },
   {
@@ -56,6 +58,7 @@ const projects: Project[] = [
     category: "Bedrijfswebsite",
     description: "Website voor een technisch dienstverlenend bedrijf met overzichtelijke informatie over de diensten.",
     url: "https://elekroblommestein.nl/",
+    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://elekroblommestein.nl/",
     monogram: "E",
   },
   {
@@ -63,6 +66,7 @@ const projects: Project[] = [
     category: "Webproject",
     description: "Website met een heldere structuur en een professionele presentatie.",
     url: "https://tsptl.nl/",
+    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://tsptl.nl/",
     monogram: "T",
   },
   {
@@ -70,6 +74,7 @@ const projects: Project[] = [
     category: "Stichtingswebsite",
     description: "Informatieve website voor de stichting, met ruimte voor activiteiten en contact.",
     url: "https://stichtingalbirwataqwa.nl/",
+    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://stichtingalbirwataqwa.nl/",
     monogram: "A",
   },
 ];
