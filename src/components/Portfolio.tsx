@@ -24,7 +24,7 @@ const projects: Project[] = [
   {
     name: "Comfort by Sons",
     category: "WooCommerce & maatwerk",
-    description: "Een maatwerk configurator voor banken en poefs binnen de WooCommerce-webshop, met keuzes voor stof en afmetingen.",
+    description: "Maatwerk meubelconfigurator binnen WooCommerce voor banken en poefs, met keuzes voor stof en afmetingen.",
     url: "https://comfortbysons.nl/",
     preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fcomfortbysons.nl%2F?w=1200",
     monogram: "C",
@@ -32,18 +32,50 @@ const projects: Project[] = [
   {
     name: "SMVC Fair Play",
     category: "Verenigingswebsite & WordPress",
-    description: "Een moderne verenigingswebsite, inclusief de doorontwikkeling en inrichting van de WordPress-omgeving.",
+    description: "Verenigingswebsite en inrichting van WordPress, zodat de vereniging de site zelf kan beheren.",
     url: "https://smvcfairplay.nl/",
-    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fsmvcfairplay.nl%2F?w=1200",
+    preview: "https://screenshot2.lovable.dev/lovp_24derjrarv880bwgfrtx02w90z/e3020aba2f955afbff16fafb66bd02bb_1790888371651.png",
     monogram: "F",
   },
   {
-    name: "Harkas IT",
-    category: "Eigen platform & klantportaal",
-    description: "Onze eigen digitale omgeving met bedrijfswebsite, supportportaal en geïntegreerde administratieve functies.",
-    url: "https://harkasit.nl/",
-    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fharkasit.nl%2F?w=1200",
-    monogram: "H",
+    name: "Brandweer Inside",
+    category: "Contentwebsite",
+    description: "Website gericht op nieuws, informatie en content rondom de brandweer.",
+    url: "https://brandweerinside.nl/",
+    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fbrandweerinside.nl%2F?w=1200",
+    monogram: "B",
+  },
+  {
+    name: "De Jager Ongediertebestrijding",
+    category: "Bedrijfswebsite",
+    description: "Online presentatie van ongediertebestrijdingsdiensten met duidelijke informatie en contactmogelijkheden.",
+    url: "https://dejagerongediertebestrijding.nl/",
+    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fdejagerongediertebestrijding.nl%2F?w=1200",
+    monogram: "D",
+  },
+  {
+    name: "Elekro Blommestein",
+    category: "Bedrijfswebsite",
+    description: "Website voor een technisch dienstverlenend bedrijf met overzichtelijke informatie over de diensten.",
+    url: "https://elekroblommestein.nl/",
+    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Felekroblommestein.nl%2F?w=1200",
+    monogram: "E",
+  },
+  {
+    name: "TSPTL",
+    category: "Webproject",
+    description: "Website met een heldere structuur en een professionele presentatie.",
+    url: "https://tsptl.nl/",
+    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Ftsptl.nl%2F?w=1200",
+    monogram: "T",
+  },
+  {
+    name: "Stichting Albir Wa Taqwa",
+    category: "Stichtingswebsite",
+    description: "Informatieve website voor de stichting, met ruimte voor activiteiten en contact.",
+    url: "https://stichtingalbirwataqwa.nl/",
+    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fstichtingalbirwataqwa.nl%2F?w=1200",
+    monogram: "A",
   },
 ];
 
@@ -163,7 +195,7 @@ const ProjectPreview = ({ project }: { project: Project }) => {
       </div>
       <div className="absolute inset-x-0 bottom-0 top-9 flex flex-col items-center justify-center gap-5 bg-gradient-to-br from-slate-800 via-[#101c35] to-[#102f50] p-8 text-center">
         <span className="flex h-20 w-20 items-center justify-center rounded-3xl border border-white/20 bg-white/10 text-4xl font-black text-white shadow-xl">{project.monogram}</span>
-        <span className="text-2xl font-bold tracking-tight text-white">{project.name}</span>
+        <span className="text-sm font-medium text-slate-300">Bekijk de website via de knop hieronder</span>
       </div>
       {!imageFailed && (
         <img
@@ -241,7 +273,7 @@ const Portfolio = () => (
           Websites & <span className="text-gradient">digitale projecten</span>
         </h2>
         <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
-          Een selectie van websites, platforms en oplossingen waaraan Harkas IT heeft gewerkt. Ontdek wat we in de praktijk realiseren.
+          Een selectie van klantwebsites en digitale projecten waaraan Harkas IT heeft gewerkt.
         </p>
       </motion.div>
 
