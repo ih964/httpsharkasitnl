@@ -10,7 +10,7 @@ type Project = {
   category: string;
   description: string;
   url: string;
-  preview: string;
+  preview?: string;
   monogram: string;
 };
 
@@ -192,7 +192,7 @@ const ProjectPreview = ({ project }: { project: Project }) => {
         <span className="flex h-20 w-20 items-center justify-center rounded-3xl border border-white/20 bg-white/10 text-4xl font-black text-white shadow-xl">{project.monogram}</span>
         <span className="text-sm font-medium text-slate-300">Bekijk de website via de knop hieronder</span>
       </div>
-      {!imageFailed && (
+      {project.preview && !imageFailed && (
         <img
           src={project.preview}
           alt={"Voorbeeldweergave van de website " + project.name}
