@@ -42,7 +42,6 @@ const projects: Project[] = [
     category: "Contentwebsite",
     description: "Website gericht op nieuws, informatie en content rondom de brandweer.",
     url: "https://brandweerinside.nl/",
-    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fbrandweerinside.nl%2F?w=1200",
     monogram: "B",
   },
   {
@@ -50,7 +49,6 @@ const projects: Project[] = [
     category: "Bedrijfswebsite",
     description: "Online presentatie van ongediertebestrijdingsdiensten met duidelijke informatie en contactmogelijkheden.",
     url: "https://dejagerongediertebestrijding.nl/",
-    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fdejagerongediertebestrijding.nl%2F?w=1200",
     monogram: "D",
   },
   {
@@ -58,7 +56,6 @@ const projects: Project[] = [
     category: "Bedrijfswebsite",
     description: "Website voor een technisch dienstverlenend bedrijf met overzichtelijke informatie over de diensten.",
     url: "https://elekroblommestein.nl/",
-    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Felekroblommestein.nl%2F?w=1200",
     monogram: "E",
   },
   {
@@ -66,7 +63,6 @@ const projects: Project[] = [
     category: "Webproject",
     description: "Website met een heldere structuur en een professionele presentatie.",
     url: "https://tsptl.nl/",
-    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Ftsptl.nl%2F?w=1200",
     monogram: "T",
   },
   {
@@ -74,7 +70,6 @@ const projects: Project[] = [
     category: "Stichtingswebsite",
     description: "Informatieve website voor de stichting, met ruimte voor activiteiten en contact.",
     url: "https://stichtingalbirwataqwa.nl/",
-    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fstichtingalbirwataqwa.nl%2F?w=1200",
     monogram: "A",
   },
 ];
