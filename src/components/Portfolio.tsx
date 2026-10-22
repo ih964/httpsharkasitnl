@@ -180,6 +180,7 @@ const CarouselSlider = ({
 
 const ProjectPreview = ({ project }: { project: Project }) => {
   const [imageFailed, setImageFailed] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   return (
     <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-blue-950">
       <div className="absolute inset-x-0 top-0 z-10 flex h-9 items-center gap-2 border-b border-white/10 bg-[#111a2a] px-4">
@@ -197,8 +198,9 @@ const ProjectPreview = ({ project }: { project: Project }) => {
           src={project.preview}
           alt={"Voorbeeldweergave van de website " + project.name}
           loading="lazy"
+          onLoad={() => setImageLoaded(true)}
           onError={() => setImageFailed(true)}
-          className="absolute inset-x-0 bottom-0 top-9 h-[calc(100%_-_2.25rem)] w-full object-cover object-top"
+          className={`absolute inset-x-0 bottom-0 top-9 h-[calc(100%_-_2.25rem)] w-full object-cover object-top transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
         />
       )}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/35 to-transparent" />
