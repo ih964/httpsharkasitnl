@@ -11,7 +11,7 @@ type Project = {
   description: string;
   url: string;
   preview?: string;
-  monogram: string;
+  availabilityNote?: string;
 };
 
 type Organisation = {
@@ -26,56 +26,49 @@ const projects: Project[] = [
     category: "WooCommerce & maatwerk",
     description: "Maatwerk meubelconfigurator binnen WooCommerce voor banken en poefs, met keuzes voor stof en afmetingen.",
     url: "https://comfortbysons.nl/",
-    preview: "https://s0.wordpress.com/mshots/v1/https%3A%2F%2Fcomfortbysons.nl%2F?w=1200",
-    monogram: "C",
+    preview: "/portfolio/comfort-by-sons-20261022.jpg",
   },
   {
     name: "SMVC Fair Play",
     category: "Verenigingswebsite & WordPress",
     description: "Verenigingswebsite en inrichting van WordPress, zodat de vereniging de site zelf kan beheren.",
     url: "https://smvcfairplay.nl/",
-    preview: "https://screenshot2.lovable.dev/lovp_24derjrarv880bwgfrtx02w90z/e3020aba2f955afbff16fafb66bd02bb_1790888371651.png",
-    monogram: "F",
+    preview: "/portfolio/smvc-fair-play-20261022.jpg",
   },
   {
     name: "Brandweer Inside",
-    category: "Contentwebsite",
-    description: "Website gericht op nieuws, informatie en content rondom de brandweer.",
+    category: "Bedrijfswebsite",
+    description: "Website voor brandwachten, rescue teams en brandveiligheid, met een overzichtelijke presentatie van de diensten.",
     url: "https://brandweerinside.nl/",
-    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://brandweerinside.nl/",
-    monogram: "B",
+    preview: "/portfolio/brandweer-inside-20261022.jpg",
   },
   {
     name: "De Jager Ongediertebestrijding",
     category: "Bedrijfswebsite",
     description: "Online presentatie van ongediertebestrijdingsdiensten met duidelijke informatie en contactmogelijkheden.",
     url: "https://dejagerongediertebestrijding.nl/",
-    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://dejagerongediertebestrijding.nl/",
-    monogram: "D",
+    preview: "/portfolio/de-jager-20261022.jpg",
   },
   {
-    name: "Elekro Blommestein",
+    name: "Elektro Blommestein",
     category: "Bedrijfswebsite",
     description: "Website voor een technisch dienstverlenend bedrijf met overzichtelijke informatie over de diensten.",
-    url: "https://elekroblommestein.nl/",
-    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://elekroblommestein.nl/",
-    monogram: "E",
+    url: "https://elektro-blommestein.nl/",
+    preview: "/portfolio/elektro-blommestein-20261022.jpg",
   },
   {
-    name: "TSPTL",
-    category: "Webproject",
-    description: "Website met een heldere structuur en een professionele presentatie.",
+    name: "TSP Transport & Logistics",
+    category: "Transport & logistiek",
+    description: "Bedrijfswebsite voor transport en logistiek, met een heldere structuur en een professionele presentatie.",
     url: "https://tsptl.nl/",
-    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://tsptl.nl/",
-    monogram: "T",
+    availabilityNote: "De website toont momenteel geen inhoud.",
   },
   {
     name: "Stichting Albir Wa Taqwa",
     category: "Stichtingswebsite",
     description: "Informatieve website voor de stichting, met ruimte voor activiteiten en contact.",
-    url: "https://stichtingalbirwataqwa.nl/",
-    preview: "https://image.thum.io/get/noanimate/width/1000/crop/650/maxAge/168/https://stichtingalbirwataqwa.nl/",
-    monogram: "A",
+    url: "https://albirwataqwaa.nl/",
+    availabilityNote: "Voor deze website is momenteel geen voorbeeld beschikbaar.",
   },
 ];
 
@@ -185,41 +178,39 @@ const CarouselSlider = ({
 
 const ProjectPreview = ({ project }: { project: Project }) => {
   const [imageFailed, setImageFailed] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  if (!project.preview || imageFailed) return null;
+
   return (
-    <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-blue-950">
+    <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-slate-900">
       <div className="absolute inset-x-0 top-0 z-10 flex h-9 items-center gap-2 border-b border-white/10 bg-[#111a2a] px-4">
         <span className="h-2 w-2 rounded-full bg-rose-400/75" />
         <span className="h-2 w-2 rounded-full bg-amber-400/75" />
         <span className="h-2 w-2 rounded-full bg-emerald-400/75" />
         <span className="ml-3 max-w-[70%] truncate text-[10px] text-slate-400">{project.url.replace("https://", "")}</span>
       </div>
-      <div className="absolute inset-x-0 bottom-0 top-9 flex flex-col items-center justify-center gap-5 bg-gradient-to-br from-slate-800 via-[#101c35] to-[#102f50] p-8 text-center">
-        <span className="flex h-20 w-20 items-center justify-center rounded-3xl border border-white/20 bg-white/10 text-4xl font-black text-white shadow-xl">{project.monogram}</span>
-        <span className="text-sm font-medium text-slate-300">Bekijk de website via de knop hieronder</span>
-      </div>
-      {project.preview && !imageFailed && (
-        <img
-          src={project.preview}
-          alt={"Voorbeeldweergave van de website " + project.name}
-          loading="lazy"
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageFailed(true)}
-          className={`absolute inset-x-0 bottom-0 top-9 h-[calc(100%_-_2.25rem)] w-full object-cover object-top transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-        />
-      )}
+      <img
+        src={project.preview}
+        alt={"Website van " + project.name + ", vastgelegd op 22 oktober 2026"}
+        loading="lazy"
+        decoding="async"
+        width={1920}
+        height={900}
+        onError={() => setImageFailed(true)}
+        className="absolute inset-x-0 bottom-0 top-9 h-[calc(100%_-_2.25rem)] w-full object-cover object-top"
+      />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/35 to-transparent" />
     </div>
   );
 };
 
 const ProjectCard = ({ project }: { project: Project }) => (
-  <article className="group h-full overflow-hidden rounded-[1.5rem] border border-border/70 bg-card/70 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-glow">
+  <article className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-card/70 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-glow">
     <ProjectPreview project={project} />
-    <div className="flex min-h-[226px] flex-col p-6 sm:p-7">
+    <div className="flex min-h-[226px] flex-1 flex-col p-6 sm:p-7">
       <p className="mb-3 text-xs font-semibold uppercase tracking-[0.17em] text-primary">{project.category}</p>
       <h3 className="mb-2 text-xl font-bold text-foreground sm:text-2xl">{project.name}</h3>
       <p className="mb-5 flex-1 text-sm leading-relaxed text-muted-foreground">{project.description}</p>
+      {project.availabilityNote && <p className="mb-5 text-xs leading-relaxed text-muted-foreground">{project.availabilityNote}</p>}
       <a
         href={project.url}
         target="_blank"

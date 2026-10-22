@@ -71,6 +71,7 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(false);
     const name = formData.name.trim();
     const email = formData.email.trim();
     const phone = formData.phone.trim();
@@ -99,6 +100,10 @@ const Contact = () => {
       });
 
       if (!response.ok) throw new Error("Formulier kon niet worden verzonden");
+      const result: unknown = await response.json();
+      if (typeof result !== "object" || result === null || !("ok" in result) || result.ok !== true) {
+        throw new Error("Verzending is niet bevestigd");
+      }
 
       setSubmitted(true);
       setFormData({
@@ -117,7 +122,9 @@ const Contact = () => {
     } catch {
       toast({
         title: "Verzenden niet gelukt",
-        description: "Probeer het opnieuw of mail direct naar info@harkasit.nl.",
+        description: service === "Administratie & facturatie"
+          ? "Probeer het opnieuw of mail direct naar administratie@harkasit.nl."
+          : "Probeer het opnieuw of mail direct naar info@harkasit.nl.",
         variant: "destructive",
       });
     } finally {

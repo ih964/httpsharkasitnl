@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle2,
+  Copy,
   ExternalLink,
   FileText,
   FolderOpen,
@@ -13,7 +14,6 @@ import {
   Loader2,
   Mail,
   Server,
-  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -77,6 +77,17 @@ const AdminQuickAccess = () => {
   const { session } = useAuth();
   const [ssoStatus, setSsoStatus] = useState<SsoStatus>("loading");
   const [openingPlesk, setOpeningPlesk] = useState(false);
+
+  const copyEmail = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      toast.success("E-mailadres gekopieerd", { description: email });
+    } catch {
+      toast.error("Kopiëren is niet gelukt", {
+        description: "Selecteer het e-mailadres op de kaart en kopieer het handmatig.",
+      });
+    }
+  };
 
   useEffect(() => {
     if (!session?.access_token) return;
@@ -153,6 +164,11 @@ const AdminQuickAccess = () => {
 
       <section aria-labelledby="mailboxes-title" className="space-y-4">
         <h2 id="mailboxes-title" className="text-xl font-semibold">Mailboxen</h2>
+        <p id="mailbox-session-help" className="text-sm text-muted-foreground">
+          Webmail opent je bestaande aanmelding. Controleer welk e-mailadres actief is
+          en meld je zo nodig aan met het adres op de kaart. De knoppen wisselen niet
+          automatisch van mailbox.
+        </p>
         <div className="grid gap-4 md:grid-cols-3">
           {mailboxes.map((mailbox) => (
             <Card key={mailbox.email} className="flex flex-col">
@@ -161,17 +177,33 @@ const AdminQuickAccess = () => {
                   <mailbox.icon className="h-5 w-5" />
                 </div>
                 <CardTitle className="text-lg">{mailbox.label}</CardTitle>
-                <CardDescription className="break-all font-medium text-foreground">
+                <CardDescription className="select-all break-all font-medium text-foreground">
                   {mailbox.email}
                 </CardDescription>
               </CardHeader>
               <CardContent className="mt-auto space-y-4">
                 <p className="min-h-10 text-sm text-muted-foreground">{mailbox.description}</p>
                 <Button asChild className="w-full">
-                  <a href={mailbox.url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-2 h-4 w-4" />
+                  <a
+                    href={mailbox.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open webmail (${mailbox.email}, nieuw tabblad)`}
+                    aria-describedby="mailbox-session-help"
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
                     Open webmail
                   </a>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => void copyEmail(mailbox.email)}
+                  aria-label={`Kopieer e-mailadres ${mailbox.email}`}
+                >
+                  <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
+                  E-mailadres kopiëren
                 </Button>
               </CardContent>
             </Card>
@@ -217,10 +249,12 @@ const AdminQuickAccess = () => {
             </div>
             <p className="text-sm text-muted-foreground">
               {ssoStatus === "configured"
-                ? "Automatisch aanmelden gebruikt een eenmalig Plesk-sessietoken. Je wachtwoord wordt niet naar de browser gestuurd."
+                ? "Je opent Plesk met een eenmalige aanmelding. Plesk kan om een verificatiecode vragen."
                 : ssoStatus === "loading"
                   ? "Plesk-koppeling wordt gecontroleerd..."
-                  : "Een bestaande Plesk-sessie wordt hergebruikt. Voor volledig automatisch aanmelden is een toegestane Plesk API-koppeling nodig."}
+                  : ssoStatus === "not-configured"
+                    ? "Automatisch aanmelden is nog niet ingesteld. Je bestaande Plesk-aanmelding wordt gebruikt; anders kun je daar inloggen."
+                    : "De aanmeldkoppeling kan nu niet worden gecontroleerd. Je kunt Plesk openen en daar inloggen."}
             </p>
             <div className="grid gap-3 border-t pt-4 sm:grid-cols-2">
               {pleskLinks.map((item) => (
@@ -256,17 +290,6 @@ const AdminQuickAccess = () => {
           </CardContent>
         </Card>
       </section>
-
-      <div className="flex items-start gap-3 rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
-        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-        <p>
-          <strong className="text-foreground">Veilig aanmelden:</strong> de webmaillinks
-          selecteren de juiste gebruikersnaam en hergebruiken een geldige webmailsessie.
-          Roundcube ondersteunt hiermee geen gegarandeerde automatische login voor drie
-          verschillende accounts tegelijk. Mailboxwachtwoorden staan niet in de links
-          of in de broncode van Harkas Admin.
-        </p>
-      </div>
     </div>
   );
 };

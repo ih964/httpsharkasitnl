@@ -11,8 +11,8 @@ Admin-menu: **Mail & Hosting** (`/admin/snelle-toegang`).
 - Plesk e-mailbeheer, websitebeheer, bestanden, WordPress Toolkit, Mijn Cloud86
 
 De pagina is uitsluitend toegankelijk voor gebruikers met de adminrol.
-Webmaillinks selecteren het juiste e-mailadres, maar versturen **geen wachtwoord** en vormen op zichzelf **geen SSO**.
-Roundcube kan bij het wisselen tussen mailboxen opnieuw om authenticatie vragen.
+Webmaillinks vullen het e-mailadres in op het Roundcube-inlogformulier, maar wisselen een bestaande sessie **niet** van mailbox. Een klik op de kaart voor `info@harkasit.nl` kan dus de al aangemelde administratiemailbox openen. De pagina legt dit bij de mailboxkaarten uit en biedt per account **E-mailadres kopiëren**, zodat de gebruiker met het gewenste adres kan inloggen.
+De links versturen **geen wachtwoord** en vormen op zichzelf **geen SSO**. De bestaande `/roundcube/index.php`-route is op 22 oktober 2026 in de lokale browser gecontroleerd en werkt; de huidige sessie blijft behouden.
 
 ## Plesk eenmalig koppelen voor automatische aanmelding
 
