@@ -69,15 +69,19 @@ export default async function handler(req: any, res: any) {
   res.setHeader("Referrer-Policy", "no-referrer");
   if (!["GET", "POST"].includes(req.method)) return res.status(405).json({ error: "Methode niet toegestaan" });
   let imap: ImapFlow | undefined;
+  let stage = "authorization";
   try {
     const bearer = String(req.headers.authorization || "");
     if (!(await isAdmin(bearer))) return res.status(403).json({ error: "Alleen voor beheerders" });
     const input = parseRequest(req.query || {});
     if ((input.action === "send") !== (req.method === "POST")) throw new MailError("Methode niet toegestaan", 405);
     const composed = input.action === "send" ? composeInput(req.body || {}) : undefined;
+    stage = "credential";
     const password = await credential(input.account, bearer);
     imap = new ImapFlow({ host: HOST, port: 993, secure: true, auth: { user: input.address, pass: password }, logger: false, connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 12000 });
+    stage = "connect";
     await imap.connect();
+    stage = "mailbox";
     if (composed) {
       // Build one RFC822 message for both SMTP delivery and the Sent copy.
       const composer = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "windows" });
@@ -123,6 +127,10 @@ export default async function handler(req: any, res: any) {
     return res.json({ uid: input.uid, account: input.address, subject: mail.subject || "Zonder onderwerp", from: addresses(mail.from?.value), to: addresses(Array.isArray(mail.to) ? mail.to.flatMap(x=>x.value) : mail.to?.value), replyTo: addresses(mail.replyTo?.value || mail.from?.value), date: mail.date, text: (mail.text || "Dit bericht bevat geen leesbare tekst. Open het in webmail voor de volledige opmaak.").slice(0, 300000), attachments: mail.attachments.map((a, index) => ({ index, filename: a.filename || "bijlage", size: a.size })) });
   } catch (error) {
     if (error instanceof MailError) return res.status(error.status).json({ error: error.message });
+    const failure = error as { authenticationFailed?: boolean; code?: string; responseText?: string };
+    const authenticationFailed = Boolean(failure?.authenticationFailed || /AUTHENTICATIONFAILED/i.test(failure?.responseText || ""));
+    console.warn("Admin mailbox unavailable", { stage, authenticationFailed, code: /^[A-Z_]{1,32}$/.test(failure?.code || "") ? failure.code : "MAIL_FAILURE" });
+    if (authenticationFailed) return res.status(503).json({ error: "De mailserver accepteert het opgeslagen mailboxwachtwoord niet. Werk het webmailwachtwoord bij in Wachtwoorden en probeer opnieuw." });
     return res.status(503).json({ error: "Mailbox openen mislukt. Controleer de opgeslagen inloggegevens of probeer opnieuw." });
   } finally { if (imap) await imap.logout().catch(() => {}); }
 }
