@@ -20,7 +20,9 @@ import {
 import { toast } from "sonner";
 
 const PLESK_ORIGIN = "https://shared70.cloud86-host.nl:8443";
-const PLESK_HOME = PLESK_ORIGIN + "/smb/web/view";
+const cloud86Sso = (path: string) =>
+  "https://my.cloud86.io/clientarea.php?action=productdetails&id=16509&dosinglesignon=1&success_redirect_url=" + encodeURIComponent(path);
+const PLESK_HOME = cloud86Sso("/smb/web/view");
 
 const mailboxes = [
   {
@@ -50,7 +52,7 @@ const pleskLinks = [
   {
     label: "Mailadressen beheren",
     description: "Mailboxen, aliassen en mailinstellingen",
-    url: PLESK_ORIGIN + "/smb/email-address/list/domainId/191",
+    url: cloud86Sso("/smb/email-address/list"),
     icon: Mail,
   },
   {
@@ -62,13 +64,13 @@ const pleskLinks = [
   {
     label: "Bestandsbeheer",
     description: "Bestanden op de hostingomgeving",
-    url: PLESK_ORIGIN + "/smb/file-manager",
+    url: cloud86Sso("/smb/file-manager/list"),
     icon: FolderOpen,
   },
   {
     label: "WordPress",
     description: "WordPress Toolkit van Plesk",
-    url: PLESK_ORIGIN + "/modules/wp-toolkit/index.php/domain/index?context=extNavButton_wp_toolkit_1",
+    url: cloud86Sso("/modules/wp-toolkit/index.php/domain/list"),
     icon: Server,
   },
 ] as const;
@@ -151,7 +153,7 @@ const AdminQuickAccess = () => {
     } catch {
       if (tab) tab.location.replace(PLESK_HOME);
       else window.open(PLESK_HOME, "_blank", "noopener,noreferrer");
-      toast.warning("Automatische aanmelding is niet gelukt. Open Plesk met je bestaande sessie.");
+      toast.warning("Je wordt via Mijn Cloud86 aangemeld bij Plesk.");
     } finally {
       setOpeningPlesk(false);
     }
@@ -248,11 +250,11 @@ const AdminQuickAccess = () => {
                 {openingPlesk
                   ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   : <ExternalLink className="mr-2 h-4 w-4" />}
-                {ssoStatus === "configured" ? "Plesk openen met automatische aanmelding" : "Plesk openen"}
+                Plesk openen met automatische aanmelding
               </Button>
               <Button variant="outline" asChild>
                 <a
-                  href="https://my.cloud86.io/clientarea.php?action=productdetails&id=16509"
+                  href={PLESK_HOME}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -264,10 +266,10 @@ const AdminQuickAccess = () => {
               {ssoStatus === "configured"
                 ? "Je opent Plesk met een eenmalige aanmelding. Plesk kan om een verificatiecode vragen."
                 : ssoStatus === "loading"
-                  ? "Plesk-koppeling wordt gecontroleerd..."
+                  ? "Plesk opent via je Mijn Cloud86-aanmelding."
                   : ssoStatus === "not-configured"
-                    ? "Automatisch aanmelden is nog niet ingesteld. Je bestaande Plesk-aanmelding wordt gebruikt; anders kun je daar inloggen."
-                    : "De aanmeldkoppeling kan nu niet worden gecontroleerd. Je kunt Plesk openen en daar inloggen."}
+                    ? "Je wordt automatisch aangemeld via Mijn Cloud86. Is die sessie verlopen, log dan eerst bij Cloud86 in."
+                    : "Je wordt via Mijn Cloud86 aangemeld. Cloud86 kan om inloggen of een verificatiecode vragen."}
             </p>
             <div className="grid gap-3 border-t pt-4 sm:grid-cols-2">
               {pleskLinks.map((item) => (
