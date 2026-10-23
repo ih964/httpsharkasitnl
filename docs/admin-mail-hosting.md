@@ -11,8 +11,9 @@ Admin-menu: **Mail & Hosting** (`/admin/snelle-toegang`).
 - Plesk e-mailbeheer, websitebeheer, bestanden, WordPress Toolkit, Mijn Cloud86
 
 De pagina is uitsluitend toegankelijk voor gebruikers met de adminrol.
-Webmaillinks vullen het e-mailadres in op het Roundcube-inlogformulier, maar wisselen een bestaande sessie **niet** van mailbox. Een klik op de kaart voor `info@harkasit.nl` kan dus de al aangemelde administratiemailbox openen. De pagina legt dit bij de mailboxkaarten uit en biedt per account **E-mailadres kopiëren**, zodat de gebruiker met het gewenste adres kan inloggen.
-De links versturen **geen wachtwoord** en vormen op zichzelf **geen SSO**. De bestaande `/roundcube/index.php`-route is op 22 oktober 2026 in de lokale browser gecontroleerd en werkt; de huidige sessie blijft behouden.
+**Mailbox openen** verbindt sinds 23 oktober 2026 rechtstreeks met de gekozen mailbox binnen Harkas Admin, zonder aparte mailboxlogin. De server hergebruikt de bestaande wachtwoordkluis voor info/administratie en Supabase Vault voor support. Wachtwoorden blijven server-side. Mappen, berichten, bijlagen, opstellen en beantwoorden zijn beschikbaar; zie [Directe mailboxtoegang](admin-mail-access.md).
+
+**Roundcube openen** blijft een secundaire link naar de uitgebreide externe webmail. Deze aparte webmaillink vult alleen het adres in en kan een bestaande Roundcube-sessie behouden; het is geen Roundcube-SSO.
 
 ## Plesk eenmalig koppelen voor automatische aanmelding
 
@@ -36,4 +37,4 @@ Bronnen:
 
 ## Mailboxen zonder aparte login
 
-Voor **echte** automatische toegang tot drie verschillende mailboxen is een interne mailclient met server-side IMAP-sessies (per mailbox) of een SSO-oplossing van de mailprovider nodig. Plesk-sessietokens loggen alleen in bij het Plesk-panel, niet automatisch in bij drie verschillende Roundcube-accounts. Deze pagina levert veilige snelkoppelingen en sessiehergebruik; geen onbewezen automatische webmail-login.
+Dit is gerealiseerd met een interne mailclient en server-side IMAP/SMTP-aanmelding per mailbox. Er worden geen mailboxwachtwoorden aan links of frontendcode toegevoegd. Plesk-sessietokens en Roundcube-sessies staan los van deze interne mailboxtoegang.

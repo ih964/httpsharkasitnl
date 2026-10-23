@@ -15,7 +15,7 @@ function db() {
 class MailError extends Error { constructor(message: string, public status = 400) { super(message); } }
 export function parseRequest(query: Record<string, unknown>) {
   const account = String(query.account || "");
-  if (!Object.hasOwn(ACCOUNTS, account)) throw new MailError("Ongeldige mailbox");
+  if (!Object.prototype.hasOwnProperty.call(ACCOUNTS, account)) throw new MailError("Ongeldige mailbox");
   const folder = String(query.folder || "INBOX");
   if (folder.length > 255 || /[\0\r\n]/.test(folder)) throw new MailError("Ongeldige map");
   const action = String(query.action || "list");
