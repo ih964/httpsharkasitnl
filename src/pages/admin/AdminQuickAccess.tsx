@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import AdminMailbox from "@/components/admin/AdminMailbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,6 +77,8 @@ type SsoStatus = "loading" | "configured" | "not-configured" | "unavailable";
 
 const AdminQuickAccess = () => {
   const { session } = useAuth();
+  const [searchParams] = useSearchParams();
+  const selectedMailbox = searchParams.get("mailbox");
   const [ssoStatus, setSsoStatus] = useState<SsoStatus>("loading");
   const [openingPlesk, setOpeningPlesk] = useState(false);
 
@@ -153,6 +157,10 @@ const AdminQuickAccess = () => {
     }
   };
 
+  if (selectedMailbox === "info" || selectedMailbox === "administratie" || selectedMailbox === "support") {
+    return <AdminMailbox key={selectedMailbox} account={selectedMailbox} />;
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-7">
       <div>
@@ -165,9 +173,8 @@ const AdminQuickAccess = () => {
       <section aria-labelledby="mailboxes-title" className="space-y-4">
         <h2 id="mailboxes-title" className="text-xl font-semibold">Mailboxen</h2>
         <p id="mailbox-session-help" className="text-sm text-muted-foreground">
-          Webmail opent je bestaande aanmelding. Controleer welk e-mailadres actief is
-          en meld je zo nodig aan met het adres op de kaart. De knoppen wisselen niet
-          automatisch van mailbox.
+          Open de gewenste mailbox direct in Harkas Admin. Je wordt automatisch
+          verbonden met het juiste account, zonder apart mailboxwachtwoord.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           {mailboxes.map((mailbox) => (
@@ -184,15 +191,20 @@ const AdminQuickAccess = () => {
               <CardContent className="mt-auto space-y-4">
                 <p className="min-h-10 text-sm text-muted-foreground">{mailbox.description}</p>
                 <Button asChild className="w-full">
+                  <Link to={`/admin/snelle-toegang?mailbox=${mailbox.email.split("@")[0]}`}>
+                    <Inbox className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Mailbox openen
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
                   <a
                     href={mailbox.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`Open webmail (${mailbox.email}, nieuw tabblad)`}
-                    aria-describedby="mailbox-session-help"
                   >
                     <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Open webmail
+                    Roundcube openen
                   </a>
                 </Button>
                 <Button
@@ -209,6 +221,7 @@ const AdminQuickAccess = () => {
             </Card>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground">Roundcube is ook beschikbaar voor uitgebreide webmailfuncties en kan om een eigen aanmelding vragen.</p>
       </section>
 
       <section aria-labelledby="hosting-title" className="space-y-4">
@@ -295,3 +308,4 @@ const AdminQuickAccess = () => {
 };
 
 export default AdminQuickAccess;
+
