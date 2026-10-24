@@ -44,6 +44,8 @@ import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import ModuleRoute from "./components/admin/ModuleRoute";
 
+const AdminDemos = lazy(() => import('./pages/admin/AdminDemos'));
+
 const InstallationWebsite = lazy(() => import('./pages/demo/InstallationDemo'));
 const InstallationDemoLayout = lazy(() => import('./pages/demo/InstallationDemo').then(m => ({ default: m.InstallationDemoLayout })));
 const InstallationRequest = lazy(() => import('./pages/demo/InstallationRequest'));
@@ -89,6 +91,7 @@ const App = () => (
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminHome />} />
+              <Route path="demos" element={<ModuleRoute adminOnly><Suspense fallback={<div role="status" className="p-6 text-muted-foreground">Demo’s laden…</div>}><AdminDemos /></Suspense></ModuleRoute>} />
               <Route path="invoices" element={<ModuleRoute module="invoices"><AdminInvoicesWithStatus /></ModuleRoute>} />
               <Route path="offertes" element={<ModuleRoute module="quotes"><AdminQuotes /></ModuleRoute>} />
               <Route path="offerte-maker" element={<Navigate to="/admin/offertes" replace />} />

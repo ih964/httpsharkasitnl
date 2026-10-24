@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
+  Presentation,
   FileText,
   Users,
   Calculator,
@@ -42,6 +43,7 @@ type SidebarItem = {
 
 const items: SidebarItem[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, module: "dashboard" },
+  { title: "Demo’s", url: "/admin/demos", icon: Presentation, adminOnly: true },
   { title: "Facturen", url: "/admin/invoices", icon: FileText, module: "invoices" },
   { title: "Offertes", url: "/admin/offertes", icon: FilePenLine, module: "quotes" },
   { title: "Factuur Maker", url: "/admin/factuur-maker", icon: ReceiptText, module: "factuur_maker" },
