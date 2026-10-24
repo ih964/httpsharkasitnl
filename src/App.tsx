@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -43,6 +44,11 @@ import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import ModuleRoute from "./components/admin/ModuleRoute";
 
+const InstallationWebsite = lazy(() => import('./pages/demo/InstallationDemo'));
+const InstallationDemoLayout = lazy(() => import('./pages/demo/InstallationDemo').then(m => ({ default: m.InstallationDemoLayout })));
+const InstallationRequest = lazy(() => import('./pages/demo/InstallationRequest'));
+const InstallationDashboard = lazy(() => import('./pages/demo/InstallationDashboard'));
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -54,6 +60,11 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/demo/installatiebedrijf" element={<Suspense fallback={<div role="status" style={{ padding: 40, background: '#f5f6f7', color: '#102a43', minHeight: '100vh' }}>Demo laden…</div>}><InstallationDemoLayout /></Suspense>}>
+              <Route index element={<InstallationWebsite />} />
+              <Route path="aanvragen" element={<InstallationRequest />} />
+              <Route path="dashboard" element={<InstallationDashboard />} />
+            </Route>
             <Route path="/it-check" element={<ITQuickScan />} />
             <Route path="/over-ons" element={<About />} />
             <Route path="/diensten/branding" element={<Branding />} />

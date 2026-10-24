@@ -1,7 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/quotes.ts": { "includeFiles": "src/assets/logo.png", "maxDuration": 60 }
+    "api/quotes.ts": {
+      "includeFiles": "src/assets/logo.png",
+      "maxDuration": 60
+    }
   },
   "headers": [
     {
@@ -10,6 +13,15 @@
         {
           "key": "Content-Type",
           "value": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "source": "/demo/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
         }
       ]
     }

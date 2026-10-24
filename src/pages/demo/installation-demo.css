@@ -1,0 +1,146 @@
+/* The product demo has its own visual system; never change the host website. */
+.installation-demo { --id-ink:#102a43; --id-muted:#64748b; --id-copper:#ae5135; --id-line:#dfe5e9; --id-paper:#f5f6f7; color:var(--id-ink); background:#fff; min-height:100dvh; font-family:Inter,'Segoe UI',Arial,sans-serif; font-size:15px; line-height:1.6; color-scheme:light; }
+.installation-demo * { box-sizing:border-box; }
+.installation-demo :is(h1,h2,h3,h4,p) { margin:0; }
+.installation-demo :is(h1,h2,h3,h4) { font-family:inherit; color:var(--id-ink); overflow-wrap:normal; }
+.installation-demo :is(button,input,select,textarea) { font:inherit; }
+.installation-demo :is(button,a,input,select,textarea):focus-visible { outline:3px solid #d27c52; outline-offset:4px; }
+.installation-demo button { cursor:pointer; }
+.installation-demo button:disabled { cursor:wait; opacity:.65; }
+.installation-demo a { text-decoration:none; color:inherit; }
+.installation-demo svg { flex-shrink:0; }
+.installation-demo .id-container { width:min(1240px,calc(100% - 96px)); margin-inline:auto; }
+.installation-demo .id-demo-bar { min-height:44px; background:#0b2133; color:#d3dde5; display:flex; align-items:center; gap:25px; justify-content:space-between; padding:0 32px; font-size:11px; }
+.installation-demo .id-back { display:flex; align-items:center; gap:6px; color:#fff; }
+.installation-demo .id-demo-caption { display:flex; gap:8px; align-items:center; letter-spacing:1.4px; font-size:9px; }
+.installation-demo .id-live-dot { height:6px; width:6px; border-radius:100%; background:#8eb7a4; display:inline-block; flex-shrink:0; }
+.installation-demo .id-demo-bar nav { display:flex; align-self:stretch; gap:5px; }
+.installation-demo .id-demo-bar nav a { display:flex; align-items:center; gap:7px; padding:11px 12px; border-bottom:2px solid transparent; }
+.installation-demo .id-demo-bar nav a.active { color:#fff; border-bottom-color:#d68b66; background:#ffffff09; }
+.installation-demo .id-site-header { height:100px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.installation-demo .id-brand { display:flex; align-items:center; gap:10px; line-height:1; font-size:39px; letter-spacing:-2px; font-weight:750; width:max-content; }
+.installation-demo .id-brand-symbol { display:grid; place-items:center; width:40px; height:45px; background:#102a43; color:#fff; clip-path:polygon(0 0,100% 0,100% 80%,50% 100%,0 80%); }
+.installation-demo .id-brand-sub { display:block; font-size:7px; letter-spacing:1.6px; line-height:2; font-weight:600; }
+.installation-demo .id-brand-period { color:var(--id-copper); align-self:flex-start; margin-left:-8px; }
+.installation-demo .id-site-header nav { display:flex; gap:32px; align-items:center; font-size:13px; font-weight:500; }
+.installation-demo .id-btn { background:var(--id-copper); border:1px solid var(--id-copper); color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:25px; padding:16px 23px; font-size:13px; font-weight:600; border-radius:4px; line-height:1.4; transition:background .15s, transform .15s; }
+.installation-demo .id-btn:hover { background:#8f4028; border-color:#8f4028; transform:translateY(-1px); }
+.installation-demo .id-btn-small { padding:12px 17px; gap:16px; }
+.installation-demo .id-btn-white { background:#fff; border-color:#fff; color:var(--id-ink); }
+.installation-demo .id-btn-white:hover { background:#f3ede5; border-color:#f3ede5; }
+.installation-demo .id-text-link { display:inline-flex; gap:9px; align-items:center; font-size:12px; font-weight:600; background:transparent; border:0; padding:0; }
+.installation-demo .id-text-link:hover { color:var(--id-copper); }
+.installation-demo .id-eyebrow { font-size:9px; letter-spacing:1.9px; font-weight:650; display:flex; align-items:center; gap:8px; line-height:1.8; }
+.installation-demo .id-eyebrow>span { width:5px; height:5px; background:var(--id-copper); }
+.installation-demo .id-hero { display:grid; grid-template-columns:1fr 1.06fr; align-items:stretch; padding-top:22px; padding-bottom:68px; gap:50px; }
+.installation-demo .id-hero-copy { padding-top:27px; }
+.installation-demo .id-hero h1 { font-size:clamp(45px,4.6vw,68px); line-height:1.07; letter-spacing:-3px; font-weight:550; margin:24px 0; }
+.installation-demo em { color:var(--id-copper); font-style:normal; }
+.installation-demo .id-lead { font-size:14px; color:#617180; max-width:385px; line-height:1.9; }
+.installation-demo .id-hero-actions { display:flex; gap:24px; align-items:center; margin-top:30px; flex-wrap:wrap; }
+.installation-demo .id-hero-footnote { display:flex; gap:22px; color:#73808b; font-size:8px; letter-spacing:.9px; margin-top:42px; }
+.installation-demo .id-hero-footnote span+span { border-left:1px solid #ccd3d8; padding-left:22px; }
+.installation-demo .id-house-art { position:relative; min-height:480px; border-radius:4px; overflow:hidden; background:#e1e7e7; }
+.installation-demo .id-house-art>svg { display:block; width:100%; height:100%; object-fit:cover; min-height:480px; }
+.installation-demo .id-art-label { position:absolute; top:24px; left:24px; right:24px; display:flex; gap:7px; align-items:center; font-size:8px; letter-spacing:1.1px; color:#2f4a54; }
+.installation-demo .id-art-label>span:last-child { margin-left:auto; }
+.installation-demo .id-art-callout { position:absolute; bottom:25px; left:25px; right:25px; background:#fff; padding:16px; display:flex; gap:13px; align-items:center; border-radius:4px; box-shadow:0 8px 30px #21384312; }
+.installation-demo .id-callout-icon { width:39px; height:39px; background:#f4eee7; color:var(--id-copper); display:grid; place-items:center; }
+.installation-demo .id-art-callout strong { display:block; font-size:12px; font-weight:600; }
+.installation-demo .id-art-callout div>span { color:#6d7d83; display:block; font-size:10px; margin-top:3px; }
+.installation-demo .id-values { background:#f5f6f5; border-block:1px solid #e9eceb; }
+.installation-demo .id-values>.id-container { display:grid; grid-template-columns:repeat(3,1fr); padding-block:24px; }
+.installation-demo .id-values>.id-container>span { display:flex; align-items:center; justify-content:center; gap:20px; font-size:12px; font-weight:500; }
+.installation-demo .id-values>.id-container>span+span { border-left:1px solid #dce0df; }
+.installation-demo .id-values span>span { color:#89968c; font-size:10px; }
+.installation-demo .id-services { padding-block:82px; scroll-margin-top:24px; }
+.installation-demo .id-section-heading { display:flex; justify-content:space-between; gap:35px; align-items:flex-end; margin-bottom:35px; }
+.installation-demo .id-section-heading h2 { font-size:36px; line-height:1.15; letter-spacing:-1.3px; font-weight:550; margin-top:12px; }
+.installation-demo .id-section-heading>p { max-width:315px; font-size:13px; color:#6a7884; line-height:1.8; }
+.installation-demo .id-service-grid { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--id-line); border-radius:4px; overflow:hidden; }
+.installation-demo .id-service-card { padding:27px 24px; transition:background .15s; }
+.installation-demo .id-service-card:hover { background:#f7f6f2; }
+.installation-demo .id-service-card+.id-service-card { border-left:1px solid var(--id-line); }
+.installation-demo .id-card-top { display:flex; justify-content:space-between; color:var(--id-copper); margin-bottom:34px; }
+.installation-demo .id-card-top>span { font-size:10px; color:#7f8c96; }
+.installation-demo .id-service-card h3 { font-size:17px; line-height:1.4; font-weight:550; min-height:48px; }
+.installation-demo .id-service-card p { font-size:12px; color:#6a7884; line-height:1.8; margin-top:13px; min-height:66px; }
+.installation-demo .id-card-link { font-size:10px; display:block; margin-top:24px; font-weight:600; }
+.installation-demo .id-process { background:#f5f6f7; padding-block:70px; }
+.installation-demo .id-process-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:44px; }
+.installation-demo .id-step-number { display:block; color:var(--id-copper); border-top:1px solid #ccd4da; padding-top:18px; margin-bottom:18px; font-size:11px; }
+.installation-demo .id-process h3 { font-size:17px; font-weight:550; margin-bottom:10px; }
+.installation-demo .id-process-grid p { font-size:12px; line-height:1.9; color:#6a7884; max-width:290px; }
+.installation-demo .id-cta { background:#102a43; border-radius:4px; margin-block:65px; padding:43px 48px; display:flex; align-items:center; justify-content:space-between; gap:30px; }
+.installation-demo .id-cta .id-eyebrow { color:#a6b9c5; }
+.installation-demo .id-cta h2 { color:#fff; font-size:37px; line-height:1.15; letter-spacing:-1px; margin-top:15px; font-weight:500; }
+.installation-demo .id-footer { display:flex; justify-content:space-between; align-items:center; gap:28px; padding-bottom:40px; }
+.installation-demo .id-footer>div { font-size:11px; color:#75828c; }
+.installation-demo .id-footer>div a { color:var(--id-ink); }
+.installation-demo .id-footer>div a svg { display:inline; }
+.installation-demo .id-bottom-note { border-top:1px solid #e5e9ec; text-align:center; padding:14px 20px; color:#75828c; font-size:10px; background:#fafbfc; }
+.installation-demo .id-intake-page { display:grid; grid-template-columns:.8fr 1.2fr; gap:80px; padding-block:35px 70px; align-items:start; }
+.installation-demo .id-intake-aside { padding-top:20px; }
+.installation-demo .id-intake-aside h1 { font-size:46px; line-height:1.14; letter-spacing:-1.8px; font-weight:550; margin:18px 0; }
+.installation-demo .id-intake-aside>p:not(.id-eyebrow) { color:#6a7884; font-size:13px; line-height:1.9; max-width:330px; }
+.installation-demo .id-intake-steps { list-style:none; padding:0; display:flex; flex-direction:column; gap:25px; margin:32px 0; }
+.installation-demo .id-intake-steps li { display:flex; align-items:center; gap:14px; color:#8e99a4; }
+.installation-demo .id-intake-steps li>span { display:grid; place-items:center; width:34px; height:34px; border:1px solid #dce3e8; border-radius:50%; font-size:11px; }
+.installation-demo .id-intake-steps li small { font-size:8px; letter-spacing:1px; display:block; }
+.installation-demo .id-intake-steps li strong { font-size:12px; display:block; font-weight:550; }
+.installation-demo .id-intake-steps li.current { color:var(--id-ink); }
+.installation-demo .id-intake-steps li.current>span { background:var(--id-ink); color:#fff; border-color:var(--id-ink); }
+.installation-demo .id-intake-steps li.complete>span { color:#28765a; background:#eaf5ef; border-color:#b8d9c8; }
+.installation-demo .id-demo-info { display:flex; gap:12px; padding:18px; border:1px solid #dde5e7; background:#f8fafb; border-radius:4px; max-width:355px; }
+.installation-demo .id-demo-info strong { font-size:11px; display:block; margin-bottom:3px; }
+.installation-demo .id-demo-info p { color:#74808b; font-size:10px; line-height:1.8; }
+.installation-demo .id-intake-card { padding:32px; background:#fff; border:1px solid var(--id-line); border-radius:7px; box-shadow:0 10px 45px #102a4308; min-width:0; }
+.installation-demo .id-form-top { display:flex; align-items:center; justify-content:space-between; gap:15px; margin-bottom:26px; }
+.installation-demo .id-form-top>span { font-size:9px; letter-spacing:1px; color:#7c8c97; }
+.installation-demo .id-example { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--id-copper); background:#f9f1ed; padding:7px 9px; border:0; border-radius:3px; }
+.installation-demo .id-intake-card h2 { font-size:24px; letter-spacing:-.7px; font-weight:550; line-height:1.3; }
+.installation-demo .id-form-intro { color:#778591; font-size:12px; margin:10px 0 25px; }
+.installation-demo .id-service-options { border:0; padding:0; margin:0; display:flex; flex-direction:column; gap:11px; }
+.installation-demo .id-service-options label { position:relative; display:flex; align-items:center; gap:16px; padding:18px; border:1px solid #dde4e8; border-radius:4px; cursor:pointer; }
+.installation-demo .id-service-options label.selected { border-color:var(--id-copper); background:#fbf7f4; }
+.installation-demo .id-service-options input { position:absolute; width:1px; height:1px; opacity:0; }
+.installation-demo .id-service-options label:has(input:focus-visible) { outline:3px solid #d27c52; outline-offset:3px; }
+.installation-demo .id-service-options strong { display:block; font-size:12px; font-weight:600; }
+.installation-demo .id-service-options small { display:block; font-size:10px; line-height:1.7; color:#74808b; margin-top:4px; }
+.installation-demo .id-radio { margin-left:auto; width:17px; min-width:17px; height:17px; border:1px solid #cad3d8; border-radius:50%; display:grid; place-items:center; }
+.installation-demo .selected .id-radio { color:#fff; background:var(--id-copper); border-color:var(--id-copper); }
+.installation-demo .id-form-fields { display:flex; flex-direction:column; gap:18px; }
+.installation-demo .id-field { display:flex; flex-direction:column; gap:7px; font-size:11px; font-weight:550; min-width:0; }
+.installation-demo .id-field :is(input,select,textarea) { background:#fff; border:1px solid #ccd7df; padding:11px 12px; border-radius:4px; color:var(--id-ink); width:100%; font-weight:400; font-size:13px; }
+.installation-demo .id-field textarea { resize:vertical; min-height:120px; }
+.installation-demo .id-field :is(input,textarea)::placeholder { color:#929da7; }
+.installation-demo .id-upload { display:flex; flex-direction:column; align-items:center; padding:24px 15px; border:1px dashed #bccbd4; background:#f8fafb; border-radius:4px; cursor:pointer; gap:6px; position:relative; }
+.installation-demo .id-upload strong { font-size:12px; }.installation-demo .id-upload>span { font-size:10px; color:#74808b; text-align:center; }
+.installation-demo .id-upload input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+.installation-demo .id-upload:has(input:focus-visible) { outline:3px solid #d27c52; outline-offset:3px; }
+.installation-demo .id-photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.installation-demo .id-photo-grid>div { position:relative; min-width:0; }
+.installation-demo .id-photo-grid img { width:100%; height:80px; object-fit:cover; border-radius:4px; }
+.installation-demo .id-photo-grid span { display:block; font-size:9px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.installation-demo .id-photo-grid button { position:absolute; right:4px; top:4px; background:#fff; padding:5px; border:1px solid #e1e5e8; border-radius:3px; }
+.installation-demo .id-fields-row { display:grid; grid-template-columns:1.2fr .8fr; gap:15px; }
+.installation-demo .id-request-summary { background:#f6f8f9; padding:16px; border-radius:4px; font-size:11px; }
+.installation-demo .id-request-summary small { font-size:8px; letter-spacing:1px; color:#778591; display:block; }
+.installation-demo .id-request-summary strong { display:block; margin:5px 0; }
+.installation-demo .id-request-summary p { color:#6a7884; overflow-wrap:anywhere; white-space:pre-wrap; }
+.installation-demo .id-privacy-copy { font-size:10px; color:#7e8b96; line-height:1.7; }
+.installation-demo .id-form-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid var(--id-line); padding-top:24px; margin-top:25px; }
+.installation-demo .id-form-time { font-size:10px; color:#84909a; }
+.installation-demo .id-form-error { margin-top:15px; padding:12px; font-size:12px; color:#a42525; background:#fff1f1; border:1px solid #f3cccc; border-radius:4px; }
+.installation-demo .id-success>svg { color:#2c8065; margin-bottom:20px; }.installation-demo .id-success>p { font-size:12px; color:#74808b; margin-block:12px; }
+.installation-demo .id-success>.id-btn { margin:22px 0 18px; width:100%; }
+.installation-demo .id-confirm-ref { display:flex; justify-content:space-between; font-size:12px; background:#f3f6f8; border-radius:4px; padding:14px; margin:25px 0; }
+.installation-demo .id-email-preview { padding:20px; border:1px solid #dce4e9; border-radius:4px; font-size:12px; }
+.installation-demo .id-email-preview h3 { display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; }
+.installation-demo .id-email-preview small { display:block; font-size:10px; color:var(--id-copper); margin:5px 0 16px; }
+.installation-demo .id-email-preview p { margin-top:13px; color:#617180; }
+.installation-demo .id-sr-only { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+@media(min-width:1600px) { .installation-demo .id-container { width:min(1340px,calc(100% - 120px)); }.installation-demo .id-hero { gap:75px; }.installation-demo .id-hero h1 { font-size:76px; } }
+@media(max-width:1050px) { .installation-demo .id-container { width:calc(100% - 56px); }.installation-demo .id-hero { gap:25px; }.installation-demo .id-hero h1 { font-size:52px; }.installation-demo .id-house-art,.installation-demo .id-house-art>svg { min-height:450px; }.installation-demo .id-intake-page { gap:35px; }.installation-demo .id-service-card { padding:24px 18px; }.installation-demo .id-service-card h3 { font-size:15px; }.installation-demo .id-hero-footnote { font-size:7px; gap:14px; }.installation-demo .id-hero-footnote span+span { padding-left:14px; } }
+@media(max-width:760px) { .installation-demo .id-container { width:calc(100% - 40px); }.installation-demo .id-demo-bar { padding-inline:16px; gap:5px; }.installation-demo .id-demo-caption { display:none; }.installation-demo .id-demo-bar nav a { font-size:9px; padding-inline:9px; }.installation-demo .id-site-header { height:86px; }.installation-demo .id-site-header nav { gap:15px; }.installation-demo .id-site-header nav>a:not(.id-btn) { display:none; }.installation-demo .id-brand { font-size:33px; }.installation-demo .id-brand-symbol { width:33px; height:38px; }.installation-demo .id-brand-sub { font-size:6px; }.installation-demo .id-hero { grid-template-columns:1fr; padding-top:0; gap:30px; padding-bottom:35px; }.installation-demo .id-hero-copy { padding-top:17px; }.installation-demo .id-hero h1 { font-size:56px; letter-spacing:-2.5px; }.installation-demo .id-lead { max-width:450px; }.installation-demo .id-hero-footnote { margin-top:26px; font-size:7px; }.installation-demo .id-house-art,.installation-demo .id-house-art>svg { min-height:0; }.installation-demo .id-house-art>svg { height:auto; aspect-ratio:1.25; }.installation-demo .id-art-callout { padding:12px; left:18px; right:18px; bottom:18px; }.installation-demo .id-values>.id-container { padding-block:18px; gap:12px; }.installation-demo .id-values>.id-container>span { gap:6px; font-size:9px; align-items:flex-start; }.installation-demo .id-values>.id-container>span+span { padding-left:10px; }.installation-demo .id-section-heading { display:block; }.installation-demo .id-section-heading h2 { font-size:31px; }.installation-demo .id-section-heading>p { margin-top:18px; max-width:400px; }.installation-demo .id-services { padding-block:45px; }.installation-demo .id-service-grid { grid-template-columns:repeat(2,1fr); }.installation-demo .id-service-card:nth-child(3) { border-left:0; }.installation-demo .id-service-card:nth-child(n+3) { border-top:1px solid var(--id-line); }.installation-demo .id-card-top { margin-bottom:22px; }.installation-demo .id-service-card p { min-height:85px; }.installation-demo .id-process { padding-block:40px; }.installation-demo .id-process .id-section-heading>.id-text-link { margin-top:18px; }.installation-demo .id-process-grid { grid-template-columns:1fr; gap:25px; }.installation-demo .id-process-grid p { max-width:none; }.installation-demo .id-step-number { margin-bottom:10px; }.installation-demo .id-cta { padding:30px; display:block; margin-block:35px; }.installation-demo .id-cta h2 { font-size:33px; }.installation-demo .id-cta>.id-btn { margin-top:25px; }.installation-demo .id-footer { flex-wrap:wrap; padding-bottom:30px; gap:25px; }.installation-demo .id-footer>div { font-size:10px; }.installation-demo .id-intake-page { grid-template-columns:1fr; padding-block:15px 40px; gap:25px; }.installation-demo .id-intake-aside { padding-top:0; }.installation-demo .id-intake-aside h1 { font-size:35px; }.installation-demo .id-intake-aside h1 br { display:none; }.installation-demo .id-intake-aside>p:not(.id-eyebrow) { max-width:none; }.installation-demo .id-intake-steps { flex-direction:row; gap:10px; margin:22px 0; }.installation-demo .id-intake-steps li { gap:7px; flex:1; }.installation-demo .id-intake-steps li>span { width:27px; height:27px; flex-shrink:0; }.installation-demo .id-intake-steps li small { font-size:7px; }.installation-demo .id-intake-steps li strong { font-size:9px; }.installation-demo .id-demo-info { max-width:none; padding:12px; }.installation-demo .id-intake-card { padding:23px 20px; }.installation-demo .id-intake-card h2 { font-size:23px; }.installation-demo .id-form-top { gap:8px; }.installation-demo .id-example { font-size:9px; padding:6px; }.installation-demo .id-form-actions { flex-wrap:wrap; }.installation-demo .id-form-actions>.id-btn { gap:12px; }.installation-demo .id-form-time { font-size:9px; }.installation-demo .id-site-header>.id-text-link { font-size:10px; } }
+@media(prefers-reduced-motion:reduce) { .installation-demo * { scroll-behavior:auto; transition:none!important; } }
