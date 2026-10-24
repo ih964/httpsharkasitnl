@@ -1,0 +1,287 @@
+/* The marketing website is isolated from the demo's intake and dashboard. */
+.installation-demo .veld-site {
+  --v-ink: #172f36;
+  --v-muted: #657477;
+  --v-orange: #ef996c;
+  --v-paper: #f5f4ef;
+  --v-line: #d9deda;
+  color: var(--v-ink);
+  background: #fff;
+  font-family: Inter, 'Segoe UI', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.installation-demo .veld-site .v-container { width: min(1280px, calc(100% - 112px)); margin-inline: auto; }
+.installation-demo .veld-site :is(h1,h2,h3) { color: inherit; font-weight: 550; }
+.installation-demo .veld-site h2 { font-size: clamp(32px, 3.45vw, 50px); line-height: 1.13; letter-spacing: -1.9px; }
+.installation-demo .veld-site :is(a,button,summary) { -webkit-tap-highlight-color: transparent; }
+.installation-demo .veld-site nav { overflow: visible; }
+.installation-demo .veld-site :is(a,button,summary):focus-visible { outline-color: #c46c3d; }
+.installation-demo .veld-site .v-skip { position: absolute; top: -120px; left: 20px; z-index: 20; padding: 12px 20px; background: white; }
+.installation-demo .veld-site .v-skip:focus { top: 50px; }
+.installation-demo .veld-site .v-header { height: 108px; display: flex; justify-content: space-between; align-items: center; gap: 28px; position: relative; z-index: 5; }
+.installation-demo .veld-site .id-brand { color: var(--v-ink); font-size: 44px; font-weight: 750; letter-spacing: -2.7px; gap: 12px; }
+.installation-demo .veld-site .id-brand-symbol { width: 43px; height: 47px; background: var(--v-ink); }
+.installation-demo .veld-site .id-brand-sub { font-size: 7px; letter-spacing: 1.5px; }
+.installation-demo .veld-site .id-brand-period { color: #cc7950; }
+.installation-demo .veld-site .v-navigation { display: flex; align-items: center; gap: 31px; font-size: 13px; font-weight: 550; }
+.installation-demo .veld-site .v-navigation > a:not(.v-button):hover { color: #b15b32; }
+.installation-demo .veld-site .v-button { display: inline-flex; align-items: center; justify-content: space-between; gap: 32px; padding: 18px 24px; color: var(--v-ink); background: var(--v-orange); border: 1px solid transparent; border-radius: 3px; font-size: 14px; line-height: 1.4; font-weight: 650; transition: background .2s, transform .2s; }
+.installation-demo .veld-site .v-button:hover { background: #f4ad88; transform: translateY(-2px); }
+.installation-demo .veld-site .v-button-small { padding: 14px 18px; font-size: 12px; gap: 25px; background: var(--v-ink); color: white; }
+.installation-demo .veld-site .v-button-small:hover { background: #294a51; }
+.installation-demo .veld-site .v-menu-toggle { display: none; }
+.installation-demo .veld-site .v-eyebrow { display: flex; align-items: center; gap: 9px; font-size: 10px; font-weight: 650; letter-spacing: 1.5px; line-height: 1.8; }
+.installation-demo .veld-site .v-eyebrow > span { width: 6px; height: 6px; background: var(--v-orange); }
+.installation-demo .veld-site .v-hero { display: grid; grid-template-columns: .96fr 1.04fr; background: var(--v-ink); min-height: 610px; max-width: 1680px; margin-inline: auto; color: white; }
+.installation-demo .veld-site .v-hero-copy { padding: 66px 40px 30px max(56px, calc((100vw - 1280px) / 2)); display: flex; flex-direction: column; align-items: flex-start; }
+.installation-demo .veld-site .v-hero .v-eyebrow { font-size: 9px; color: #d7e1df; letter-spacing: 1.2px; }
+.installation-demo .veld-site .v-hero h1 { font-size: clamp(52px, 4.9vw, 76px); letter-spacing: -3.4px; line-height: 1.065; font-weight: 550; margin-top: 27px; }
+.installation-demo .veld-site .v-hero h1 > span { color: var(--v-orange); }
+.installation-demo .veld-site .v-hero-intro { color: #c2cfcd; font-size: 14px; max-width: 378px; line-height: 1.85; margin-top: 25px; }
+.installation-demo .veld-site .v-hero-actions { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; margin-top: 31px; }
+.installation-demo .veld-site .v-hero-discover { display: flex; align-items: center; gap: 9px; font-size: 12px; color: #e3ebe8; padding-block: 10px; }
+.installation-demo .veld-site .v-hero-discover:hover { color: var(--v-orange); }
+.installation-demo .veld-site .v-hero-bottom { display: flex; gap: 8px; align-items: center; font-size: 8px; letter-spacing: 1.6px; margin-top: auto; padding-top: 36px; color: #adbfbb; }
+.installation-demo .veld-site .v-status-dot { width: 5px; height: 5px; border-radius: 100%; background: var(--v-orange); }
+.installation-demo .veld-site .v-hero-visual { position: relative; min-width: 0; overflow: hidden; background: #41514a; }
+.installation-demo .veld-site .v-hero-visual > img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; object-position: 55% center; }
+.installation-demo .veld-site .v-hero-visual::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, #10282e25 0%, transparent 45%, #10282e9e 100%); pointer-events: none; }
+.installation-demo .veld-site .v-photo-label { position: absolute; top: 29px; left: 30px; right: 30px; z-index: 1; display: flex; align-items: center; gap: 12px; color: white; font-size: 8px; font-weight: 600; letter-spacing: 1.8px; text-shadow: 0 1px 10px #0007; }
+.installation-demo .veld-site .v-photo-cross { font-size: 26px; font-weight: 300; line-height: 1; }
+.installation-demo .veld-site .v-hero-caption { position: absolute; bottom: 68px; left: 38px; right: 38px; z-index: 1; border-top: 1px solid #ffffff70; padding-top: 19px; }
+.installation-demo .veld-site .v-hero-caption > span { text-transform: uppercase; letter-spacing: 1.8px; font-size: 8px; }
+.installation-demo .veld-site .v-hero-caption p { font-size: 23px; line-height: 1.45; letter-spacing: -.6px; margin-top: 10px; font-weight: 450; padding-right: 24px; }
+.installation-demo .veld-site .v-hero-caption > svg { position: absolute; right: 0; bottom: 2px; }
+.installation-demo .veld-site .v-image-reference { position: absolute; bottom: 27px; left: 38px; z-index: 1; font-size: 7px; color: #dde6e0; letter-spacing: 1.8px; }
+.installation-demo .veld-site .v-promises { display: grid; grid-template-columns: repeat(3, 1fr); padding-block: 33px; }
+.installation-demo .veld-site .v-promises > div { display: flex; gap: 17px; align-items: center; padding-right: 20px; }
+.installation-demo .veld-site .v-promises > div + div { border-left: 1px solid var(--v-line); padding-left: 35px; }
+.installation-demo .veld-site .v-promises svg { color: #9a623f; stroke-width: 1.5; }
+.installation-demo .veld-site .v-promises span { font-size: 13px; font-weight: 600; line-height: 1.6; }
+.installation-demo .veld-site .v-promises small { display: block; color: var(--v-muted); font-size: 11px; font-weight: 400; margin-top: 2px; }
+.installation-demo .veld-site .v-section { padding-block: 96px; scroll-margin-top: 25px; }
+.installation-demo .veld-site .v-section-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; margin-bottom: 47px; }
+.installation-demo .veld-site .v-section-heading .v-eyebrow { color: #716b5d; margin-bottom: 18px; }
+.installation-demo .veld-site .v-section-heading > p { max-width: 300px; font-size: 13px; color: var(--v-muted); line-height: 1.9; padding-bottom: 3px; }
+.installation-demo .veld-site .v-expertise { background: var(--v-paper); }
+.installation-demo .veld-site .v-expertise-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 70px; align-items: start; }
+.installation-demo .veld-site .v-service { border-top: 1px solid #ccd3cb; }
+.installation-demo .veld-site .v-service:last-child { border-bottom: 1px solid #ccd3cb; }
+.installation-demo .veld-site .v-service h3 { font-size: 17px; font-weight: 550; letter-spacing: -.3px; }
+.installation-demo .veld-site .v-service h3 > button { width: 100%; background: none; border: 0; color: inherit; padding: 24px 0; display: flex; align-items: center; gap: 15px; text-align: left; font: inherit; line-height: 1.4; }
+.installation-demo .veld-site .v-service h3 > button:hover { color: #a2532c; }
+.installation-demo .veld-site .v-service-number { font-size: 9px; color: #7d8a84; letter-spacing: 1px; margin-right: 2px; }
+.installation-demo .veld-site .v-service h3 > button > svg:not(.v-service-plus) { color: #8b654c; }
+.installation-demo .veld-site .v-service-plus { margin-left: auto; transition: transform .2s; color: #6f7a74; }
+.installation-demo .veld-site .v-service-active .v-service-plus { transform: rotate(45deg); }
+.installation-demo .veld-site .v-service-body { padding: 0 22px 28px 58px; }
+.installation-demo .veld-site .v-service-body p { color: var(--v-muted); font-size: 13px; line-height: 1.85; }
+.installation-demo .veld-site .v-service-body ul { list-style: none; padding: 0; margin: 17px 0 22px; display: grid; gap: 7px; }
+.installation-demo .veld-site .v-service-body li { display: flex; gap: 8px; align-items: center; font-size: 11px; }
+.installation-demo .veld-site .v-service-body li svg { color: #6b7767; }
+.installation-demo .veld-site .v-inline-link { display: inline-flex; align-items: center; gap: 23px; font-size: 12px; font-weight: 650; line-height: 1.6; padding-bottom: 5px; border-bottom: 1px solid #bac5bd; }
+.installation-demo .veld-site .v-inline-link:hover { color: #ac5930; border-color: currentColor; }
+.installation-demo .veld-site .v-expertise-photo { margin: 0; position: relative; min-height: 440px; align-self: stretch; }
+.installation-demo .veld-site .v-expertise-photo > img { height: 100%; width: 100%; object-fit: cover; position: absolute; inset: 0; object-position: 43% center; border-radius: 3px; }
+.installation-demo .veld-site .v-expertise-photo figcaption { position: absolute; bottom: 20px; right: 20px; left: 20px; display: flex; align-items: center; gap: 14px; padding: 17px; background: #ffffffed; border: 1px solid #fff8; border-radius: 2px; }
+.installation-demo .veld-site .v-detail-icon { display: grid; place-items: center; background: #f3eee5; height: 42px; width: 42px; color: #9a623f; }
+.installation-demo .veld-site .v-expertise-photo figcaption div > span { font-size: 7px; letter-spacing: 1.2px; color: #6e7977; display: block; margin-bottom: 4px; }
+.installation-demo .veld-site .v-expertise-photo strong { font-size: 12px; font-weight: 600; display: block; }
+.installation-demo .veld-site .v-project-feature { display: grid; grid-template-columns: 1.2fr 1fr; background: var(--v-paper); }
+.installation-demo .veld-site .v-project-image { position: relative; min-height: 470px; overflow: hidden; }
+.installation-demo .veld-site .v-project-image > img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; }
+.installation-demo .veld-site .v-project-tag { position: absolute; bottom: 23px; left: 25px; padding: 10px 13px; color: var(--v-ink); background: #f8f7f1ed; font-size: 8px; font-weight: 600; letter-spacing: 1px; }
+.installation-demo .veld-site .v-project-copy { padding: 44px 42px; align-self: center; }
+.installation-demo .veld-site .v-project-index { color: #7e877b; font-size: 9px; letter-spacing: 1.8px; }
+.installation-demo .veld-site .v-project-copy h3 { font-size: 35px; letter-spacing: -1.3px; line-height: 1.18; margin-block: 22px; }
+.installation-demo .veld-site .v-project-copy > p { font-size: 13px; line-height: 1.85; color: var(--v-muted); }
+.installation-demo .veld-site .v-project-copy dl { margin-block: 25px 28px; font-size: 11px; }
+.installation-demo .veld-site .v-project-copy dl > div { padding-block: 10px; border-top: 1px solid var(--v-line); display: grid; grid-template-columns: 76px 1fr; gap: 10px; }
+.installation-demo .veld-site .v-project-copy dt { font-weight: 600; }
+.installation-demo .veld-site .v-project-copy dd { margin: 0; color: var(--v-muted); }
+.installation-demo .veld-site .v-about { position: relative; color: #f7f5ec; background: var(--v-ink); overflow: hidden; padding-block: 94px 104px; scroll-margin-top: 25px; }
+.installation-demo .veld-site .v-about-inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: center; }
+.installation-demo .veld-site .v-about .v-eyebrow { color: #afc0b9; margin-bottom: 24px; }
+.installation-demo .veld-site .v-about h2 > span { color: var(--v-orange); }
+.installation-demo .veld-site .v-about-copy > p:first-child { font-size: 20px; line-height: 1.5; letter-spacing: -.3px; max-width: 380px; margin-bottom: 16px; }
+.installation-demo .veld-site .v-about-copy > p + p { color: #b6c5bf; font-size: 13px; line-height: 1.9; max-width: 380px; }
+.installation-demo .veld-site .v-about-copy .v-inline-link { margin-top: 25px; color: #ef996c; border-color: #9a8971; }
+.installation-demo .veld-site .v-about-watermark { position: absolute; left: 40%; bottom: -130px; font-size: 370px; line-height: 1; font-weight: 750; letter-spacing: -30px; color: #ffffff03; pointer-events: none; }
+.installation-demo .veld-site .v-process-list { padding: 0; margin: 0; list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 55px; }
+.installation-demo .veld-site .v-process-line { padding-top: 18px; border-top: 1px solid #bdc7bd; display: flex; align-items: center; justify-content: space-between; color: #a56742; margin-bottom: 25px; }
+.installation-demo .veld-site .v-process-line > span { font-size: 11px; letter-spacing: 1px; }
+.installation-demo .veld-site .v-process-list h3 { font-size: 20px; font-weight: 550; letter-spacing: -.5px; margin-bottom: 12px; }
+.installation-demo .veld-site .v-process-list p { font-size: 13px; color: var(--v-muted); line-height: 1.85; max-width: 325px; }
+.installation-demo .veld-site .v-faq { background: var(--v-paper); }
+.installation-demo .veld-site .v-faq-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 70px; }
+.installation-demo .veld-site .v-faq h2 { font-size: 38px; margin-block: 18px 28px; }
+.installation-demo .veld-site .v-faq details { border-top: 1px solid #ccd3cb; }
+.installation-demo .veld-site .v-faq details:last-child { border-bottom: 1px solid #ccd3cb; }
+.installation-demo .veld-site .v-faq summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 20px; cursor: pointer; font-size: 13px; line-height: 1.6; font-weight: 550; padding-block: 22px; }
+.installation-demo .veld-site .v-faq summary::-webkit-details-marker { display: none; }
+.installation-demo .veld-site .v-faq details[open] summary svg { transform: rotate(180deg); }
+.installation-demo .veld-site .v-faq details > p { font-size: 13px; color: var(--v-muted); line-height: 1.9; padding: 0 27px 24px 0; }
+.installation-demo .veld-site .v-contact { background: #efd2bb; padding-block: 76px; }
+.installation-demo .veld-site .v-contact > .v-container { display: grid; grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: center; }
+.installation-demo .veld-site .v-contact .v-eyebrow { color: #735d4d; }
+.installation-demo .veld-site .v-contact h2 { font-size: 58px; line-height: 1.08; margin-top: 21px; letter-spacing: -2.8px; }
+.installation-demo .veld-site .v-contact h2 > span { color: #9a4b2d; }
+.installation-demo .veld-site .v-contact-action > p { font-size: 14px; line-height: 1.85; margin-bottom: 24px; }
+.installation-demo .veld-site .v-button-dark { color: white; background: var(--v-ink); }
+.installation-demo .veld-site .v-button-dark:hover { background: #2a4d51; }
+.installation-demo .veld-site .v-contact-action > span { display: block; color: #846e5f; font-size: 10px; margin-top: 13px; }
+.installation-demo .veld-site .v-footer { background: #11292f; color: #b1c2bd; padding-top: 60px; }
+.installation-demo .veld-site .v-footer-main { display: grid; grid-template-columns: 1.4fr 1fr .8fr; gap: 60px; padding-bottom: 50px; }
+.installation-demo .veld-site .v-footer .id-brand { color: #fff; }
+.installation-demo .veld-site .v-footer .id-brand-symbol { color: #172f36; background: #ef996c; }
+.installation-demo .veld-site .v-footer-main > div > p { font-size: 12px; margin-top: 23px; line-height: 1.9; }
+.installation-demo .veld-site .v-footer nav { display: flex; align-items: flex-start; flex-direction: column; gap: 10px; font-size: 11px; }
+.installation-demo .veld-site .v-footer nav > span { display: block; color: #eff2e9; font-size: 9px; letter-spacing: 1.5px; margin-bottom: 10px; }
+.installation-demo .veld-site .v-footer nav a { display: inline-flex; gap: 8px; align-items: center; }
+.installation-demo .veld-site .v-footer a:hover { color: #ef996c; }
+.installation-demo .veld-site .v-footer-bottom { padding-block: 22px; border-top: 1px solid #ffffff1a; display: flex; justify-content: space-between; gap: 20px; font-size: 9px; }
+.installation-demo .veld-site .v-footer-bottom a { display: flex; align-items: center; gap: 10px; color: #e5ece6; }
+.installation-demo .veld-site .v-demo-note { text-align: center; color: #6a7877; background: #f9f9f5; padding: 16px 25px; font-size: 9px; }
+.installation-demo .veld-site .v-demo-note a { font-weight: 650; }
+.installation-demo .veld-site .v-demo-note > span { padding-inline: 10px; }
+@media (min-width: 1680px) {
+  .installation-demo .veld-site .v-hero-copy { padding-left: 150px; }
+  .installation-demo .veld-site .v-hero { min-height: 670px; }
+}
+@media (max-width: 1150px) {
+  .installation-demo .veld-site .v-container { width: calc(100% - 80px); }
+  .installation-demo .veld-site .v-header { height: 96px; }
+  .installation-demo .veld-site .v-navigation { gap: 23px; font-size: 12px; }
+  .installation-demo .veld-site .v-hero-copy { padding: 52px 32px 29px 40px; }
+  .installation-demo .veld-site .v-hero { min-height: 590px; }
+  .installation-demo .veld-site .v-hero h1 { font-size: 57px; letter-spacing: -2.6px; }
+  .installation-demo .veld-site .v-hero-actions { gap: 22px; }
+  .installation-demo .veld-site .v-hero-actions .v-button { gap: 22px; padding-inline: 19px; font-size: 12px; }
+  .installation-demo .veld-site .v-promises > div + div { padding-left: 24px; }
+  .installation-demo .veld-site .v-promises span { font-size: 12px; }
+  .installation-demo .veld-site .v-promises small { font-size: 10px; }
+  .installation-demo .veld-site .v-expertise-grid { gap: 38px; }
+  .installation-demo .veld-site .v-section { padding-block: 75px; }
+  .installation-demo .veld-site .v-expertise-photo { min-height: 430px; }
+  .installation-demo .veld-site .v-service h3 { font-size: 15px; }
+  .installation-demo .veld-site .v-service h3 > button { gap: 11px; }
+  .installation-demo .veld-site .v-project-copy { padding: 35px 30px; }
+  .installation-demo .veld-site .v-project-copy h3 { font-size: 31px; }
+  .installation-demo .veld-site .v-about-inner, .installation-demo .veld-site .v-contact > .v-container { gap: 48px; }
+}
+@media (max-width: 900px) {
+  .installation-demo .veld-site .v-container { width: calc(100% - 56px); }
+  .installation-demo .veld-site .v-navigation { gap: 20px; }
+  .installation-demo .veld-site .v-navigation > a:nth-child(3) { display: none; }
+  .installation-demo .veld-site .v-hero-copy { padding-left: 28px; padding-right: 25px; }
+  .installation-demo .veld-site .v-hero h1 { font-size: 49px; letter-spacing: -2.5px; }
+  .installation-demo .veld-site .v-hero .v-eyebrow { font-size: 7px; }
+  .installation-demo .veld-site .v-hero-intro { font-size: 13px; }
+  .installation-demo .veld-site .v-hero-actions { gap: 13px; }
+  .installation-demo .veld-site .v-hero-discover { font-size: 11px; }
+  .installation-demo .veld-site .v-promises > div { gap: 10px; padding-right: 10px; }
+  .installation-demo .veld-site .v-promises > div + div { padding-left: 15px; }
+  .installation-demo .veld-site .v-promises span { font-size: 10px; }
+  .installation-demo .veld-site .v-promises small { font-size: 9px; }
+  .installation-demo .veld-site .v-section-heading { gap: 30px; }
+  .installation-demo .veld-site .v-section-heading > p { max-width: 260px; font-size: 12px; }
+  .installation-demo .veld-site .v-expertise-grid { gap: 25px; }
+  .installation-demo .veld-site .v-service-number { display: none; }
+  .installation-demo .veld-site .v-service h3 { font-size: 14px; }
+  .installation-demo .veld-site .v-service-body { padding-left: 34px; padding-right: 4px; }
+  .installation-demo .veld-site .v-expertise-photo figcaption { left: 12px; right: 12px; bottom: 12px; padding: 12px; gap: 10px; }
+  .installation-demo .veld-site .v-expertise-photo strong { font-size: 10px; }
+  .installation-demo .veld-site .v-expertise-photo figcaption div > span { font-size: 6px; }
+  .installation-demo .veld-site .v-project-copy { padding: 30px 25px; }
+  .installation-demo .veld-site .v-project-copy h3 { font-size: 28px; }
+  .installation-demo .veld-site .v-about-copy > p:first-child { font-size: 18px; }
+  .installation-demo .veld-site .v-process-list { gap: 28px; }
+  .installation-demo .veld-site .v-faq-grid { gap: 35px; }
+  .installation-demo .veld-site .v-faq h2 { font-size: 31px; }
+  .installation-demo .veld-site .v-contact h2 { font-size: 49px; }
+  .installation-demo .veld-site .v-footer-main { gap: 35px; }
+}
+@media (max-width: 700px) {
+  .installation-demo .veld-site .v-container { width: calc(100% - 40px); }
+  .installation-demo .veld-site .v-header { height: 86px; }
+  .installation-demo .veld-site .id-brand { font-size: 38px; gap: 9px; }
+  .installation-demo .veld-site .id-brand-symbol { width: 36px; height: 41px; }
+  .installation-demo .veld-site .id-brand-sub { font-size: 6px; }
+  .installation-demo .veld-site .v-menu-toggle { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #d9deda; border-radius: 3px; color: var(--v-ink); background: transparent; }
+  .installation-demo .veld-site .v-navigation { display: none; position: absolute; top: 75px; left: -20px; right: -20px; padding: 20px; border-bottom: 1px solid #d9deda; background: #fff; box-shadow: 0 15px 20px #142c3010; flex-direction: column; align-items: stretch; gap: 0; font-size: 14px; }
+  .installation-demo .veld-site .v-navigation-open { display: flex; }
+  .installation-demo .veld-site .v-navigation > a:not(.v-button) { padding: 13px 0; display: block; }
+  .installation-demo .veld-site .v-navigation > .v-button { margin-top: 12px; }
+  .installation-demo .veld-site .v-hero { grid-template-columns: 1fr; }
+  .installation-demo .veld-site .v-hero-copy { padding: 42px 24px 30px; }
+  .installation-demo .veld-site .v-hero .v-eyebrow { font-size: 8px; letter-spacing: 1px; }
+  .installation-demo .veld-site .v-hero h1 { font-size: clamp(46px, 9.6vw, 64px); letter-spacing: -2.7px; margin-top: 24px; line-height: 1.07; }
+  .installation-demo .veld-site .v-hero-intro { font-size: 14px; margin-top: 23px; max-width: 420px; }
+  .installation-demo .veld-site .v-hero-actions { margin-top: 27px; gap: 25px; }
+  .installation-demo .veld-site .v-hero-actions .v-button { font-size: 12px; padding: 17px 18px; gap: 25px; }
+  .installation-demo .veld-site .v-hero-bottom { padding-top: 27px; font-size: 7px; }
+  .installation-demo .veld-site .v-hero-visual { min-height: 370px; }
+  .installation-demo .veld-site .v-hero-visual > img { object-position: 50% center; }
+  .installation-demo .veld-site .v-photo-label { left: 24px; top: 20px; font-size: 7px; }
+  .installation-demo .veld-site .v-hero-caption { left: 24px; right: 24px; bottom: 49px; padding-top: 13px; }
+  .installation-demo .veld-site .v-hero-caption p { font-size: 21px; }
+  .installation-demo .veld-site .v-image-reference { left: 24px; bottom: 20px; font-size: 6px; }
+  .installation-demo .veld-site .v-promises { grid-template-columns: 1fr; gap: 0; padding-block: 7px; }
+  .installation-demo .veld-site .v-promises > div { padding: 18px 0; gap: 16px; }
+  .installation-demo .veld-site .v-promises > div + div { border-left: 0; border-top: 1px solid #e6e9e2; padding-left: 0; }
+  .installation-demo .veld-site .v-promises span { font-size: 12px; }
+  .installation-demo .veld-site .v-promises small { font-size: 10px; }
+  .installation-demo .veld-site .v-section { padding-block: 56px; }
+  .installation-demo .veld-site h2 { font-size: 34px; letter-spacing: -1.4px; }
+  .installation-demo .veld-site .v-section-heading { display: block; margin-bottom: 31px; }
+  .installation-demo .veld-site .v-section-heading .v-eyebrow { font-size: 8px; margin-bottom: 16px; }
+  .installation-demo .veld-site .v-section-heading > p { margin-top: 22px; max-width: 380px; font-size: 13px; }
+  .installation-demo .veld-site .v-expertise-grid { grid-template-columns: 1fr; gap: 30px; }
+  .installation-demo .veld-site .v-service h3 { font-size: 15px; }
+  .installation-demo .veld-site .v-service h3 > button { padding-block: 23px; gap: 13px; }
+  .installation-demo .veld-site .v-service-body { padding-left: 36px; padding-right: 8px; }
+  .installation-demo .veld-site .v-expertise-photo { min-height: 330px; }
+  .installation-demo .veld-site .v-expertise-photo figcaption { padding: 15px; }
+  .installation-demo .veld-site .v-expertise-photo strong { font-size: 11px; }
+  .installation-demo .veld-site .v-expertise-photo figcaption div > span { font-size: 6px; }
+  .installation-demo .veld-site .v-project-feature { grid-template-columns: 1fr; }
+  .installation-demo .veld-site .v-project-image { min-height: 295px; }
+  .installation-demo .veld-site .v-project-tag { left: 15px; bottom: 15px; font-size: 7px; }
+  .installation-demo .veld-site .v-project-copy { padding: 30px 24px; }
+  .installation-demo .veld-site .v-project-copy h3 { font-size: 32px; margin-block: 18px; }
+  .installation-demo .veld-site .v-about { padding-block: 56px; }
+  .installation-demo .veld-site .v-about-inner { grid-template-columns: 1fr; gap: 30px; }
+  .installation-demo .veld-site .v-about .v-eyebrow { font-size: 8px; margin-bottom: 18px; }
+  .installation-demo .veld-site .v-about-copy > p:first-child { font-size: 19px; }
+  .installation-demo .veld-site .v-about-watermark { font-size: 230px; bottom: -70px; left: 25%; }
+  .installation-demo .veld-site .v-process .v-section-heading > .v-inline-link { margin-top: 25px; }
+  .installation-demo .veld-site .v-process-list { grid-template-columns: 1fr; gap: 30px; }
+  .installation-demo .veld-site .v-process-line { margin-bottom: 14px; padding-top: 14px; }
+  .installation-demo .veld-site .v-process-list h3 { margin-bottom: 8px; }
+  .installation-demo .veld-site .v-process-list p { max-width: none; }
+  .installation-demo .veld-site .v-faq-grid { grid-template-columns: 1fr; gap: 29px; }
+  .installation-demo .veld-site .v-faq h2 { font-size: 34px; }
+  .installation-demo .veld-site .v-faq .v-eyebrow { font-size: 8px; }
+  .installation-demo .veld-site .v-faq summary { font-size: 13px; padding-block: 20px; }
+  .installation-demo .veld-site .v-contact { padding-block: 52px; }
+  .installation-demo .veld-site .v-contact > .v-container { grid-template-columns: 1fr; gap: 30px; }
+  .installation-demo .veld-site .v-contact .v-eyebrow { font-size: 8px; }
+  .installation-demo .veld-site .v-contact h2 { font-size: 48px; letter-spacing: -2px; }
+  .installation-demo .veld-site .v-contact-action > p { font-size: 13px; }
+  .installation-demo .veld-site .v-footer { padding-top: 43px; }
+  .installation-demo .veld-site .v-footer-main { grid-template-columns: 1fr 1fr; gap: 33px 22px; padding-bottom: 35px; }
+  .installation-demo .veld-site .v-footer-main > div { grid-column: 1 / -1; }
+  .installation-demo .veld-site .v-footer-main > div > p { margin-top: 17px; }
+  .installation-demo .veld-site .v-footer nav { font-size: 10px; }
+  .installation-demo .veld-site .v-footer nav > span { font-size: 8px; }
+  .installation-demo .veld-site .v-footer-bottom { flex-direction: column; gap: 14px; line-height: 1.8; }
+  .installation-demo .veld-site .v-demo-note { line-height: 1.9; padding-inline: 20px; font-size: 8px; }
+}
+@media (max-width: 360px) {
+  .installation-demo .veld-site .v-hero h1 { font-size: 43px; }
+  .installation-demo .veld-site .v-hero-actions { gap: 17px; }
+  .installation-demo .veld-site .v-hero-actions .v-button { gap: 15px; padding-inline: 14px; }
+  .installation-demo .veld-site .v-hero-discover { font-size: 10px; gap: 5px; }
+  .installation-demo .veld-site .v-service h3 { font-size: 13px; }
+}

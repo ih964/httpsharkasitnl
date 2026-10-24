@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, LayoutDashboard, Monitor, Zap } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, LayoutDashboard, Menu, Monitor, Plus, ShieldCheck, ThermometerSun, Wind, Wrench, X, Zap } from 'lucide-react';
 import './installation-demo.css';
+import './installation-website.css';
 
 export const DEMO_BASE = '/demo/installatiebedrijf';
 export const SERVICES = [
@@ -41,66 +42,116 @@ export function Brand({ light = false }: { light?: boolean }) {
   return <Link to={DEMO_BASE} className={`id-brand ${light ? 'id-brand-light' : ''}`} aria-label="Veld Installatietechniek demo, naar startpagina"><span className="id-brand-symbol"><Zap size={24} strokeWidth={2.2} /></span><span>veld<span className="id-brand-sub">INSTALLATIETECHNIEK</span></span><span className="id-brand-period">.</span></Link>;
 }
 
-function HouseIllustration() {
-  return <div className="id-house-art">
-    <svg viewBox="0 0 760 600" role="img" aria-labelledby="id-house-title">
-      <title id="id-house-title">Architectuurillustratie van een moderne woning met warmtepomp en zonnepanelen</title>
-      <defs>
-        <linearGradient id="id-sky" x2="0" y2="1"><stop stopColor="#dce5e9" /><stop offset="1" stopColor="#f0ede5" /></linearGradient>
-        <linearGradient id="id-wall" x2="1" y2="1"><stop stopColor="#f8f1e3" /><stop offset="1" stopColor="#d8cebc" /></linearGradient>
-        <linearGradient id="id-glass" x2="1" y2="1"><stop stopColor="#526f7b" /><stop offset="1" stopColor="#253f4b" /></linearGradient>
-        <pattern id="id-slats" width="9" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" fill="#a77c58"/><path d="M1 0V9" stroke="#725b46" strokeWidth="1.5"/></pattern>
-      </defs>
-      <rect width="760" height="600" fill="url(#id-sky)" />
-      <circle cx="625" cy="95" r="55" fill="#f5f1e6" opacity=".8" />
-      <path d="M0 415L760 337V600H0Z" fill="#c3c8b5"/>
-      <path d="M0 540L760 460V600H0Z" fill="#b3bba7"/>
-      <path d="M60 477L531 403L710 478L231 570Z" fill="#9aa49d" opacity=".45"/>
-      <path d="M105 295L413 242L630 323L328 382Z" fill="#1b303b"/>
-      <path d="M105 295V450L328 530V382Z" fill="#c6bca9"/>
-      <path d="M328 382L630 323V465L328 530Z" fill="url(#id-wall)"/>
-      <path d="M105 295L105 279L328 361L630 302V323L328 382Z" fill="#e7dfd1"/>
-      <path d="M105 279L407 222L630 302L328 361Z" fill="#f0eadf"/>
-      <path d="M168 282L413 238L553 289L310 337Z" fill="#284856"/>
-      <g stroke="#71838a" strokeWidth="2" opacity=".85"><path d="M217 273L359 328M266 264L408 318M315 256L457 309M364 247L506 299M214 298L459 252M261 317L508 270"/></g>
-      <path d="M128 320L290 378V488L128 431Z" fill="url(#id-slats)"/>
-      <path d="M157 345L258 381V463L157 427Z" fill="url(#id-glass)"/>
-      <g stroke="#aebbc0" strokeWidth="3"><path d="M207 363V444M157 388L258 423"/></g>
-      <path d="M352 397L515 365V478L352 512Z" fill="url(#id-glass)"/>
-      <path d="M432 381V495M352 452L515 420" stroke="#b9c3c4" strokeWidth="4"/>
-      <path d="M537 362L601 350V467L537 481Z" fill="url(#id-slats)"/>
-      <path d="M552 376L586 369V464L552 471Z" fill="#324c56"/>
-      <path d="M567 408V431" stroke="#d3c5ac" strokeWidth="3"/>
-      <path d="M484 489L544 477L585 493L525 507Z" fill="#87938e"/>
-      <path d="M485 450L544 438V477L484 489Z" fill="#edece5"/>
-      <path d="M544 438L564 447V484L544 477Z" fill="#c4cbc9"/>
-      <ellipse cx="515" cy="464" rx="17" ry="14" fill="#5d7178"/><ellipse cx="515" cy="464" rx="11" ry="9" fill="none" stroke="#a4b2b5"/><path d="M505 455L526 474M504 473L525 455" stroke="#a4b2b5"/>
-      <path d="M387 545L610 492L683 521L449 581Z" fill="#d7d3c8"/>
-      <g stroke="#a2a99f" strokeWidth="2"><path d="M447 532L512 565M508 517L571 551M569 502L631 536"/></g>
-      <g fill="#637c69"><ellipse cx="72" cy="405" rx="38" ry="24"/><ellipse cx="80" cy="385" rx="30" ry="39"/><ellipse cx="674" cy="399" rx="32" ry="49"/><ellipse cx="689" cy="428" rx="43" ry="25"/></g>
-      <g fill="#8c9d7e"><ellipse cx="130" cy="466" rx="33" ry="12"/><ellipse cx="620" cy="478" rx="24" ry="13"/></g>
-      <path d="M618 96H694M656 58V134" stroke="#91a4aa" strokeWidth="1"/><circle cx="656" cy="96" r="24" fill="none" stroke="#91a4aa"/>
-      <text x="650" y="100" fill="#607b85" fontSize="11" fontFamily="sans-serif">N</text>
-    </svg>
-    <div className="id-art-label"><span className="id-live-dot" /> SLIM GEÏNTEGREERD <span>01 — WONEN</span></div>
-    <div className="id-art-callout"><span className="id-callout-icon"><Zap size={18}/></span><div><strong>Comfort begint bij de basis.</strong><span>Verwarming · Elektra · Binnenklimaat</span></div></div>
-  </div>;
-}
+const expertise = [
+  { icon: ThermometerSun, title: 'Warmte die bij u past.', description: 'Een warmtepomp, cv-installatie of vloerverwarming? We beginnen bij uw woning, uw gebruik en uw wensen. Zo kiest u een oplossing die ook op de lange termijn klopt.', items: ['Warmtepompen & cv-installaties', 'Vloerverwarming & regeling'] },
+  { icon: Zap, title: 'Klaar voor meer vermogen.', description: 'Een keuken verbouwen, elektrisch rijden of uw meterkast vernieuwen. We zorgen voor een doordachte elektrische installatie die aansluit op uw plannen.', items: ['Groepenkasten & aansluitingen', 'Laadvoorzieningen & verlichting'] },
+  { icon: Wind, title: 'Frisse lucht. Fijn wonen.', description: 'Goede ventilatie maakt het verschil in huis. We kijken naar luchttoevoer, afvoer en de bestaande installatie voor een prettiger binnenklimaat.', items: ['Mechanische ventilatie & WTW', 'Inregeling & verbetering'] },
+  { icon: Wrench, title: 'Aandacht houdt het werkend.', description: 'Een installatie verdient aandacht, ook na oplevering. Met gericht onderhoud, controles en duidelijke uitleg houden we uw systeem in goede conditie.', items: ['Periodiek onderhoud & inspectie', 'Service & optimalisatie'] },
+];
+
+const questions = [
+  { q: 'Ik weet nog niet welke installatie ik nodig heb. Kan ik al een aanvraag doen?', a: 'Zeker. Vertel wat u wilt verbeteren, bijvoorbeeld het comfort in huis, de verwarming of uw elektrische installatie. Een eerste idee is genoeg om het gesprek te beginnen.' },
+  { q: 'Kunnen jullie verschillende werkzaamheden combineren?', a: 'Ja. Verwarming, elektra en ventilatie hebben veel met elkaar te maken. Bij een verbouwing of verduurzaming bekijken we de onderdelen in samenhang en bespreken we één aanpak.' },
+  { q: 'Wat gebeurt er nadat ik een aanvraag heb ingediend?', a: 'We bekijken uw beschrijving en eventuele foto’s. Daarna bespreken we de situatie en bepalen we of extra informatie of een opname op locatie nodig is. Werkzaamheden beginnen pas na duidelijke afspraken en uw akkoord.' },
+  { q: 'Hoe werkt deze voorbeeldwebsite?', a: 'Veld is een fictief installatiebedrijf. U kunt het aanvraagformulier proberen met voorbeeldgegevens en de aanvraag daarna terugvinden in het beheerdashboard. Alles blijft in uw eigen browser; er wordt geen e-mail verstuurd.' },
+];
 
 export default function InstallationWebsite() {
-  return <>
-    <header className="id-site-header id-container"><Brand /><nav aria-label="Website navigatie"><a href="#diensten">Diensten</a><a href="#werkwijze">Onze werkwijze</a><Link className="id-btn id-btn-small" to={`${DEMO_BASE}/aanvragen`}>Aanvraag starten <ArrowUpRight size={16}/></Link></nav></header>
-    <main>
-      <section className="id-hero id-container">
-        <div className="id-hero-copy"><p className="id-eyebrow"><span/> INSTALLATIETECHNIEK, DOORDACHT GEREGELD</p><h1>Goed geregeld.<br/>Van installatie<br/>tot <em>comfort.</em></h1><p className="id-lead">Een comfortabel huis begint met techniek die klopt. Wij denken mee, installeren zorgvuldig en houden uw installatie in goede conditie.</p><div className="id-hero-actions"><Link to={`${DEMO_BASE}/aanvragen`} className="id-btn">Bespreek uw project <ArrowUpRight size={18}/></Link><a href="#diensten" className="id-text-link">Ontdek onze diensten <ArrowUpRight size={16}/></a></div><div className="id-hero-footnote"><span>WONINGEN & BEDRIJFSPANDEN</span><span>VAN ADVIES TOT ONDERHOUD</span></div></div>
-        <HouseIllustration />
+  const [activeService, setActiveService] = useState<number | null>(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
+  const requestUrl = `${DEMO_BASE}/aanvragen`;
+
+  return <div className="veld-site">
+    <a className="v-skip" href="#veld-content">Naar de inhoud</a>
+    <header className="v-header v-container" onKeyDown={event => {
+      if (event.key === 'Escape' && menuOpen) {
+        setMenuOpen(false);
+        menuToggleRef.current?.focus();
+      }
+    }}>
+      <Brand />
+      <button ref={menuToggleRef} className="v-menu-toggle" type="button" aria-label={menuOpen ? 'Menu sluiten' : 'Menu openen'} aria-expanded={menuOpen} aria-controls="veld-navigation" onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X size={24} /> : <Menu size={24} />}</button>
+      <nav id="veld-navigation" className={`v-navigation ${menuOpen ? 'v-navigation-open' : ''}`} aria-label="Website navigatie">
+        <a href="#diensten" onClick={() => setMenuOpen(false)}>Onze expertise</a>
+        <a href="#projecten" onClick={() => setMenuOpen(false)}>Projecten</a>
+        <a href="#over-veld" onClick={() => setMenuOpen(false)}>Over Veld</a>
+        <Link className="v-button v-button-small" to={requestUrl}>Bespreek uw project <ArrowUpRight size={17} /></Link>
+      </nav>
+    </header>
+
+    <main id="veld-content">
+      <section className="v-hero" aria-labelledby="veld-hero-heading">
+        <div className="v-hero-copy">
+          <p className="v-eyebrow"><span /> DOORDACHTE TECHNIEK. ELKE DAG COMFORT.</p>
+          <h1 id="veld-hero-heading">Techniek die<br />werkt. Comfort<br />dat <span>blijft.</span></h1>
+          <p className="v-hero-intro">Van de eerste plannen tot de laatste afstelling. Wij brengen warmte, elektra en binnenklimaat samen in een installatie die voor u werkt.</p>
+          <div className="v-hero-actions">
+            <Link to={requestUrl} className="v-button">Bespreek uw project <ArrowUpRight size={19} /></Link>
+            <a href="#diensten" className="v-hero-discover">Ontdek Veld <ArrowDown size={16} /></a>
+          </div>
+          <div className="v-hero-bottom"><span className="v-status-dot" /> VOOR WONINGEN & BEDRIJFSPANDEN</div>
+        </div>
+        <div className="v-hero-visual">
+          <img src="/demo/veld/woning-comfort.webp" alt="Moderne woning met warme verlichting, houten gevel en een discreet geplaatste warmtepomp" width="1536" height="1024" fetchPriority="high" />
+          <div className="v-photo-label"><span className="v-photo-cross">+</span> RUIMTE VOOR GOED WONEN.</div>
+          <div className="v-hero-caption"><span>U voelt het verschil.</span><p>De techniek op de achtergrond.<br />Het comfort op de voorgrond.</p><ArrowUpRight size={26} /></div>
+          <span className="v-image-reference">VELD / WONEN & COMFORT</span>
+        </div>
       </section>
-      <div className="id-values"><div className="id-container"><span><span>01</span> Eén aanspreekpunt</span><span><span>02</span> Heldere afspraken</span><span><span>03</span> Aandacht voor uw situatie</span></div></div>
-      <section id="diensten" className="id-services id-container"><div className="id-section-heading"><div><p className="id-eyebrow">ONZE EXPERTISE</p><h2>Alle techniek.<br/>Eén vertrouwd adres.</h2></div><p>Een nieuwe installatie of een bestaand systeem verbeteren? We kijken naar het geheel en adviseren wat past.</p></div><div className="id-service-grid">{SERVICES.map(s => <Link key={s.number} to={`${DEMO_BASE}/aanvragen?dienst=${encodeURIComponent(s.name)}`} className="id-service-card"><div className="id-card-top"><span>{s.number} /</span><ArrowUpRight size={22}/></div><h3>{s.name}</h3><p>{s.text}</p><span className="id-card-link">Bespreek de mogelijkheden</span></Link>)}</div></section>
-      <section id="werkwijze" className="id-process"><div className="id-container"><div className="id-section-heading"><div><p className="id-eyebrow">VAN VRAAG NAAR OPLOSSING</p><h2>U vertelt. Wij denken mee.</h2></div><Link to={`${DEMO_BASE}/aanvragen`} className="id-text-link">Start uw aanvraag <ArrowUpRight size={18}/></Link></div><div className="id-process-grid">{[{n:'01',title:'Vertel over uw project',text:'Beschrijf uw wensen en voeg eventueel foto’s toe. Zo hebben we direct een goed beeld.'},{n:'02',title:'Samen de juiste aanpak',text:'We bespreken uw situatie, beantwoorden uw vragen en bepalen de volgende stap.'},{n:'03',title:'Duidelijke afspraken',text:'U weet vooraf wat we gaan doen. Na uw akkoord stemmen we de planning samen af.'}].map(s=><div key={s.n}><span className="id-step-number">{s.n}</span><h3>{s.title}</h3><p>{s.text}</p></div>)}</div></div></section>
-      <section className="id-cta id-container"><div><p className="id-eyebrow">EEN IDEE, EEN VRAAG OF EEN CONCREET PLAN?</p><h2>Maak ruimte voor<br/>meer comfort.</h2></div><Link to={`${DEMO_BASE}/aanvragen`} className="id-btn id-btn-white">Laten we kennismaken <ArrowUpRight size={18}/></Link></section>
+
+      <div className="v-promises v-container">
+        <div><ShieldCheck size={22} /><span>Heldere afspraken.<small>Vooraf weten waar u aan toe bent.</small></span></div>
+        <div><Wrench size={22} /><span>Van advies tot onderhoud.<small>Alle aandacht voor uw installatie.</small></span></div>
+        <div><Check size={23} /><span>Eén team. Korte lijnen.<small>Een vertrouwd aanspreekpunt.</small></span></div>
+      </div>
+
+      <section id="diensten" className="v-expertise v-section">
+        <div className="v-container">
+          <div className="v-section-heading"><div><p className="v-eyebrow">01 / ONZE EXPERTISE</p><h2>Alles grijpt in elkaar.<br />Wij zorgen dat het klopt.</h2></div><p>Een huis is meer dan losse installaties. Daarom kijken we verder dan de vraag alleen. Naar hoe u woont, werkt en vooruit wilt.</p></div>
+          <div className="v-expertise-grid">
+            <div className="v-service-list">{SERVICES.map((service, index) => {
+              const entry = expertise[index];
+              const Icon = entry.icon;
+              const expanded = activeService === index;
+              return <article className={`v-service ${expanded ? 'v-service-active' : ''}`} key={service.number}>
+                <h3><button type="button" aria-expanded={expanded} aria-controls={`veld-service-${index}`} onClick={() => setActiveService(expanded ? null : index)}><span className="v-service-number">{service.number}</span><Icon size={23} strokeWidth={1.5} /><span>{service.name}</span><Plus className="v-service-plus" size={22} /></button></h3>
+                <div id={`veld-service-${index}`} hidden={!expanded} className="v-service-body"><p>{entry.description}</p><ul>{entry.items.map(item => <li key={item}><Check size={14} />{item}</li>)}</ul><Link to={`${requestUrl}?dienst=${encodeURIComponent(service.name)}`} className="v-inline-link">Bespreek de mogelijkheden <ArrowUpRight size={17} /></Link></div>
+              </article>;
+            })}</div>
+            <figure className="v-expertise-photo"><img src="/demo/veld/vakmanschap.webp" alt="Installatiemonteur controleert zorgvuldig een verwarmingsinstallatie in een lichte technische ruimte" width="1536" height="1024" loading="lazy" /><figcaption><span className="v-detail-icon"><Wrench size={22} strokeWidth={1.5} /></span><div><span>HET VERSCHIL ZIT IN DE DETAILS.</span><strong>Vakwerk, tot de laatste afstelling.</strong></div></figcaption></figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="projecten" className="v-projects v-container v-section">
+        <div className="v-section-heading"><div><p className="v-eyebrow">02 / VAN PLAN NAAR PRAKTIJK</p><h2>Zo ziet vooruitgang eruit.</h2></div><p>Een blik op de mogelijkheden.<br />Dit project is een fictief voorbeeld, speciaal voor deze demo.</p></div>
+        <article className="v-project-feature">
+          <div className="v-project-image"><img src="/demo/veld/warmtepomp-project.webp" alt="Zorgvuldig geplaatste warmtepomp naast een moderne bakstenen gevel met houten afwerking" width="1536" height="1024" loading="lazy" /><span className="v-project-tag">VOORBEELDPROJECT / VERDUURZAMEN</span></div>
+          <div className="v-project-copy"><span className="v-project-index">PROJECT / 001</span><h3>Een volgende stap.<br />Een warmer thuis.</h3><p>Een bestaande woning voorbereiden op een andere manier van verwarmen. Met aandacht voor de plek van de warmtepomp, de aansluiting en het comfort binnen.</p><dl><div><dt>De vraag</dt><dd>Verduurzamen met behoud van comfort.</dd></div><div><dt>De aanpak</dt><dd>Installatie, regeling en elektra als één geheel.</dd></div></dl><Link to={`${requestUrl}?dienst=${encodeURIComponent(SERVICES[0].name)}`} className="v-inline-link">Wat kan er bij u? <ArrowUpRight size={18} /></Link></div>
+        </article>
+      </section>
+
+      <section id="over-veld" className="v-about">
+        <div className="v-about-inner v-container"><div><p className="v-eyebrow">DE MENSEN ACHTER DE TECHNIEK</p><h2>Goed werk begint<br />met <span>goed luisteren.</span></h2></div><div className="v-about-copy"><p>U hoeft niet alles van techniek te weten. Daar zijn wij voor.</p><p>We vertalen uw wensen naar een plan dat u begrijpt. Denken mee over wat nodig is. Werken zorgvuldig en leggen uit hoe alles werkt. Dat is voor ons goed installatiewerk.</p><a href="#werkwijze" className="v-inline-link">Zo werken we samen <ArrowDown size={17} /></a></div></div>
+        <div className="v-about-watermark" aria-hidden="true">veld.</div>
+      </section>
+
+      <section id="werkwijze" className="v-process v-container v-section">
+        <div className="v-section-heading"><div><p className="v-eyebrow">03 / VANDAAG EEN VRAAG. STRAKS EEN OPLOSSING.</p><h2>Een duidelijk plan.<br />Van begin tot geregeld.</h2></div><Link to={requestUrl} className="v-inline-link">Zet de eerste stap <ArrowUpRight size={18} /></Link></div>
+        <ol className="v-process-list">{[
+          { title: 'Uw verhaal', text: 'U vertelt wat u wilt. Met uw beschrijving en eventueel foto’s krijgen we een eerste beeld van uw project.' },
+          { title: 'Een passend plan', text: 'We bespreken de mogelijkheden en bekijken wat nodig is. U krijgt een voorstel met duidelijke afspraken.' },
+          { title: 'Zorgvuldig uitgevoerd', text: 'Na uw akkoord stemmen we de planning af. We installeren, stellen af en laten zien hoe het werkt.' },
+        ].map((step, index) => <li key={step.title}><div className="v-process-line"><span>0{index + 1}</span><ArrowRight size={19} /></div><h3>{step.title}</h3><p>{step.text}</p></li>)}</ol>
+      </section>
+
+      <section className="v-faq v-section"><div className="v-container v-faq-grid"><div><p className="v-eyebrow">EVEN GOED OM TE WETEN</p><h2>Uw vragen.<br />Heldere antwoorden.</h2><Link to={requestUrl} className="v-inline-link">Stel uw eigen vraag <ArrowUpRight size={18} /></Link></div><div className="v-faq-list">{questions.map(item => <details key={item.q}><summary>{item.q}<ChevronDown size={19} /></summary><p>{item.a}</p></details>)}</div></div></section>
+
+      <section className="v-contact"><div className="v-container"><div><p className="v-eyebrow">UW PLANNEN. ONZE VOLGENDE KLUS.</p><h2>Wat mogen we<br />voor u <span>regelen?</span></h2></div><div className="v-contact-action"><p>Een eerste idee of een concreet project?<br />Vertel het ons. We denken graag mee.</p><Link to={requestUrl} className="v-button v-button-dark">Laten we kennismaken <ArrowUpRight size={20} /></Link><span>In een paar stappen uw aanvraag versturen.</span></div></div></section>
     </main>
-    <footer className="id-footer id-container"><Brand/><div>Veld is een fictief installatiebedrijf.<br/>Een werkende productdemo van <Link to="/">Harkas IT <ArrowUpRight size={12}/></Link>.</div><Link to={`${DEMO_BASE}/dashboard`} className="id-text-link">Bekijk de achterkant <LayoutDashboard size={16}/></Link></footer>
-    <div className="id-bottom-note">Demo met fictieve gegevens · Aanvragen worden alleen in deze browser bewaard · Er worden geen e-mails verstuurd</div>
-  </>;
+
+    <footer className="v-footer"><div className="v-container"><div className="v-footer-main"><div><Brand light /><p>Doordachte techniek.<br />Elke dag comfort.</p></div><nav aria-label="Footer expertise"><span>ONZE EXPERTISE</span>{SERVICES.map(service => <Link key={service.name} to={`${requestUrl}?dienst=${encodeURIComponent(service.name)}`}>{service.name}</Link>)}</nav><nav aria-label="Footer navigatie"><span>ONTDEK VELD</span><a href="#projecten">Voorbeeldproject</a><a href="#over-veld">Over Veld</a><a href="#werkwijze">Onze werkwijze</a><Link to={requestUrl}>Uw project bespreken <ArrowUpRight size={14} /></Link></nav></div><div className="v-footer-bottom"><span>Veld is een fictief installatiebedrijf. Beelden en project zijn illustratief.</span><Link to={`${DEMO_BASE}/dashboard`}>Bekijk het beheerdashboard <ArrowUpRight size={14} /></Link></div></div></footer>
+    <div className="v-demo-note">Een productdemo van <Link to="/">Harkas IT</Link><span>·</span>Gebruik fictieve gegevens. Aanvragen blijven in deze browser; e-mails worden gesimuleerd.</div>
+  </div>;
 }
