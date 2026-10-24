@@ -24,6 +24,15 @@
           "value": "noindex, nofollow"
         }
       ]
+    },
+    {
+      "source": "/veranda/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     }
   ],
   "redirects": [
@@ -39,11 +48,19 @@
       "destination": "/favicon.svg"
     },
     {
+      "source": "/veranda",
+      "destination": "/veranda/index.html"
+    },
+    {
+      "source": "/veranda/",
+      "destination": "/veranda/index.html"
+    },
+    {
       "source": "/factuurgegevens",
       "destination": "/index.html"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/((?!api/|veranda/).*)",
       "destination": "/index.html"
     }
   ],
@@ -54,3 +71,4 @@
     }
   ]
 }
+
