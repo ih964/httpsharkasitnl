@@ -33,6 +33,15 @@
           "value": "noindex, nofollow"
         }
       ]
+    },
+    {
+      "source": "/verhuizen/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     }
   ],
   "redirects": [
@@ -48,6 +57,14 @@
       "destination": "/favicon.svg"
     },
     {
+      "source": "/verhuizen",
+      "destination": "/verhuizen/index.html"
+    },
+    {
+      "source": "/verhuizen/",
+      "destination": "/verhuizen/index.html"
+    },
+    {
       "source": "/veranda",
       "destination": "/veranda/index.html"
     },
@@ -60,7 +77,7 @@
       "destination": "/index.html"
     },
     {
-      "source": "/((?!api/|veranda/).*)",
+      "source": "/((?!api/|veranda/|verhuizen/).*)",
       "destination": "/index.html"
     }
   ],
@@ -71,4 +88,3 @@
     }
   ]
 }
-

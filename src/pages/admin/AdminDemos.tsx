@@ -29,6 +29,18 @@ const demos = [
     dashboardUrl: "https://www.harkasit.nl/veranda#dashboard",
     features: ["Showroom voor veranda’s en buitenleven", "Configurator met visuele prijsindicatie", "Dashboard voor aanvragen en opvolging"],
   },
+  {
+    id: "verhuizen",
+    title: "VerhuisRegie",
+    brand: "VerhuisRegie",
+    category: "Aanvraag + offerteportaal",
+    description: "Van verhuiswensen en foto’s naar een complete offerte en digitaal proefakkoord.",
+    image: "/verhuizen/cover.svg",
+    imageAlt: "Een huis met verhuisdozen in de VerhuisRegie demo",
+    url: "https://www.harkasit.nl/verhuizen/",
+    dashboardUrl: "https://www.harkasit.nl/verhuizen/#dashboard",
+    features: ["Klantaanvraag met inboedel, foto’s en extra’s", "Dashboard met eigen tarieven en calculatie", "Proefofferte bekijken, afdrukken en accepteren"],
+  },
 ];
 
 async function copyDemoLink(url: string) {
@@ -144,7 +156,7 @@ export default function AdminDemos() {
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
         <p>
           <strong className="font-medium text-foreground">Vrij om te proberen.</strong>{" "}
-          Beide demo’s werken zonder login. Gebruik fictieve gegevens: aanvragen, statussen en notities blijven alleen in de browser waarin je test. Er worden geen echte aanvragen of e-mails verstuurd.
+          Alle demo’s werken zonder login. Gebruik fictieve gegevens: aanvragen, statussen en notities blijven alleen in de browser waarin je test. Er worden geen echte aanvragen of e-mails verstuurd.
         </p>
       </div>
     </div>

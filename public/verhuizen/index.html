@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#193f35">
+<meta name="description" content="Probeer VerhuisRegie van Harkas IT: van complete verhuisaanvraag tot offerte en klantakkoord. Een interactieve demo zonder account.">
+<title>VerhuisRegie — Van eerste doos tot akkoord</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/verhuizen/styles.css?v=1">
+</head>
+<body>
+<a class="skip" href="#main">Ga naar inhoud</a>
+<div class="demo-bar"><span><i></i> INTERACTIEVE DEMO VAN HARKAS IT</span><button id="demo-info" aria-expanded="false">Hoe werkt de demo? <span aria-hidden="true">↗</span></button></div>
+<div id="demo-details" class="demo-details" hidden>Probeer de klantaanvraag, bekijk deze in het bedrijfsdashboard en zet een proefofferte klaar. Alle gegevens blijven alleen in deze browser. Gebruik fictieve gegevens en testfoto’s. Er worden geen e-mails verstuurd en je boekt geen echte verhuizing. De offerte werkt alleen in dezelfde browser. <button data-action="reset">Demo opnieuw beginnen</button></div>
+<header id="header"></header>
+<main id="main" tabindex="-1"></main>
+<footer class="footer"><a href="/verhuizen/">VerhuisRegie<span> Een productdemo van Harkas IT</span></a><span>Fictieve gegevens · opgeslagen in deze browser</span><a href="/contact">Bespreek jouw eigen portaal ↗</a></footer>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<dialog id="photo-dialog"><button class="icon-btn" data-action="close-photo" aria-label="Foto sluiten">×</button><img alt="Foto bij de proefaanvraag" id="photo-full"></dialog>
+<script type="module" src="/verhuizen/app.js?v=1"></script>
+</body></html>
