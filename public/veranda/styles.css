@@ -66,3 +66,43 @@
  .business-custom .custom-contact .button{margin-top:0}
  .dashboard-journey{align-items:start;flex-direction:column;gap:15px;padding:18px}
 }
+
+/* Visible instructions at entry and at each step. */
+.demo-help-button{position:fixed;right:24px;bottom:24px;z-index:35;display:flex;align-items:center;gap:10px;min-height:48px;padding:11px 18px;border:1px solid #73856a;border-radius:999px;background:var(--green);color:#fff;font-size:13px;font-weight:600;box-shadow:0 6px 24px #152c2933}
+.demo-help-button>span{display:grid;place-items:center;width:24px;height:24px;border:1px solid #ffffff70;border-radius:50%;font-size:14px}
+.demo-steps{gap:18px}
+.demo-steps li{padding:24px;background:#fff;border:1px solid #ccd6c2;border-radius:8px;box-shadow:0 4px 18px #293b2506}
+.demo-step-number{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:#e9efdf;color:var(--green);font:600 15px var(--sans)}
+.demo-steps p,.demo-steps small{color:#53614a}
+.demo-steps .text-button:disabled{opacity:.65}
+.tour-callout{display:flex;align-items:flex-start;gap:16px;border:1px solid #bccdaa;border-left:4px solid #597844;border-radius:6px;background:#eef3e6;padding:23px 26px;margin:0 0 24px}
+.tour-number{flex-shrink:0;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;font:600 14px var(--sans)}
+.tour-label{display:block;color:#536d41;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:7px}
+.tour-callout h3{font-size:16px;font-weight:600;line-height:1.5;margin:0 0 7px;color:#263d2c}
+.tour-callout p{max-width:840px;font-size:13px;line-height:1.8;color:#526148;margin:0}
+.tour-callout .button{margin-top:16px}
+.tour-callout.compact{padding:18px;margin-bottom:20px;gap:12px}
+.tour-callout.compact p{font-size:12px}
+.tour-callout.compact h3{font-size:15px}
+.demo-welcome>p:first-child{font-size:14px;line-height:1.8;color:#526148;margin-bottom:24px}
+.welcome-steps{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 24px;padding:0}
+.welcome-steps li{border:1px solid #cbd6bd;border-radius:6px;background:#f0f4e9;padding:19px 16px;min-width:0}
+.welcome-steps h3{font:600 14px/1.5 var(--sans);margin:15px 0 9px}
+.welcome-steps p{font-size:12px;line-height:1.8;color:#526148;margin:0}
+.demo-welcome .welcome-note{font-size:12px;line-height:1.8;color:#65715c}
+.welcome-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.demo-welcome .welcome-return{font-size:11px;margin:20px 0 0;color:#65715c}
+.tour-complete{padding:18px 22px;border:1px solid #a9c491;background:#edf5e6;color:#35532b;font-size:13px;line-height:1.8;margin-bottom:24px;border-radius:6px}
+.toast{bottom:86px;z-index:100}
+@media(max-width:780px){
+ .welcome-steps{grid-template-columns:1fr;gap:10px}
+ .welcome-steps li{display:grid;grid-template-columns:34px 1fr;gap:5px 14px;padding:16px}
+ .welcome-steps .tour-number{grid-row:1/3}
+ .welcome-steps h3{margin:0}
+ .welcome-steps p{grid-column:2}
+ .welcome-actions .button{flex:1 1 100%;min-width:0}
+ .demo-help-button{right:14px;bottom:14px;min-height:44px;padding:9px 14px;font-size:12px}
+ .tour-callout{padding:18px 16px;gap:12px}
+ .tour-callout .button{gap:10px;white-space:normal;text-align:left}
+ .demo-steps li{padding:20px}
+}
