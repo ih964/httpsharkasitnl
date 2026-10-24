@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, LayoutDashboard, Menu, Monitor, Plus, ShieldCheck, ThermometerSun, Wind, Wrench, X, Zap } from 'lucide-react';
+import { Link, Outlet, useLocation, useSearchParams } from 'react-router-dom';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, CirclePlay, LayoutDashboard, Menu, Monitor, Plus, ShieldCheck, ThermometerSun, Wind, Wrench, X, Zap } from 'lucide-react';
+import InstallationDemoGuide from './InstallationDemoGuide';
 import './installation-demo.css';
 import './installation-website.css';
 
@@ -14,6 +15,21 @@ export const SERVICES = [
 
 export function InstallationDemoLayout() {
   const { pathname } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const guideOpen = searchParams.get('uitleg') === '1';
+  const guideButtonRef = useRef<HTMLButtonElement>(null);
+  function setGuideOpen(open: boolean) {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current);
+      if (open) next.set('uitleg', '1');
+      else next.delete('uitleg');
+      return next;
+    }, { replace: true });
+  }
+  function closeGuide() {
+    setGuideOpen(false);
+    guideButtonRef.current?.focus();
+  }
   useEffect(() => {
     const oldTitle = document.title;
     document.title = `${pathname.endsWith('dashboard') ? 'Beheerdashboard' : pathname.endsWith('aanvragen') ? 'Aanvraag starten' : 'Veld Installatietechniek'} · Harkas IT demo`;
@@ -30,10 +46,12 @@ export function InstallationDemoLayout() {
       <Link to="/" className="id-back"><ArrowLeft size={13} /> Harkas IT</Link>
       <span className="id-demo-caption"><span className="id-live-dot" /> INTERACTIEVE PRODUCTDEMO</span>
       <nav aria-label="Demo navigatie">
-        <Link to={DEMO_BASE} className={!pathname.endsWith('dashboard') ? 'active' : ''}><Monitor size={14} /><span>Voorbeeldwebsite</span></Link>
-        <Link to={`${DEMO_BASE}/dashboard`} className={pathname.endsWith('dashboard') ? 'active' : ''}><LayoutDashboard size={14} /><span>Beheerdashboard</span></Link>
+        <Link to={DEMO_BASE} className={!pathname.endsWith('dashboard') ? 'active' : ''}><Monitor size={14} /><span className="id-demo-label-long">Voorbeeldwebsite</span><span className="id-demo-label-short">Website</span></Link>
+        <Link to={`${DEMO_BASE}/dashboard`} className={pathname.endsWith('dashboard') ? 'active' : ''}><LayoutDashboard size={14} /><span className="id-demo-label-long">Beheerdashboard</span><span className="id-demo-label-short">Dashboard</span></Link>
+        <button ref={guideButtonRef} type="button" className="id-guide-trigger" aria-expanded={guideOpen} aria-controls="id-test-guide" onClick={() => setGuideOpen(!guideOpen)}><CirclePlay size={14} /><span className="id-demo-label-long">Demo testen</span><span className="id-demo-label-short">Testen</span></button>
       </nav>
     </div>
+    <InstallationDemoGuide open={guideOpen} onClose={closeGuide} />
     <Outlet />
   </div>;
 }
