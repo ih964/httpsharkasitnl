@@ -32,7 +32,7 @@ export default function InstallationRequest() {
   const { addLead, storageError } = useDemoLeads();
   const field = (key: keyof typeof blank) => ({ value: form[key], onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setForm({...form,[key]:e.target.value}) });
   function move(to: number) { setStep(to); setError(''); setTimeout(()=>headingRef.current?.focus(),0); }
-  function example() { setService(SERVICES[0].name); setForm({ name: 'Robin Voorbeeld', email: 'robin@voorbeeld.example', phone: '0600000000', postcode: '1234 AB', description: 'Dit is een fictieve demoaanvraag. Ik wil mijn cv-installatie vervangen door een warmtepomp en bespreek graag de mogelijkheden voor mijn woning.', preference: 'In de ochtend' }); setError(''); }
+  function example() { setService(current => current || SERVICES[0].name); setForm({ name: 'Robin Voorbeeld', email: 'robin@voorbeeld.example', phone: '0600000000', postcode: '1234 AB', description: 'Dit is een fictieve demoaanvraag. Ik wil mijn woning verbeteren en bespreek graag de mogelijkheden voor de gekozen werkzaamheden. Foto’s en extra informatie kan ik tijdens de intake toelichten.', preference: 'In de ochtend' }); setError(''); }
   function submit(e: FormEvent) {
     e.preventDefault(); setError('');
     if (!service) { setError('Kies eerst het type werkzaamheden.'); return; }

@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowDown, ArrowUpRight, ArrowRight, BellRing, CalendarDays, Check, CheckCircle2, ChevronRight, CircleDot, ClipboardList, Download, ExternalLink, FileText, LayoutDashboard, Mail, MessageSquare, Plus, RotateCcw, Search, SlidersHorizontal, Wrench } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ArrowDown, ArrowUpRight, ArrowRight, BellRing, CalendarDays, Check, CheckCircle2, ChevronRight, CircleDot, ClipboardList, Download, ExternalLink, FileText, LayoutDashboard, Mail, MessageSquare, Plus, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDemoLeads, isFollowUpDue, type Lead, type LeadStatus } from "./installation-store";
+import { Brand } from "./InstallationDemo";
 import "./InstallationDashboard.css";
 
 const statuses: LeadStatus[] = ["Nieuw", "In behandeling", "Offerte verstuurd", "Gewonnen", "Afgesloten"];
@@ -17,7 +18,8 @@ export default function InstallationDashboard() {
   const [view, setView] = useState<"overview" | "leads" | "followup">("overview");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("Alle statussen");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedId = searchParams.get("aanvraag");
   const [note, setNote] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -34,7 +36,9 @@ export default function InstallationDashboard() {
   }).sort((a, b) => (oldestFirst ? 1 : -1) * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())), [leads, search, status, view, oldestFirst]);
   function changeView(next: typeof view) { setView(next); setStatus("Alle statussen"); setSearch(""); }
   function safeAction(action: () => void, message: string) { try { action(); setError(""); setNotice(message); } catch (err) { setError(err instanceof Error ? err.message : "Opslaan is niet gelukt. Probeer het opnieuw."); } }
-  function openLead(lead: Lead) { setSelectedId(lead.id); setNote(""); setError(""); setNotice(""); setEmailOpen(false); }
+  function closeLead() { setSearchParams(current => { const next = new URLSearchParams(current); next.delete("aanvraag"); return next; }, { replace: true }); }
+  function openLead(lead: Lead) { setSearchParams(current => { const next = new URLSearchParams(current); next.set("aanvraag", lead.id); return next; }, { replace: true }); setNote(""); setError(""); setNotice(""); setEmailOpen(false); }
+  function restoreDemo() { if (window.confirm("Alleen de gegevens van deze demo herstellen? Uw toegevoegde demoaanvragen en notities worden verwijderd.")) safeAction(() => { reset(); closeLead(); }, "Voorbeeldgegevens hersteld."); }
   function exportCsv() {
     const safe = (v: string) => `"${(/^[=+\-@\t\r]/.test(v) ? "'" + v : v).replace(/"/g, '""')}"`;
     const rows = [["Referentie", "Naam", "Dienst", "Postcode", "Status", "Ontvangen", "Opvolgen op"], ...filtered.map(lead => [lead.id, lead.name, lead.service, lead.postcode, lead.status, lead.createdAt, lead.followUp || ""])];
@@ -43,14 +47,14 @@ export default function InstallationDashboard() {
   }
   return <div className="id-dashboard">
     <aside className="id-sidebar">
-      <Link to="/demo/installatiebedrijf" className="id-brand"><span className="id-brand-mark"><Wrench size={21} /></span><span>VELD<span className="id-brand-sub">INSTALLATIETECHNIEK</span></span></Link>
+      <Brand light />
       <div className="id-workspace-label">WERKOMGEVING <span>DEMO</span></div>
       <nav aria-label="Dashboardnavigatie" className="id-nav">
         <button className={view === "overview" ? "is-active" : ""} onClick={() => changeView("overview")}><LayoutDashboard size={18} />Overzicht</button>
         <button className={view === "leads" ? "is-active" : ""} onClick={() => changeView("leads")}><ClipboardList size={18} />Aanvragen<span className="id-nav-count">{leads.length}</span></button>
         <button className={view === "followup" ? "is-active" : ""} onClick={() => changeView("followup")}><BellRing size={18} />Opvolging<span className="id-nav-count">{dueLeads.length}</span></button>
       </nav>
-      <div className="id-sidebar-bottom"><div className="id-demo-note"><CircleDot size={17} /><strong>Uw digitale balie</strong><p>Van eerste aanvraag tot een nieuwe opdracht. Alles op één plek.</p></div><Link to="/demo/installatiebedrijf"><ExternalLink size={16} />Bekijk voorbeeldwebsite</Link><button onClick={() => { if (window.confirm("Alleen de gegevens van deze demo herstellen? Uw toegevoegde demoaanvragen en notities worden verwijderd.")) safeAction(() => { reset(); setSelectedId(null); }, "Voorbeeldgegevens hersteld."); }}><RotateCcw size={16} />Voorbeeldgegevens herstellen</button><div className="id-user"><span>VI</span><div><strong>Veld Installatietechniek</strong><small>Demonstratieaccount</small></div></div></div>
+      <div className="id-sidebar-bottom"><div className="id-demo-note"><CircleDot size={17} /><strong>Uw digitale balie</strong><p>Van eerste aanvraag tot een nieuwe opdracht. Alles op één plek.</p></div><Link to="/demo/installatiebedrijf"><ExternalLink size={16} />Bekijk voorbeeldwebsite</Link><button onClick={restoreDemo}><RotateCcw size={16} />Voorbeeldgegevens herstellen</button><div className="id-user"><span>VI</span><div><strong>Veld Installatietechniek</strong><small>Demonstratieaccount</small></div></div></div>
     </aside>
     <div className="id-main">
       <header className="id-topbar"><span>Werkruimte <ChevronRight size={14} /><strong>{view === "overview" ? "Overzicht" : view === "leads" ? "Aanvragen" : "Opvolging"}</strong></span><div className="id-live"><span />Lokale demo</div></header>
@@ -73,10 +77,10 @@ export default function InstallationDashboard() {
           {filtered.length === 0 && <div className="id-empty"><Search size={26} /><h3>Geen aanvragen gevonden</h3><p>{view === "followup" ? "Er staan geen aanvragen open die aan deze opvolgfilters voldoen." : "Pas uw zoekopdracht of statusfilter aan."}</p><button className="id-secondary" onClick={() => { setSearch(""); setStatus("Alle statussen"); }}>Filters wissen</button></div>}
           <div className="id-table-footer"><span>{filtered.length} van {leads.length} aanvragen</span><span><Check size={14} />Wijzigingen worden lokaal bewaard</span></div>
         </section>
-        <div className="id-dashboard-footer"><span>VELD <span>·</span> Digitale balie</span><span>Een productdemo van Harkas IT</span></div>
+        <div className="id-dashboard-footer"><span>VELD <span>·</span> Digitale balie</span><button type="button" className="id-mobile-reset" onClick={restoreDemo}><RotateCcw size={13} />Voorbeeldgegevens herstellen</button><span>Een productdemo van Harkas IT</span></div>
       </main>
     </div>
-    <Dialog open={Boolean(selected)} onOpenChange={open => { if (!open) setSelectedId(null); }}><DialogContent className="installation-demo id-detail">
+    <Dialog open={Boolean(selected)} onOpenChange={open => { if (!open) closeLead(); }}><DialogContent className="installation-demo id-detail">
       {selected && <><DialogHeader><p className="id-eyebrow">AANVRAAG {selected.id}</p><DialogTitle className="id-detail-title">{selected.service}</DialogTitle><DialogDescription className="id-detail-subtitle">Ontvangen op {fmtTime(selected.createdAt)} · Fictieve demoaanvraag</DialogDescription></DialogHeader>
         <div className="id-detail-grid"><div className="id-detail-body"><div className="id-detail-client"><span className="id-avatar">{initials(selected.name)}</span><div><strong>{selected.name}</strong><span>{selected.postcode}</span></div><StatusBadge status={selected.status} /></div><div className="id-contact-grid"><div><small>E-mailadres</small><span>{selected.email}</span></div><div><small>Telefoon</small><span>{selected.phone || "Niet opgegeven"}</span></div></div><div className="id-description"><h3>De aanvraag</h3><p>{selected.description}</p><span><CalendarDays size={15} />Voorkeur: {selected.preference || "Geen voorkeur opgegeven"}</span></div>
         {selected.photos.length > 0 && <div className="id-photos"><h3>Bijgevoegde foto's</h3><div>{selected.photos.map(photo => <figure key={photo.id}><img src={photo.dataUrl} alt={photo.name} /><figcaption>{photo.name}</figcaption></figure>)}</div></div>}
