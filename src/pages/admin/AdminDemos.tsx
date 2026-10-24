@@ -94,7 +94,7 @@ export default function AdminDemos() {
               </ul>
 
               <div className="mt-auto space-y-4">
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                   <Button asChild>
                     <a href={demo.url} target="_blank" rel="noopener noreferrer" aria-label={demo.title + " demo openen in een nieuw tabblad"}>
                       <ExternalLink aria-hidden="true" />
