@@ -177,6 +177,8 @@ function parseSelect(table:string, columns:string, alias="t"): {sql:string; para
 
   const out:string[]=[]; const relations:string[]=[];
   for(const part of parts){
+    // A wildcard may be combined with embedded relations, as in the hours page.
+    if (part === "*") { out.push(`${alias}.*`); continue; }
     const rel=part.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)\)$/s);
     if(rel){
       const name=rel[1], inner=rel[2], cfg=RELATIONS[table]?.[name];

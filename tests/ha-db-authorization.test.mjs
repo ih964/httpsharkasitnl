@@ -135,6 +135,25 @@ try {
       assert.equal(status, expected);
     }
   });
+  await test('hours selection combines wildcard and invoice relation without weakening validation', async () => {
+    const calls = [];
+    const row = { id: 'entry', hours: 8, invoices: { invoice_number: '2026-001' } };
+    const db = { async query(sql, params) {
+      calls.push({ sql, params });
+      if (sql.includes('array(select module_key')) return { rows: [{ is_admin: false, modules: ['time_entries'] }] };
+      return { rows: [row] };
+    } };
+    const result = await executeAuthorized('supabase', '0e161dba-150e-451f-adca-16001610511c', request('time_entries', 'select', {
+      columns: '*, invoices(invoice_number)', order: [{ column: 'work_date', ascending: true }]
+    }), db);
+    assert.deepEqual(result.data, [row]);
+    assert.match(calls.at(-1).sql, /^select t\.\*,/);
+    assert.match(calls.at(-1).sql, /r\."invoice_number"/);
+    assert.match(calls.at(-1).sql, /order by t\."work_date" asc/);
+    assert.throws(() => authorizeRequest(admin, request('time_entries', 'select', { columns: '*, id; DROP TABLE time_entries' })), /Invalid identifier/);
+    assert.throws(() => authorizeRequest(admin, request('time_entries', 'select', { columns: '*, password_vault(*)' })), /Unsupported relation/);
+    assert.throws(() => authorizeRequest(access('btw_overzicht'), request('invoices', 'select', { columns: '*, customers(*)' })), /Forbidden/);
+  });
   console.log(`${passed} HA authorization tests passed`);
 } finally {
   await rm(dir, { recursive: true, force: true });
