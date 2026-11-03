@@ -3,6 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
+import { types } from 'pg';
 
 const dir = await mkdtemp(resolve('.ha-auth-test-'));
 try {
@@ -13,6 +14,15 @@ try {
   const request = (table, action = 'select', other = {}) => ({ action, table, ...other });
   let passed = 0;
   const test = async (name, fn) => { await fn(); passed++; console.log(`PASS ${name}`); };
+
+  await test('SQL dates remain calendar strings for agenda matching and date inputs in every timezone', () => {
+    const parseDate = types.getTypeParser(1082, 'text');
+    for (const date of ['2026-03-16', '2026-07-06', '2026-09-01', '2026-10-25']) {
+      assert.equal(parseDate(date), date);
+      assert.equal(JSON.parse(JSON.stringify({ work_date: parseDate(date) })).work_date, date);
+    }
+    assert.ok(types.getTypeParser(1184, 'text')('2026-09-01 12:00:00+00') instanceof Date);
+  });
 
   await test('quotes-only users retain customer and branding lookup, but cannot reach finance or credentials', () => {
     for (const table of ['customers', 'settings']) assert.doesNotThrow(() => authorizeRequest(access('quotes'), request(table)));

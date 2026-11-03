@@ -1,5 +1,9 @@
-import { Pool, type PoolClient } from "pg";
+import { Pool, types, type PoolClient } from "pg";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+
+// SQL DATE is a calendar date, not an instant. Keep PostgREST's YYYY-MM-DD
+// contract so agenda matching and date inputs work without timezone shifts.
+types.setTypeParser(1082, (value: string) => value);
 
 const SUPABASE_URL = process.env.HARKAS_SUPABASE_URL || "https://uqkrxzlkvjdmebsbdrmb.supabase.co";
 const SUPABASE_DSN = process.env.HARKAS_SUPABASE_DSN;
