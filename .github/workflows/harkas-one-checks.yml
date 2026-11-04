@@ -1,0 +1,35 @@
+name: Harkas One mobile checks
+on:
+  pull_request:
+    paths:
+      - 'src/pages/one/**'
+      - 'public/admin/one/**'
+      - 'src/App.tsx'
+      - 'vercel.json'
+      - 'tests/harkas-one-smoke.mjs'
+      - '.github/workflows/harkas-one-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: npm run test:finance
+      - run: npm install --no-save --ignore-scripts --no-audit --no-fund @playwright/test@1.64.1
+      - run: npx playwright install --with-deps chromium
+      - name: Isolated mobile browser checks (synthetic data only)
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/one-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do curl --fail --silent http://127.0.0.1:4173/admin/one/ >/dev/null && break; sleep 1; done
+          node tests/harkas-one-smoke.mjs

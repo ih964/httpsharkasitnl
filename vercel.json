@@ -9,82 +9,30 @@
   "headers": [
     {
       "source": "/favicon.ico",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "image/svg+xml"
-        }
-      ]
+      "headers": [{ "key": "Content-Type", "value": "image/svg+xml" }]
     },
     {
-      "source": "/demo/:path*",
+      "source": "/admin/one/:path*",
       "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow"
-        }
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
       ]
     },
-    {
-      "source": "/veranda/:path*",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow"
-        }
-      ]
-    },
-    {
-      "source": "/verhuizen/:path*",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow"
-        }
-      ]
-    }
+    { "source": "/demo/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/veranda/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/verhuizen/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
   ],
-  "redirects": [
-    {
-      "source": "/diensten/marketing",
-      "destination": "/diensten/automatisering",
-      "permanent": true
-    }
-  ],
+  "redirects": [{ "source": "/diensten/marketing", "destination": "/diensten/automatisering", "permanent": true }],
   "rewrites": [
-    {
-      "source": "/favicon.ico",
-      "destination": "/favicon.svg"
-    },
-    {
-      "source": "/verhuizen",
-      "destination": "/verhuizen/index.html"
-    },
-    {
-      "source": "/verhuizen/",
-      "destination": "/verhuizen/index.html"
-    },
-    {
-      "source": "/veranda",
-      "destination": "/veranda/index.html"
-    },
-    {
-      "source": "/veranda/",
-      "destination": "/veranda/index.html"
-    },
-    {
-      "source": "/factuurgegevens",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/((?!api/|veranda/|verhuizen/).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/favicon.ico", "destination": "/favicon.svg" },
+    { "source": "/verhuizen", "destination": "/verhuizen/index.html" },
+    { "source": "/verhuizen/", "destination": "/verhuizen/index.html" },
+    { "source": "/veranda", "destination": "/veranda/index.html" },
+    { "source": "/veranda/", "destination": "/veranda/index.html" },
+    { "source": "/factuurgegevens", "destination": "/index.html" },
+    { "source": "/((?!api/|veranda/|verhuizen/|admin/one/(?:sw\\.js|manifest\\.webmanifest|offline\\.html|icon-192\\.png|icon-512\\.png)$).*)", "destination": "/index.html" }
   ],
-  "crons": [
-    {
-      "path": "/api/support-notify",
-      "schedule": "7 8 * * *"
-    }
-  ]
+  "crons": [{ "path": "/api/support-notify", "schedule": "7 8 * * *" }]
 }
