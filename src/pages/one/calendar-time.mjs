@@ -17,14 +17,14 @@ export function addDays(day, count) {
 export function toInstant(value) {
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) throw new Error('Vul datum en tijd volledig in.');
   const [y, m, d, h, min] = value.match(/\d+/g).map(Number);
-  if (y < 2000 || y > 2100 || h > 23 || min > 59) throw new Error('Kies een geldige datum en tijd tussen 2000 en 2100.');
+  // Adjacent years support calendar-grid edges; eventValues enforces persisted bounds.
+  if (y < 1999 || y > 2101 || h > 23 || min > 59) throw new Error('Kies een geldige datum en tijd tussen 2000 en 2100.');
   addDays(value.slice(0, 10), 0);
   const nominal = Date.UTC(y, m - 1, d, h, min);
   const matches = new Set();
   for (const hours of [-36, -12, 0, 12, 36]) {
     const sample = nominal + hours * 3600000;
-    const wall = wallTime(sample);
-    const parts = wall.match(/\d+/g).map(Number);
+    const parts = wallTime(sample).match(/\d+/g).map(Number);
     const offset = Date.UTC(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]) - sample;
     const candidate = nominal - offset;
     if (wallTime(candidate) === value) matches.add(candidate);
@@ -43,10 +43,14 @@ export function shiftMonth(month, amount) {
   const [year, m] = month.split('-').map(Number);
   return new Date(Date.UTC(year, m - 1 + amount, 1)).toISOString().slice(0, 7);
 }
+export function safeAgendaDay(value, fallback) {
+  try { return typeof value === 'string' && value >= '2000-01-01' && value <= '2100-11-30' ? addDays(value, 0) : fallback; } catch { return fallback; }
+}
 export function eventValues(draft) {
   const title = String(draft.title || '').trim();
   if (!title || title.length > 200) throw new Error('Vul een titel van maximaal 200 tekens in.');
   if (!['private', 'business'].includes(draft.kind)) throw new Error('Kies privé of zakelijk.');
+  if (draft.startDate < '2000-01-01' || draft.startDate > '2100-11-30' || draft.endDate > '2100-11-30') throw new Error('Kies een datum tussen 2000 en november 2100.');
   const starts_at = toInstant(`${draft.startDate}T${draft.allDay ? '00:00' : draft.startTime}`);
   const ends_at = toInstant(`${draft.allDay ? addDays(draft.endDate, 1) : draft.endDate}T${draft.allDay ? '00:00' : draft.endTime}`);
   if (new Date(ends_at) <= new Date(starts_at)) throw new Error('De eindtijd moet na de begintijd liggen.');

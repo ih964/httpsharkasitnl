@@ -1,5 +1,4 @@
 import { portalSupabase } from '@/integrations/supabase/client';
-
 export function pushSupported() { return window.isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
 export async function pushRequest(body: Record<string, unknown>) {
   const { data, error } = await portalSupabase.functions.invoke('harkas-one-push', { body });
@@ -18,7 +17,6 @@ export async function currentPush() {
 }
 export async function enablePush() {
   if (!pushSupported()) throw new Error('Deze browser ondersteunt push hier niet. Open Harkas One in Chrome of installeer de app eerst.');
-  // Called directly from a click: permissions must never be requested on page load.
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') throw new Error(permission === 'denied' ? 'Meldingen zijn geblokkeerd. Sta meldingen voor harkasit.nl toe in de site-instellingen van je browser.' : 'Je hebt nog geen toestemming gegeven. Meldingen blijven uit.');
   const cfg = await pushRequest({ action: 'status' });
@@ -39,8 +37,9 @@ export async function disablePush() {
   const subscription = await registration?.pushManager.getSubscription();
   if (!subscription) return;
   let serverStopped = false, browserStopped = false;
-  try { await pushRequest({ action: 'unsubscribe', endpoint: subscription.endpoint }); serverStopped = true; } catch { /* Still stop this device when the server cannot be reached. */ }
-  try { browserStopped = await subscription.unsubscribe(); } catch { /* Server deletion is independently sufficient to stop delivery. */ }
+  try { const result = await pushRequest({ action: 'unsubscribe', endpoint: subscription.endpoint }); serverStopped = result.detached === true; } catch { /* Try local revocation even if the server is unreachable. */ }
+  try { browserStopped = await subscription.unsubscribe(); } catch { /* A confirmed deletion of THIS account's server registration is independently sufficient. */ }
+  // A successful no-op for another account must never be mistaken for a revoked device.
   if (!serverStopped && !browserStopped) throw new Error('Uitschakelen is niet bevestigd. Probeer opnieuw voordat je dit apparaat deelt.');
   try { for (const notification of await registration!.getNotifications()) notification.close(); } catch { /* Optional browser feature. */ }
 }
