@@ -12,7 +12,7 @@
       "headers": [{ "key": "Content-Type", "value": "image/svg+xml" }]
     },
     {
-      "source": "/admin/one/:path*",
+      "source": "/admin/one(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
         { "key": "Cache-Control", "value": "no-store" },
