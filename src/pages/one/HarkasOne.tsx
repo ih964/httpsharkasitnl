@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, Check, Clock3, Download, FileText, FolderOpen, Globe, Home, LayoutGrid, LifeBuoy, Loader2, LockKeyhole, LogOut, Mail, RefreshCw, ShieldCheck, Smartphone, Users, WifiOff } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Bell, CalendarDays, Check, Clock3, Download, FileText, FolderOpen, Globe, Home, LayoutGrid, LifeBuoy, Loader2, LockKeyhole, LogOut, Mail, RefreshCw, ShieldCheck, Smartphone, Users, WifiOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { portalSupabase, supabase } from '@/integrations/supabase/client';
 import OneMailbox from './OneMailbox';
+import { OneAgenda, OneNotifications, UpcomingAgenda } from './OnePlanner';
+import { disablePush } from './one-push';
 import './one.css';
 
 const Tickets = lazy(() => import('@/pages/admin/AdminTickets'));
@@ -91,6 +93,7 @@ function Today() {
   const greeting = hour < 12 ? 'Goedemorgen' : hour < 18 ? 'Goedemiddag' : 'Goedenavond';
   return <div className="one-today">
     <section className="one-hero"><div><p className="one-eyebrow">{new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Amsterdam' })}</p><h1>{greeting}.<br /><span>Grip op je werkdag.</span></h1><p>Je onderneming, zonder het wisselen tussen schermen.</p></div><div className="one-hero-mark" aria-hidden="true">H<span>1</span></div><Link to={`${base}/mail`} className="one-button one-primary"><Mail />Open alle mail <ArrowUpRight /></Link></section>
+    <UpcomingAgenda key={version} />
     <div className="one-section-title one-section-small"><h2>Nu in Harkas Admin</h2><button className="one-icon-button" aria-label="Administratie vernieuwen" onClick={() => setVersion(value => value + 1)}><RefreshCw /></button></div>
     <div className="one-metrics">{[{ key: 'tickets', label: 'Open tickets', detail: 'Inclusief wachtende tickets', icon: LifeBuoy }, { key: 'invoices', label: 'Verzonden facturen', detail: 'Nog niet als betaald gemarkeerd', icon: FileText }, { key: 'customers', label: 'Klanten', detail: 'In je administratie', icon: Users }].map(item => <Link to={`${base}/${item.key}`} className="one-metric" key={item.key}><item.icon /><span>{item.label}</span><strong>{!metrics[item.key] ? '…' : metrics[item.key].error ? '—' : metrics[item.key].value}</strong><small>{metrics[item.key]?.error ? 'Niet beschikbaar · probeer vernieuwen' : item.detail}</small></Link>)}</div>
     <p className="one-updated">{updated ? `Gecontroleerd om ${updated.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })}. Mail wordt apart opgehaald.` : 'Administratie ophalen…'}</p>
@@ -103,14 +106,14 @@ const modules = [
   { label: 'Klanten', description: 'Contactgegevens en klantbeheer', path: `${base}/customers`, icon: Users },
   { label: 'Facturen', description: 'Overzicht, status en factuurbeheer', path: `${base}/invoices`, icon: FileText },
   { label: 'Offertes', description: 'Opstellen en opvolgen', path: `${base}/offertes`, icon: FileText },
-  { label: 'Uren & agenda', description: 'Je bestaande urenregistratie', path: `${base}/uren`, icon: Clock3 },
+  { label: 'Urenregistratie', description: 'Werkzaamheden en gewerkte uren', path: `${base}/uren`, icon: Clock3 },
   { label: 'Documenten', description: 'Je zakelijke bestanden', path: `${base}/documenten`, icon: FolderOpen },
   { label: 'Mail & hosting', description: 'Alle mailmappen, websites en Plesk', path: '/admin/snelle-toegang', icon: Globe },
   { label: 'Wachtwoordkluis', description: 'Open je bestaande beveiligde kluis', path: '/admin/wachtwoorden', icon: LockKeyhole },
   { label: 'Volledig beheer', description: 'Alle onderdelen van Harkas Admin', path: '/admin', icon: LayoutGrid },
 ];
 function More() {
-  return <><div className="one-page-heading"><p className="one-eyebrow">JE ONDERNEMING</p><h1>Alles binnen bereik.</h1><p className="one-muted">Dezelfde gegevens en modules als op je laptop.</p></div><div className="one-module-grid">{modules.map(item => <Link to={item.path} key={item.path} className="one-module"><span className="one-module-icon"><item.icon /></span><span><strong>{item.label}</strong><small>{item.description}</small></span><ArrowUpRight /></Link>)}</div><section className="one-panel one-roadmap"><h2>Dit is versie 1</h2><p>Mail, administratie en tickets zijn gekoppeld aan je bestaande omgeving. Agenda-synchronisatie, marketing, back-upmeldingen en de slimme assistent zijn nog niet aangesloten.</p><p>Geen automatische e-mails of meldingen: jij houdt de controle. Voor actuele gegevens is internet nodig.</p></section></>;
+  return <><div className="one-page-heading"><p className="one-eyebrow">JE ONDERNEMING</p><h1>Alles binnen bereik.</h1><p className="one-muted">Dezelfde gegevens en modules als op je laptop.</p></div><div className="one-module-grid">{modules.map(item => <Link to={item.path} key={item.path} className="one-module"><span className="one-module-icon"><item.icon /></span><span><strong>{item.label}</strong><small>{item.description}</small></span><ArrowUpRight /></Link>)}</div><section className="one-panel one-roadmap"><h2>Je agenda en meldingen</h2><p>Voeg privé- en zakelijke afspraken toe via Agenda. Schakel via het belletje afspraakherinneringen en meldingen voor nieuwe supporttickets in op dit apparaat.</p><div className="one-actions"><Link className="one-button" to={`${base}/agenda`}><CalendarDays />Agenda</Link><Link className="one-button" to={`${base}/meldingen`}><Bell />Meldingen</Link></div><p>Mailpush, externe agenda-synchronisatie, marketing, back-upmeldingen en de slimme assistent zijn nog niet aangesloten. Voor actuele gegevens is internet nodig.</p></section></>;
 }
 function ModulePage({ children }: { children: React.ReactNode }) {
   return <div className="one-existing"><Link className="one-text-link" to={`${base}/more`}><ArrowLeft />Alle onderdelen</Link><Suspense fallback={<Loading />}>{children}</Suspense></div>;
@@ -122,11 +125,11 @@ function Shell() {
   const [logoutError, setLogoutError] = useState('');
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   const logout = async () => {
-    if (!window.confirm('Uitloggen bij Harkas One en Harkas Admin?')) return;
+    if (!window.confirm('Uitloggen bij Harkas One en Harkas Admin? Meldingen op dit apparaat worden ook uitgeschakeld.')) return;
     setLeaving(true); setLogoutError('');
-    try { await signOut(); } catch { setLogoutError('Uitloggen is niet bevestigd. Probeer opnieuw.'); } finally { setLeaving(false); }
+    try { await disablePush(); await signOut(); } catch { setLogoutError('Uitloggen of het uitschakelen van meldingen is niet bevestigd. Probeer opnieuw.'); } finally { setLeaving(false); }
   };
-  return <><header className="one-topbar"><Link to={`${base}/`} className="one-wordmark"><span className="one-mark">H<span>1</span></span><span>Harkas <b>One</b><small>Jouw onderneming. Eén overzicht.</small></span></Link><button className="one-icon-button" aria-label="Uitloggen" title="Uitloggen" disabled={leaving} onClick={() => void logout()}><LogOut /></button></header>{logoutError && <p className="one-error" role="alert">{logoutError}</p>}<main id="one-main" className="one-main"><Suspense fallback={<Loading />}><Routes><Route index element={<Today />} /><Route path="mail" element={<OneMailbox />} /><Route path="tickets" element={<ModulePage><Tickets /></ModulePage>} /><Route path="customers" element={<ModulePage><Customers /></ModulePage>} /><Route path="invoices" element={<ModulePage><Invoices /></ModulePage>} /><Route path="offertes" element={<ModulePage><Quotes /></ModulePage>} /><Route path="uren" element={<ModulePage><Hours /></ModulePage>} /><Route path="documenten" element={<ModulePage><Documents /></ModulePage>} /><Route path="more" element={<More />} /><Route path="*" element={<Navigate to={`${base}/`} replace />} /></Routes></Suspense></main><nav className="one-bottom-nav" aria-label="Hoofdnavigatie">{[{ to: `${base}/`, label: 'Vandaag', icon: Home, end: true }, { to: `${base}/mail`, label: 'Mail', icon: Mail }, { to: `${base}/tickets`, label: 'Tickets', icon: LifeBuoy }, { to: `${base}/more`, label: 'Meer', icon: LayoutGrid }].map(item => <NavLink key={item.label} to={item.to} end={item.end}><item.icon /><span>{item.label}</span></NavLink>)}</nav></>;
+  return <><header className="one-topbar"><Link to={`${base}/`} className="one-wordmark"><span className="one-mark">H<span>1</span></span><span>Harkas <b>One</b><small>Jouw onderneming. Eén overzicht.</small></span></Link><div className="one-header-actions"><Link className="one-icon-button" to={`${base}/meldingen`} aria-label="Meldingen" title="Meldingen"><Bell /></Link><button className="one-icon-button" aria-label="Uitloggen" title="Uitloggen" disabled={leaving} onClick={() => void logout()}><LogOut /></button></div></header>{logoutError && <p className="one-error" role="alert">{logoutError}</p>}<main id="one-main" className="one-main"><Suspense fallback={<Loading />}><Routes><Route index element={<Today />} /><Route path="mail" element={<OneMailbox />} /><Route path="agenda" element={<OneAgenda />} /><Route path="meldingen" element={<OneNotifications />} /><Route path="tickets" element={<ModulePage><Tickets /></ModulePage>} /><Route path="customers" element={<ModulePage><Customers /></ModulePage>} /><Route path="invoices" element={<ModulePage><Invoices /></ModulePage>} /><Route path="offertes" element={<ModulePage><Quotes /></ModulePage>} /><Route path="uren" element={<ModulePage><Hours /></ModulePage>} /><Route path="documenten" element={<ModulePage><Documents /></ModulePage>} /><Route path="more" element={<More />} /><Route path="*" element={<Navigate to={`${base}/`} replace />} /></Routes></Suspense></main><nav className="one-bottom-nav" aria-label="Hoofdnavigatie">{[{ to: `${base}/`, label: 'Vandaag', icon: Home, end: true }, { to: `${base}/mail`, label: 'Mail', icon: Mail }, { to: `${base}/agenda`, label: 'Agenda', icon: CalendarDays }, { to: `${base}/tickets`, label: 'Tickets', icon: LifeBuoy }, { to: `${base}/more`, label: 'Meer', icon: LayoutGrid }].map(item => <NavLink key={item.label} to={item.to} end={item.end}><item.icon /><span>{item.label}</span></NavLink>)}</nav></>;
 }
 export default function HarkasOne() {
   const { session, user, isAdmin, isLoading, signOut } = useAuth();
