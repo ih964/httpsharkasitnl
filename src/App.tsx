@@ -44,6 +44,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import ModuleRoute from "./components/admin/ModuleRoute";
 
+const HarkasOne = lazy(() => import('./pages/one/HarkasOne'));
 const AdminDocuments = lazy(() => import('./pages/admin/AdminDocuments'));
 
 const AdminDemos = lazy(() => import('./pages/admin/AdminDemos'));
@@ -91,6 +92,7 @@ const App = () => (
             <Route path="/factuurgegevens" element={<Factuurgegevens />} />
             <Route path="/support" element={<SupportPortal />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/one/*" element={<Suspense fallback={<div role="status" className="p-6">Harkas One laden…</div>}><HarkasOne /></Suspense>} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminHome />} />
               <Route path="documenten" element={<ModuleRoute adminOnly><Suspense fallback={<div role="status" className="p-6">Documenten laden…</div>}><AdminDocuments /></Suspense></ModuleRoute>} />
