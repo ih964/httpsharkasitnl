@@ -106,10 +106,29 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
       if (missing.length) return missing;
       return;
     } catch {
-      throw new Error('Nieuwe tekens in dit ingesloten lettertype kunnen niet betrouwbaar worden gecontroleerd. Kies het vervangende lettertype of gebruik tekens uit de oorspronkelijke regel.');
+      throw new Error('Nieuwe tekens in dit ingesloten lettertype kunnen niet betrouwbaar worden gecontroleerd. Laad het volledige originele TTF/OTF-lettertype of gebruik tekens uit de oorspronkelijke regel.');
     } finally { if (data) free(data); free(lengthPointer); }
   }
-  function replace(bytes: Uint8Array, pageIndex: number, run: PdfTextRun, value: string, fallback?: Uint8Array) {
+  function withImportedFont<T>(doc: number, fontDocument: Uint8Array, useFont: (font: number) => T): T {
+    const data = allocate(fontDocument.length), index = api.FPDF_GetPageCount(doc);
+    let source = 0, imported = false, page = 0;
+    try {
+      mem.HEAPU8.set(fontDocument, data);
+      source = api.FPDF_LoadMemDocument(data, fontDocument.length, '');
+      if (!source || !api.FPDF_ImportPages(doc, source, '1', index)) throw new Error('Het volledige lettertype kon niet worden ingesloten.');
+      imported = true; page = api.FPDF_LoadPage(doc, index);
+      const object = page && api.FPDFPage_GetObject(page, 0);
+      const font = object && api.FPDFTextObj_GetFont(object);
+      if (!font) throw new Error('Het volledige lettertype kon niet worden geladen.');
+      return useFont(font);
+    } finally {
+      if (page) api.FPDF_ClosePage(page);
+      if (imported) api.FPDFPage_Delete(doc, index);
+      if (source) api.FPDF_CloseDocument(source);
+      free(data);
+    }
+  }
+  function replace(bytes: Uint8Array, pageIndex: number, run: PdfTextRun, value: string, fallback?: Uint8Array, fontDocument?: Uint8Array) {
     if (value.length > 3000 || /[\r\n\t\u0000-\u001f]/.test(value)) throw new Error('Bewerk één tekstregel tegelijk, zonder regeleinden.');
     if (/[\u0590-\u08ff\u0900-\u0dff]/.test(value)) throw new Error('Direct bewerken van dit schrift wordt nog niet ondersteund. Het origineel is behouden.');
     return withPage(bytes, pageIndex, (doc, page) => {
@@ -124,12 +143,16 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
           if (!api.FPDFPage_RemoveObject(page, object)) throw new Error('Tekst verwijderen is mislukt.');
           api.FPDFPageObj_Destroy(object);
         } else {
-          if (fallback) {
-            const fontData = allocate(fallback.length);
-            try { mem.HEAPU8.set(fallback, fontData); loadedFont = api.FPDFText_LoadFont(doc, fontData, fallback.length, 2, true); }
-            finally { free(fontData); }
-            if (!loadedFont) throw new Error('Het vervangende lettertype kon niet worden geladen.');
-            const replacement = api.FPDFPageObj_CreateTextObj(doc, loadedFont, current.size);
+          if (fallback || fontDocument) {
+            if (fallback && !fontDocument) {
+              const fontData = allocate(fallback.length);
+              try { mem.HEAPU8.set(fallback, fontData); loadedFont = api.FPDFText_LoadFont(doc, fontData, fallback.length, 2, true); }
+              finally { free(fontData); }
+              if (!loadedFont) throw new Error('Het vervangende lettertype kon niet worden geladen.');
+            }
+            const replacement = fontDocument
+              ? withImportedFont(doc, fontDocument, font => api.FPDFPageObj_CreateTextObj(doc, font, current.size))
+              : api.FPDFPageObj_CreateTextObj(doc, loadedFont, current.size);
             if (!replacement) throw new Error('Tekst aanmaken is mislukt.');
             current.matrix.forEach((n, i) => mem.setValue(buffer + i * 4, n, 'float'));
             api.FPDFPageObj_SetMatrix(replacement, buffer);
@@ -143,9 +166,9 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
           if (!api.FPDFText_SetText(object, buffer)) throw new Error('Deze tekst kon niet worden aangepast.');
           textPage = api.FPDFText_LoadPage(page);
           // Embedded subsets often lack new letters: reject a lossy encoding instead of silently changing the font.
-          if (textOf(object, textPage) !== value) throw new Error('Het oorspronkelijke lettertype bevat niet alle benodigde tekens. Kies bewust het vervangende lettertype of pas de tekst aan.');
-          const missing = verifyEmbeddedCharacters(object, value, fallback ? '' : current.text);
-          if (missing?.length) throw new Error(`Het lettertype bevat niet alle benodigde tekens: ${missing.slice(0, 12).map(char => `“${char}”`).join(', ')}. Kies ‘Vervangend lettertype gebruiken’ om alle letters zichtbaar te maken. De tekstvorm kan daarbij veranderen.`);
+          if (textOf(object, textPage) !== value) throw new Error('Het gekozen lettertype bevat niet alle benodigde tekens. Laad het volledige originele TTF/OTF-lettertype of pas de tekst aan.');
+          const missing = verifyEmbeddedCharacters(object, value, fallback || fontDocument ? '' : current.text);
+          if (missing?.length) throw new Error(`Het lettertype bevat niet alle benodigde tekens: ${missing.slice(0, 12).map(char => `“${char}”`).join(', ')}. Laad het volledige originele TTF/OTF-lettertype of kies een vervangend lettertype.`);
           api.FPDFText_ClosePage(textPage); textPage = 0;
         }
         if (!api.FPDFPage_GenerateContent(page)) throw new Error('De pagina kon niet worden bijgewerkt.');
