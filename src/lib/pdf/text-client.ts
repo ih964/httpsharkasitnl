@@ -1,4 +1,5 @@
 import type { PdfTextRun, TextInspection } from './text-engine';
+import type { PdfFontInfo } from './font-session';
 
 let worker: Worker | undefined, nextId = 0;
 const pending = new Map<number, { resolve: (result: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
@@ -24,4 +25,5 @@ function request<T>(data: Record<string, unknown>): Promise<T> {
   });
 }
 export const inspectPdfText = (bytes: Uint8Array, index: number) => request<TextInspection>({ action: 'inspect', bytes, index });
-export const replacePdfText = (bytes: Uint8Array, index: number, run: PdfTextRun, value: string, fallback?: Uint8Array) => request<Uint8Array>({ action: 'replace', bytes, index, run, value, fallback });
+export const inspectPdfFont = (bytes: Uint8Array) => request<PdfFontInfo>({ action: 'font-info', bytes });
+export const replacePdfText = (bytes: Uint8Array, index: number, run: PdfTextRun, value: string, fallback?: Uint8Array, customFont?: Uint8Array) => request<Uint8Array>({ action: 'replace', bytes, index, run, value, fallback, customFont });
