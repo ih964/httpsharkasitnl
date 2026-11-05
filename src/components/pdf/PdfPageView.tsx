@@ -4,8 +4,10 @@ import { type EditorPage, type Mark, type Point, uid } from '@/lib/pdf/model';
 import type { PdfSource } from '@/lib/pdf/renderer';
 import type { PdfTextRun } from '@/lib/pdf/text-engine';
 import type { OcrLine } from '@/lib/pdf/ocr';
+import { PdfTextMoveLayer } from './PdfTextMoveLayer';
+import { textBox, type TextMove } from '@/lib/pdf/text-layout';
 
-export type PdfTool = 'select' | 'existing' | 'text' | 'highlight' | 'draw' | 'rectangle' | 'image';
+export type PdfTool = 'select' | 'existing' | 'moveText' | 'text' | 'highlight' | 'draw' | 'rectangle' | 'image';
 
 export function MarkGraphic({ mark }: { mark: Mark }) {
   if (mark.kind === 'text') return <>{mark.cover && <rect x={mark.cover.x} y={mark.cover.y} width={mark.cover.width} height={mark.cover.height} fill={mark.cover.color} />}<text x={mark.x} y={mark.y + mark.size} fill={mark.color} fontSize={mark.size} fontFamily="HarkasPdfSans, sans-serif" xmlSpace="preserve">{(mark.text || '').split('\n').map((line, i) => <tspan key={i} x={mark.x} dy={i ? mark.size * 1.3 : 0}>{line || ' '}</tspan>)}</text></>;
@@ -65,8 +67,9 @@ type Props = {
   onSelect: (id: string | null) => void; onMarks: (marks: Mark[]) => void;
   onText: (point: Point) => void; onImage: (point: Point) => void;
   textRuns: PdfTextRun[]; ocrLines: OcrLine[]; onExistingText: (run: PdfTextRun) => void; onOcrText: (line: OcrLine) => void;
+  selectedText: number[]; snapText: boolean; onSelectText: (indexes: number[]) => void; onMoveText: (moves: TextMove[]) => void;
 };
-export function PdfPageView({ page, source, scale, tool, color, size, selected, disabled, onSelect, onMarks, onText, onImage, textRuns, ocrLines, onExistingText, onOcrText }: Props) {
+export function PdfPageView({ page, source, scale, tool, color, size, selected, disabled, onSelect, onMarks, onText, onImage, textRuns, ocrLines, onExistingText, onOcrText, selectedText, snapText, onSelectText, onMoveText }: Props) {
   const [draft, setDraft] = useState<Mark | null>(null);
   const gesture = useRef<{ start: Point; mark: Mark; moving: boolean; changed: boolean } | null>(null);
   const draftRef = useRef<Mark | null>(null);
@@ -78,7 +81,7 @@ export function PdfPageView({ page, source, scale, tool, color, size, selected, 
     return { x: Math.max(0, Math.min(page.width, pt.x)), y: Math.max(0, Math.min(page.height, pt.y)) };
   };
   const down = (event: PointerEvent<SVGSVGElement>) => {
-    if (disabled || event.button !== 0 || tool === 'existing') return;
+    if (disabled || event.button !== 0 || tool === 'existing' || tool === 'moveText') return;
     const start = point(event);
     if (tool === 'text') { onText(start); return; }
     if (tool === 'image') { onImage(start); return; }
@@ -132,14 +135,12 @@ export function PdfPageView({ page, source, scale, tool, color, size, selected, 
       </svg>
       {tool === 'existing' && <div className="pdf-existing-layer" aria-label="Herkende tekstregels">
         {textRuns.map(run => {
-          const [left, bottom, right, top] = run.bounds, [a,b,c,d,e,f] = page.transform;
-          const corners = [[left,bottom],[left,top],[right,bottom],[right,top]].map(([x,y]) => [a*x+c*y+e,b*x+d*y+f]);
-          const x = Math.min(...corners.map(p => p[0])), y = Math.min(...corners.map(p => p[1]));
-          const width = Math.max(...corners.map(p => p[0])) - x, height = Math.max(...corners.map(p => p[1])) - y;
+          const {x,y,width,height} = textBox(run,page);
           return <button key={run.index} className="pdf-text-hit" disabled={disabled} aria-label={`Tekst bewerken: ${run.text}`} title={`${run.font} · ${run.size.toFixed(1)} pt — ${run.text}`} style={{ left:(x-2)*scale, top:(y-2)*scale, width:Math.max(8,width+4)*scale, height:Math.max(8,height+4)*scale }} onClick={() => onExistingText(run)} />;
         })}
         {ocrLines.filter(line => !page.marks.some(mark => mark.ocrLineId === line.id)).map(line => <button key={line.id} className="pdf-text-hit pdf-ocr-hit" disabled={disabled} aria-label={`Scantekst bewerken: ${line.text}`} title={`Scan · zekerheid ${line.confidence}% — ${line.text}`} style={{left:(line.x-2)*scale,top:(line.y-2)*scale,width:(line.width+4)*scale,height:(line.height+4)*scale}} onClick={() => onOcrText(line)} />)}
       </div>}
+      {tool === 'moveText' && <PdfTextMoveLayer page={page} runs={textRuns} scale={scale} selected={selectedText} disabled={disabled} snap={snapText} onSelect={onSelectText} onMove={onMoveText} onEdit={onExistingText} />}
     </div>
   </div>;
 }
