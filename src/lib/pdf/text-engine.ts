@@ -24,16 +24,21 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
       return fn(doc, page);
     } finally { if (page) api.FPDF_ClosePage(page); if (doc) api.FPDF_CloseDocument(doc); free(data); }
   }
-  function textOf(object: number, textPage: number) {
-    const length = api.FPDFTextObj_GetText(object, textPage, 0, 0);
-    if (length < 2 || length > 100_000) return '';
-    const buffer = allocate(length);
-    try { api.FPDFTextObj_GetText(object, textPage, buffer, length); return mem.UTF16ToString(buffer); }
-    finally { free(buffer); }
+  function objectTexts(textPage: number) {
+    const texts = new Map<number, string>(), count = api.FPDFText_CountChars(textPage);
+    if (count > 1_000_000) throw new Error('Deze pagina bevat te veel tekst om veilig te bewerken.');
+    // FPDFTextObj_GetText includes layout-inferred separators from neighboring
+    // objects. Keep real spaces, but exclude generated spaces and line breaks.
+    for (let i = 0; i < count; i++) {
+      const object = api.FPDFText_GetTextObject(textPage, i);
+      if (!object || api.FPDFText_IsGenerated(textPage, i) === 1) continue;
+      const code = api.FPDFText_GetUnicode(textPage, i);
+      if (code > 0 && code <= 0x10ffff) texts.set(object, (texts.get(object) || '') + String.fromCodePoint(code));
+    }
+    return texts;
   }
-  function describe(object: number, textPage: number, index: number): PdfTextRun | null {
+  function describe(object: number, text: string, index: number): PdfTextRun | null {
     if (api.FPDFPageObj_GetType(object) !== 1) return null;
-    const text = textOf(object, textPage);
     // Invisible OCR layers, clipping text and complex multiline objects are not editable as a line.
     if (!text.trim() || /[\r\n]/.test(text) || ![0, 1, 2].includes(api.FPDFTextObj_GetTextRenderMode(object))) return null;
     const font = api.FPDFTextObj_GetFont(object), buffer = allocate(1024);
@@ -56,11 +61,12 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
       const textPage = api.FPDFText_LoadPage(page), runs: PdfTextRun[] = [];
       let skipped = 0;
       try {
+        const texts = objectTexts(textPage);
         const count = api.FPDFPage_CountObjects(page);
         if (count > 30_000) throw new Error('Deze pagina is te complex om tekst veilig te bewerken.');
         for (let i = 0; i < count; i++) {
           const object = api.FPDFPage_GetObject(page, i), type = api.FPDFPageObj_GetType(object);
-          const run = describe(object, textPage, i);
+          const run = describe(object, texts.get(object) || '', i);
           if (run) runs.push(run);
           else if (type === 1 || type === 5) skipped++;
         }
@@ -135,8 +141,9 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
       let object = api.FPDFPage_GetObject(page, run.index), textPage = api.FPDFText_LoadPage(page), loadedFont = 0;
       const buffer = allocate(Math.max(1024, (value.length + 1) * 2));
       try {
-        if (!object || textOf(object, textPage) !== run.text) throw new Error('Deze tekst is inmiddels gewijzigd. Selecteer de regel opnieuw.');
-        const current = describe(object, textPage, run.index);
+        const originalText = objectTexts(textPage).get(object) || '';
+        if (!object || originalText !== run.text) throw new Error('Deze tekst is inmiddels gewijzigd. Selecteer de regel opnieuw.');
+        const current = describe(object, originalText, run.index);
         if (!current) throw new Error('Dit tekstobject kan niet veilig worden aangepast.');
         api.FPDFText_ClosePage(textPage); textPage = 0;
         if (!value.trim()) {
@@ -166,7 +173,7 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
           if (!api.FPDFText_SetText(object, buffer)) throw new Error('Deze tekst kon niet worden aangepast.');
           textPage = api.FPDFText_LoadPage(page);
           // Embedded subsets often lack new letters: reject a lossy encoding instead of silently changing the font.
-          if (textOf(object, textPage) !== value) throw new Error('Het gekozen lettertype bevat niet alle benodigde tekens. Laad het volledige originele TTF/OTF-lettertype of pas de tekst aan.');
+          if ((objectTexts(textPage).get(object) || '') !== value) throw new Error('Het gekozen lettertype bevat niet alle benodigde tekens. Laad het volledige originele TTF/OTF-lettertype of pas de tekst aan.');
           const missing = verifyEmbeddedCharacters(object, value, fallback || fontDocument ? '' : current.text);
           if (missing?.length) throw new Error(`Het lettertype bevat niet alle benodigde tekens: ${missing.slice(0, 12).map(char => `“${char}”`).join(', ')}. Laad het volledige originele TTF/OTF-lettertype of kies een vervangend lettertype.`);
           api.FPDFText_ClosePage(textPage); textPage = 0;
