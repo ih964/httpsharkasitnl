@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Copy, Download, FilePlus2, FileText, FolderOpen, Highlighter, ImagePlus, Loader2, Maximize2, MousePointer2, PenLine, Plus, Redo2, RotateCw, Save, ScanText, ShieldCheck, Square, Trash2, Type, Undo2, Upload, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowLeft, ArrowRight, Move, AlignVerticalJustifyCenter, Check, ChevronLeft, ChevronRight, Copy, Download, FilePlus2, FileText, FolderOpen, Highlighter, ImagePlus, Loader2, Maximize2, MousePointer2, PenLine, Plus, Redo2, RotateCw, Save, ScanText, ShieldCheck, Square, Trash2, Type, Undo2, Upload, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,14 +13,16 @@ import { MAX_PAGES, movePage, normalizeRotation, pdfFilename, uid, type EditorPa
 import { downloadStoredPdf, folderPath, getPdfDocument, latestVersion, listPdfDocuments, listPdfFolders, saveStoredPdf, type PdfFolder, type StoredPdf } from '@/lib/pdf/storage';
 import { PDFDocument } from 'pdf-lib';
 import { PdfTextEditorDialog } from '@/components/pdf/PdfTextEditorDialog';
-import { inspectPdfText, disposeTextEngine } from '@/lib/pdf/text-client';
+import { inspectPdfText, disposeTextEngine, movePdfText } from '@/lib/pdf/text-client';
 import type { PdfTextRun, TextInspection } from '@/lib/pdf/text-engine';
+import { alignTextRuns, dragTextRuns, screenDelta, type TextMove } from '@/lib/pdf/text-layout';
 import { recognizePage, type OcrLine } from '@/lib/pdf/ocr';
 import './pdf-editor.css';
 
 const tools: { key: PdfTool; label: string; icon: typeof Type; help: string }[] = [
   { key: 'select', label: 'Selecteren', icon: MousePointer2, help: 'Klik op een toevoeging om die te selecteren. Sleep om te verplaatsen.' },
   { key: 'existing', label: 'Tekst bewerken', icon: ScanText, help: 'Klik op een omlijnde tekstregel om de bestaande tekst aan te passen.' },
+  { key: 'moveText', label: 'Tekst verplaatsen', icon: Move, help: 'Sleep tekstvakken of gebruik de pijltjes. Shift+klik selecteert meerdere vakken. Dubbelklik om tekst te bewerken.' },
   { key: 'text', label: 'Tekst toevoegen', icon: Type, help: 'Klik op de pagina waar je tekst wilt toevoegen.' },
   { key: 'highlight', label: 'Markeren', icon: Highlighter, help: 'Sleep over de pagina om een gebied te markeren.' },
   { key: 'draw', label: 'Tekenen', icon: PenLine, help: 'Teken op de pagina, bijvoorbeeld je handtekening.' },
@@ -56,6 +58,7 @@ export default function AdminPdfEditor() {
   const [folderError, setFolderError] = useState('');
   const [textInspection, setTextInspection] = useState<TextInspection>({ runs: [], skipped: 0 });
   const [detecting, setDetecting] = useState(false), [detectionError, setDetectionError] = useState('');
+  const [selectedText, setSelectedText] = useState<number[]>([]), [snapText, setSnapText] = useState(true), [moveStep, setMoveStep] = useState(1);
   const [existingRun, setExistingRun] = useState<PdfTextRun | null>(null);
   const [ocrLines, setOcrLines] = useState<OcrLine[]>([]);
   const ocrCache = useRef(new Map<string, OcrLine[]>()), ocrAbort = useRef<AbortController | null>(null);
@@ -75,9 +78,9 @@ export default function AdminPdfEditor() {
   }, [pages, history, cursor]);
   const updateMarks = (marks: Mark[]) => commit(pages.map(p => p.id === active.id ? { ...p, marks } : p));
   const removeMark = () => { if (active && selected) { updateMarks(active.marks.filter(m => m.id !== selected)); setSelected(null); } };
-  const choosePage = (id: string) => { setActiveId(id); setSelected(null); setExistingRun(null); };
-  const undo = () => { setCursor(c => Math.max(0, c - 1)); setSelected(null); };
-  const redo = () => { setCursor(c => Math.min(history.length - 1, c + 1)); setSelected(null); };
+  const choosePage = (id: string) => { setActiveId(id); setSelected(null); setExistingRun(null); setSelectedText([]); };
+  const undo = () => { setSelectedText([]); setCursor(c => Math.max(0, c - 1)); setSelected(null); };
+  const redo = () => { setSelectedText([]); setCursor(c => Math.min(history.length - 1, c + 1)); setSelected(null); };
   const run = async (label: string, fn: () => Promise<void>) => {
     if (lock.current) return;
     lock.current = true; setBusy(label); setErrorMessage('');
@@ -106,7 +109,12 @@ export default function AdminPdfEditor() {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); if (event.shiftKey) redo(); else undo(); }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); redo(); }
       if (event.key === 'Delete' || event.key === 'Backspace') { if (selected) { event.preventDefault(); removeMark(); } }
-      if (event.key === 'Escape') { setSelected(null); setTool('select'); }
+      if (event.key === 'Escape') { setSelected(null); setSelectedText([]); setTool('select'); }
+      if (!event.ctrlKey && !event.metaKey && !event.altKey && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key) && ((tool==='moveText' && selectedText.length) || (tool==='select' && selectedMark))) {
+        event.preventDefault();
+        const amount=moveStep*(event.shiftKey?10:1);
+        nudge(event.key==='ArrowLeft'?-amount:event.key==='ArrowRight'?amount:0,event.key==='ArrowUp'?-amount:event.key==='ArrowDown'?amount:0);
+      }
     };
     window.addEventListener('keydown', keydown); return () => window.removeEventListener('keydown', keydown);
   });
@@ -122,7 +130,7 @@ export default function AdminPdfEditor() {
   useEffect(() => {
     setExistingRun(null); setTextInspection({ runs: [], skipped: 0 }); setDetectionError('');
     setOcrLines(active ? ocrCache.current.get(`${active.sourceId}-${active.index}`) || [] : []);
-    if (!active || tool !== 'existing') { setDetecting(false); return; }
+    if (!active || !['existing','moveText'].includes(tool)) { setDetecting(false); return; }
     let canceled = false;
     setDetecting(true);
     void inspectPdfText(sourcesRef.current.get(active.sourceId)!.bytes, active.index)
@@ -131,7 +139,7 @@ export default function AdminPdfEditor() {
       .finally(() => { if (!canceled) setDetecting(false); });
     return () => { canceled = true; };
   }, [active?.sourceId, active?.index, tool]);
-  const replaceBasePage = async (bytes: Uint8Array) => {
+  const replaceBasePage = async (bytes: Uint8Array, message = 'Bestaande tekst aangepast') => {
     const changed = await PDFDocument.load(bytes);
     const form = changed.getForm(); if (form.getFields().length) form.flatten({ updateFieldAppearances: false });
     const single = await PDFDocument.create();
@@ -141,7 +149,24 @@ export default function AdminPdfEditor() {
     const next = new Map(sourcesRef.current); next.set(loaded.source.id, loaded.source);
     sourcesRef.current = next; setSources(next);
     commit(pages.map(page => page.id === active.id ? { ...loaded.pages[0], id: page.id, rotation: page.rotation, marks: page.marks } : page));
-    toast.success('Bestaande tekst aangepast');
+    toast.success(message);
+  };
+  const selectedRuns = selectedText.map(index=>textInspection.runs.find(item=>item.index===index)).filter((item): item is PdfTextRun=>!!item);
+  const moveText = (moves: TextMove[]) => {
+    if (!moves.some(move=>Math.abs(move.dx)+Math.abs(move.dy)>.01)) return;
+    void run('Tekstvakken verplaatsen…',async()=>{
+      const bytes=await movePdfText(sourcesRef.current.get(active.sourceId)!.bytes,active.index,moves,active);
+      await replaceBasePage(bytes,'Tekstvakken verplaatst');
+    });
+  };
+  const nudge = (dx: number, dy: number) => {
+    if (!active || lock.current || detecting) return;
+    const delta=screenDelta({x:dx,y:dy},active.rotation);
+    if (tool==='moveText') moveText(dragTextRuns(selectedRuns,textInspection.runs,active,delta,0).moves);
+    else if (selectedMark) updateMarks(active.marks.map(mark=>mark.id===selectedMark.id?{...mark,x:Math.max(0,Math.min(active.width-mark.width,mark.x+delta.x)),y:Math.max(0,Math.min(active.height-mark.height,mark.y+delta.y))}:mark));
+  };
+  const alignSelected = () => {
+    try { moveText(alignTextRuns(selectedRuns)); } catch(error) { fail(error); }
   };
   const scanPage = () => void run('Scan herkennen…', async () => {
     const controller = new AbortController(); ocrAbort.current = controller;
@@ -189,7 +214,7 @@ export default function AdminPdfEditor() {
         setHistory([added]); setCursor(0); setSavedPages(added); ocrCache.current.clear(); setOcrLines([]);
         const nextName = pdfFilename(files[0].name); setName(nextName); setSavedName(nextName); setStored(document);
       }
-      sourcesRef.current = nextSources; setSources(nextSources); setActiveId(added[0].id); setSelected(null); setTool('select'); setZoom('fit');
+      sourcesRef.current = nextSources; setSources(nextSources); setActiveId(added[0].id); setSelected(null); setSelectedText([]); setTool('select'); setZoom('fit');
     } catch (e) { loaded.forEach(item => void item.source.pdf.destroy()); throw e; }
   };
   const upload = (files: File[], append: boolean) => {
@@ -238,7 +263,7 @@ export default function AdminPdfEditor() {
   });
 
   const chooseTool = (next: PdfTool) => {
-    setTool(next); setSelected(null);
+    setTool(next); setSelected(null); setSelectedText([]);
     if (next === 'highlight') { setInk('#facc15'); setSize(2); }
     if (next === 'text') { setInk('#172554'); setSize(16); }
     if (next === 'draw' || next === 'rectangle') { setInk('#172554'); setSize(2); }
@@ -292,17 +317,29 @@ export default function AdminPdfEditor() {
     </div> : <section className="pdf-workbench" aria-label="PDF-werkruimte">
       <div className="pdf-filebar"><div className="pdf-file-details"><FileText size={21} /><div><Input aria-label="PDF-bestandsnaam" value={name} maxLength={220} onChange={e => setName(e.target.value)} onBlur={() => setName(pdfFilename(name))} disabled={!!busy} /><span>{pages.length} {pages.length === 1 ? 'pagina' : 'pagina’s'}<span className="pdf-status-dot">·</span>{dirty ? 'Niet opgeslagen wijzigingen' : stored ? `Documenten · versie ${latestVersion(stored).version}` : 'Lokaal geopend'}</span></div></div><div className="pdf-file-actions"><Button variant="outline" size="sm" disabled={!!busy} onClick={() => input.current?.click()}><FolderOpen size={16} /><span>Openen</span></Button><Button variant="outline" size="sm" disabled={!!busy} onClick={prepareSave}><Save size={16} /><span>Opslaan</span></Button><Button size="sm" disabled={!!busy} onClick={() => download()}><Download size={16} /><span>Downloaden</span></Button></div></div>
       <div className="pdf-toolbar" role="toolbar" aria-label="PDF-gereedschappen"><div className="pdf-tools">{tools.map(item => <button key={item.key} title={item.help} aria-pressed={tool === item.key} className={tool === item.key ? 'is-active' : ''} disabled={!!busy} onClick={() => chooseTool(item.key)}><item.icon size={18} /><span>{item.label}</span></button>)}</div><div className="pdf-history-tools"><button title="Ongedaan maken (Ctrl+Z)" aria-label="Ongedaan maken" disabled={!!busy || cursor === 0} onClick={undo}><Undo2 size={18} /></button><button title="Opnieuw uitvoeren (Ctrl+Shift+Z)" aria-label="Opnieuw uitvoeren" disabled={!!busy || cursor === history.length - 1} onClick={redo}><Redo2 size={18} /></button></div></div>
-      {tool === 'existing' && <div className="pdf-recognition-bar" role="status"><span>{detecting ? 'Tekstregels herkennen…' : detectionError || `${textInspection.runs.length} bewerkbare tekstfragmenten${ocrLines.length ? ` · ${ocrLines.length} scanregels` : ''}. Klik op een omlijnde regel.`}{textInspection.skipped > 0 && ' Sommige gegroepeerde of onzichtbare teksten zijn niet rechtstreeks bewerkbaar.'}</span><Button size="sm" variant="outline" disabled={!!busy || detecting} onClick={scanPage}><ScanText size={15} className="mr-2" />Scan herkennen (NL/EN)</Button></div>}
+      {['existing','moveText'].includes(tool) && <div className="pdf-recognition-bar" role="status"><span>{detecting ? 'Tekstregels herkennen…' : detectionError || `${textInspection.runs.length} bewerkbare tekstfragmenten${ocrLines.length ? ` · ${ocrLines.length} scanregels` : ''}. ${tool==='moveText'?'Sleep een vak. Shift+klik voor meerdere.':'Klik op een omlijnde regel.'}`}{textInspection.skipped > 0 && ' Sommige gegroepeerde of onzichtbare teksten zijn niet rechtstreeks bewerkbaar.'}</span>{tool==='existing' && <Button size="sm" variant="outline" disabled={!!busy || detecting} onClick={scanPage}><ScanText size={15} className="mr-2" />Scan herkennen (NL/EN)</Button>}</div>}
       <div className="pdf-body">
         <aside className="pdf-pages-panel" aria-label="Paginaoverzicht"><div className="pdf-panel-title"><strong>Pagina’s</strong><span>{pages.length}</span></div><div className="pdf-page-list">{pages.map((page, index) => <button key={page.id} className={`pdf-page-item ${active.id === page.id ? 'is-active' : ''}`} onClick={() => choosePage(page.id)} aria-label={`Pagina ${index + 1}`} aria-current={active.id === page.id ? 'page' : undefined} disabled={!!busy}><PdfThumbnail page={page} source={sources.get(page.sourceId)!} /><span>{index + 1}{page.marks.length > 0 && <i title="Bevat bewerkingen" />}</span></button>)}</div><button className="pdf-add-pages" disabled={!!busy} onClick={() => appendInput.current?.click()}><Plus size={16} />PDF toevoegen</button></aside>
         <div className="pdf-stage-column"><div className="pdf-stage-top"><span>Pagina {activeIndex + 1} van {pages.length}</span><div><button aria-label="Uitzoomen" disabled={!!busy || scale <= .25} onClick={() => setZoom(Math.max(.25, scale - .15))}><ZoomOut size={16} /></button><select aria-label="Zoomniveau" value={zoom === 'fit' ? 'fit' : String(zoom)} onChange={e => setZoom(e.target.value === 'fit' ? 'fit' : Number(e.target.value))}><option value="fit">Passend</option>{[...new Set([.5, .75, 1, 1.25, 1.5, 2, ...(typeof zoom === 'number' ? [zoom] : [])])].sort((a, b) => a - b).map(n => <option key={n} value={n}>{Math.round(n * 100)}%</option>)}</select><button aria-label="Inzoomen" disabled={!!busy || scale >= 2.5} onClick={() => setZoom(Math.min(2.5, scale + .15))}><ZoomIn size={16} /></button><button aria-label="Passend maken" onClick={() => setZoom('fit')}><Maximize2 size={16} /></button></div></div>
-          <div className="pdf-stage" ref={workspace}><PdfPageView key={active.id} page={active} source={sources.get(active.sourceId)!} scale={scale} tool={tool} color={ink} size={size} selected={selected} disabled={!!busy} onSelect={setSelected} onMarks={updateMarks} onText={point => editText(point)} onImage={placeImage} textRuns={textInspection.runs} ocrLines={ocrLines} onExistingText={setExistingRun} onOcrText={editOcrLine} /></div>
+          <div className="pdf-stage" ref={workspace}><PdfPageView key={active.id} page={active} source={sources.get(active.sourceId)!} scale={scale} tool={tool} color={ink} size={size} selected={selected} disabled={!!busy || detecting} selectedText={selectedText} snapText={snapText} onSelectText={setSelectedText} onMoveText={moveText} onSelect={setSelected} onMarks={updateMarks} onText={point => editText(point)} onImage={placeImage} textRuns={textInspection.runs} ocrLines={ocrLines} onExistingText={setExistingRun} onOcrText={editOcrLine} /></div>
           <div className="pdf-stage-bottom"><span>{tools.find(t => t.key === tool)?.help}</span><div><button aria-label="Vorige pagina" disabled={activeIndex === 0 || !!busy} onClick={() => choosePage(pages[activeIndex - 1].id)}><ChevronLeft size={17} /></button><button aria-label="Volgende pagina" disabled={activeIndex === pages.length - 1 || !!busy} onClick={() => choosePage(pages[activeIndex + 1].id)}><ChevronRight size={17} /></button></div></div>
         </div>
         <aside className="pdf-properties" aria-label="Eigenschappen"><div className="pdf-panel-title"><strong>{selectedMark ? 'Selectie' : 'Gereedschap'}</strong>{selectedMark && <button aria-label="Selectie opheffen" onClick={() => setSelected(null)}><X size={15} /></button>}</div>
           <div className="pdf-property-section"><h3>{selectedMark ? ({ text: 'Tekst', draw: 'Tekening', image: 'Afbeelding', highlight: 'Markering', rectangle: 'Kader' }[selectedMark.kind]) : tools.find(t => t.key === tool)?.label}</h3>
-            {(selectedMark?.kind !== 'image' && tool !== 'image' && tool !== 'existing') && <label className="pdf-field">Kleur<div className="pdf-color-row"><input type="color" aria-label="Kleur" value={selectedMark?.color || ink} disabled={!!busy} onChange={e => selectedMark ? changeSelected({ color: e.target.value }) : setInk(e.target.value)} /><span>{selectedMark?.color || ink}</span></div></label>}
+            {(selectedMark?.kind !== 'image' && tool !== 'image' && tool !== 'existing' && tool !== 'moveText') && <label className="pdf-field">Kleur<div className="pdf-color-row"><input type="color" aria-label="Kleur" value={selectedMark?.color || ink} disabled={!!busy} onChange={e => selectedMark ? changeSelected({ color: e.target.value }) : setInk(e.target.value)} /><span>{selectedMark?.color || ink}</span></div></label>}
             {!selectedMark && ['text', 'draw', 'rectangle'].includes(tool) && <label className="pdf-field">{tool === 'text' ? 'Tekstgrootte' : 'Lijndikte'}<select aria-label={tool === 'text' ? 'Tekstgrootte' : 'Lijndikte'} value={size} onChange={e => setSize(Number(e.target.value))}>{(tool === 'text' ? [10, 12, 14, 16, 18, 24, 32, 48] : [1, 2, 3, 5, 8]).map(n => <option key={n} value={n}>{n} pt</option>)}</select></label>}
+            {(tool==='moveText' || selectedMark) && <>
+              {tool==='moveText' && <p className="pdf-hint">{selectedRuns.length?`${selectedRuns.length} tekstvak${selectedRuns.length===1?'':'ken'} geselecteerd`:'Selecteer een tekstvak. Gebruik Shift+klik voor meerdere vakken.'}</p>}
+              <label className="pdf-field">Stapgrootte<select aria-label="Stapgrootte verplaatsen" value={moveStep} onChange={e=>setMoveStep(Number(e.target.value))}>{[1,5,10].map(n=><option key={n} value={n}>{n} pt</option>)}</select></label>
+              <div className="pdf-nudge-controls" aria-label="Selectie verplaatsen">{[{label:'Naar links',x:-1,y:0,Icon:ArrowLeft},{label:'Omhoog',x:0,y:-1,Icon:ArrowUp},{label:'Omlaag',x:0,y:1,Icon:ArrowDown},{label:'Naar rechts',x:1,y:0,Icon:ArrowRight}].map(({label,x,y,Icon})=><Button key={label} size="sm" variant="outline" title={label} aria-label={label} disabled={!!busy||detecting||(!selectedMark&&!selectedRuns.length)} onClick={()=>nudge(x*moveStep,y*moveStep)}><Icon size={16}/></Button>)}</div>
+              <p className="pdf-hint">Pijltjestoetsen verplaatsen de selectie. Shift+pijltje gebruikt een tienmaal grotere stap.</p>
+              {tool==='moveText' && <>
+                <label className="pdf-snap-setting"><input type="checkbox" checked={snapText} onChange={e=>setSnapText(e.target.checked)}/>Uitlijnen tijdens slepen</label>
+                <Button size="sm" variant="outline" disabled={!!busy||detecting||selectedRuns.length<2} onClick={alignSelected}><AlignVerticalJustifyCenter size={15}/>Op één tekstregel</Button>
+                <p className="pdf-hint">Uitlijnen gebruikt het eerst geselecteerde vak als referentie. Alt tijdens slepen schakelt automatisch uitlijnen tijdelijk uit.</p>
+                <Button size="sm" variant="outline" disabled={!!busy||detecting||selectedRuns.length!==1} onClick={()=>setExistingRun(selectedRuns[0])}>Tekst aanpassen</Button>
+              </>}
+            </>}
             {selectedMark?.kind === 'text' && <Button size="sm" variant="outline" onClick={() => editText({ x: selectedMark.x, y: selectedMark.y }, selectedMark)}>Tekst aanpassen</Button>}
             {selectedMark?.kind === 'image' && <label className="pdf-field">Breedte (pt)<input type="number" min={20} max={Math.floor(Math.min(active.width - selectedMark.x, (active.height - selectedMark.y) * selectedMark.width / selectedMark.height))} value={Math.round(selectedMark.width)} onChange={e => { const max = Math.min(active.width - selectedMark.x, (active.height - selectedMark.y) * selectedMark.width / selectedMark.height); const width = Math.max(20, Math.min(max, Number(e.target.value) || 20)); changeSelected({ width, height: width * selectedMark.height / selectedMark.width }); }} /></label>}
             {selectedMark && <Button variant="ghost" size="sm" className="pdf-delete" disabled={!!busy} onClick={removeMark}><Trash2 size={14} />Selectie verwijderen</Button>}
@@ -317,7 +354,7 @@ export default function AdminPdfEditor() {
       </div>
     </section>}
 
-    {existingRun && active && <PdfTextEditorDialog key={`${active.sourceId}-${existingRun.index}`} run={existingRun} source={sources.get(active.sourceId)!} pageIndex={active.index} onClose={() => setExistingRun(null)} onApply={replaceBasePage} />}
+    {existingRun && active && <PdfTextEditorDialog key={`${active.sourceId}-${existingRun.index}`} run={existingRun} source={sources.get(active.sourceId)!} pageIndex={active.index} area={active} onClose={() => setExistingRun(null)} onApply={replaceBasePage} />}
     <Dialog open={picker} onOpenChange={v => { if (!busy) setPicker(v); }}><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Openen uit Documenten</DialogTitle><DialogDescription>Kies een PDF uit je privé-documenten.</DialogDescription></DialogHeader><Input aria-label="PDF zoeken" placeholder="Zoeken op bestandsnaam…" value={query} onChange={e => setQuery(e.target.value)} /><div className="pdf-document-picker">{pickerError ? <div role="alert"><p>{pickerError}</p><Button onClick={openPicker} disabled={!!busy}>Opnieuw proberen</Button></div> : busy ? <p role="status">{busy}</p> : documents.filter(d => d.name.toLowerCase().includes(query.toLowerCase())).map(d => <button key={d.id} onClick={() => void openStored(d)} disabled={!!busy}><FileText size={20} /><span><strong>{d.name}</strong><small>Versie {latestVersion(d)?.version} · {((latestVersion(d)?.size_bytes || 0) / 1024 / 1024).toFixed(1)} MB</small></span><ChevronRight size={16} /></button>)}{!busy && !pickerError && !documents.filter(d => d.name.toLowerCase().includes(query.toLowerCase())).length && <p>Geen PDF-documenten gevonden.</p>}</div></DialogContent></Dialog>
     <Dialog open={!!textEdit} onOpenChange={v => { if (!v) setTextEdit(null); }}><DialogContent><DialogHeader><DialogTitle>{textEdit?.mark?.ocrLineId ? 'Herkende scantekst aanpassen' : textEdit?.mark ? 'Tekst aanpassen' : 'Tekst toevoegen'}</DialogTitle><DialogDescription>{textEdit?.mark?.ocrLineId ? 'Controleer de herkende tekst. Het lettertype is benaderd met DejaVu Sans; de grootte kun je aanpassen.' : 'Voeg tekst toe aan je PDF. Gebruik regeleinden voor meerdere regels.'}</DialogDescription></DialogHeader><Label htmlFor="pdf-text">Tekst</Label><textarea id="pdf-text" className="pdf-text-input" rows={5} maxLength={3000} value={text} onChange={e => setText(e.target.value)} autoFocus /><div className="pdf-text-settings"><label>Tekstgrootte<select aria-label="Tekstgrootte in tekstvenster" value={size} onChange={e => setSize(Number(e.target.value))}>{[...new Set([10, 12, 14, 16, 18, 24, 32, 48, size])].sort((a,b) => a-b).map(n => <option key={n} value={n}>{n} pt</option>)}</select></label><label>Kleur<input type="color" aria-label="Tekstkleur" value={ink} onChange={e => setInk(e.target.value)} /></label></div>{textEdit?.mark?.cover && <><label className="flex items-center gap-3 text-sm">Achtergrond van de scanregel<input type="color" aria-label="Achtergrond scanregel" value={textEdit.mark.cover.color} onChange={e => setTextEdit({ ...textEdit, mark: { ...textEdit.mark!, cover: { ...textEdit.mark!.cover!, color: e.target.value } } })} /></label><p className="text-xs text-muted-foreground">Herkenningszekerheid: {textEdit.mark.ocrConfidence ?? 0}%. Controleer de tekst. Dit is een visuele correctie: de oude scan blijft onder de nieuwe tekst aanwezig. Gebruik dit niet voor het onleesbaar maken van vertrouwelijke gegevens.</p></>}<Button disabled={!text.trim()} onClick={() => void applyText().catch(fail)}><Check size={16} className="mr-2" />{textEdit?.mark ? 'Aanpassen' : 'Tekst plaatsen'}</Button></DialogContent></Dialog>
     <Dialog open={saveDialog} onOpenChange={v => { if (!busy) setSaveDialog(v); }}><DialogContent><DialogHeader><DialogTitle>Opslaan in Documenten</DialogTitle><DialogDescription>Bewaar je PDF in de privéopslag van Harkas Admin.</DialogDescription></DialogHeader>{stored && <div className="pdf-save-options"><label><input type="radio" name="pdf-save-mode" checked={saveMode === 'version'} onChange={() => setSaveMode('version')} />Nieuwe versie van {stored.name}<small>De vorige versie blijft beschikbaar.</small></label><label><input type="radio" name="pdf-save-mode" checked={saveMode === 'copy'} onChange={() => setSaveMode('copy')} />Opslaan als apart document</label></div>}{saveMode === 'copy' && <><Label htmlFor="pdf-save-name">Bestandsnaam</Label><Input id="pdf-save-name" value={saveName} maxLength={220} onChange={e => setSaveName(e.target.value)} /><Label htmlFor="pdf-save-folder">Map</Label><select id="pdf-save-folder" className="pdf-folder-select" value={folder} onChange={e => setFolder(e.target.value)}><option value="">Geen map</option>{folders.map(f => <option key={f.id} value={f.id}>{folderPath(f, folders)}</option>)}</select></>}{folderError && <p role="alert" className="text-sm text-destructive">{folderError}</p>}<Button disabled={!!busy || !saveName.trim() || (saveMode === 'copy' && !!folderError)} onClick={save}><Save size={16} className="mr-2" />{busy || 'PDF opslaan'}</Button><p className="text-xs text-muted-foreground">Een opgeslagen PDF bevat je toevoegingen als vaste inhoud. Bewerkbare lagen blijven alleen beschikbaar zolang deze editor geopend is.</p></DialogContent></Dialog>

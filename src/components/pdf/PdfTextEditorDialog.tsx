@@ -9,14 +9,16 @@ import type { PdfSource } from '@/lib/pdf/renderer';
 import { renderTextPreview } from '@/lib/pdf/text-preview';
 import { uid } from '@/lib/pdf/model';
 import { localFonts, localFontError } from '@/lib/pdf/local-fonts';
+import type { PageArea } from '@/lib/pdf/text-layout';
 
-type Props = { run: PdfTextRun; source: PdfSource; pageIndex: number; onClose: () => void; onApply: (bytes: Uint8Array) => Promise<void> };
-export function PdfTextEditorDialog({ run, source, pageIndex, onClose, onApply }: Props) {
+type Props = { run: PdfTextRun; source: PdfSource; pageIndex: number; area: PageArea; onClose: () => void; onApply: (bytes: Uint8Array) => Promise<void> };
+export function PdfTextEditorDialog({ run, source, pageIndex, area, onClose, onApply }: Props) {
   const [text, setText] = useState(run.text), [choice, setChoice] = useState('original');
+  const [flow, setFlow] = useState(true);
   const [fonts, setFonts] = useState(getSessionFonts), [loadingFont, setLoadingFont] = useState(false), [fontError, setFontError] = useState('');
   const [localReady, setLocalReady] = useState(false), [autoNote, setAutoNote] = useState('');
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [preparing, setPreparing] = useState(false);
-  const [preview, setPreview] = useState<{ text: string; choice: string; bytes: Uint8Array } | null>(null);
+  const [preview, setPreview] = useState<{ text: string; choice: string; flow: boolean; bytes: Uint8Array } | null>(null);
   const canvas = useRef<HTMLCanvasElement>(null), fallbackFont = useRef<Uint8Array>(), fileInput = useRef<HTMLInputElement>(null), alive = useRef(true);
   const selectedFont = fonts.find(font => font.id === choice);
   const localSupported = localFonts.supported();
@@ -69,11 +71,11 @@ export function PdfTextEditorDialog({ run, source, pageIndex, onClose, onApply }
         }
         if (!['original', 'fallback'].includes(choice) && !selectedFont) throw new Error('Laad dit lettertype opnieuw.');
         const bytes = text === run.text && choice === 'original' ? source.bytes : await replacePdfText(
-          source.bytes, pageIndex, run, text, choice === 'fallback' ? fallbackFont.current : undefined, selectedFont?.bytes,
+          source.bytes, pageIndex, run, text, choice === 'fallback' ? fallbackFont.current : undefined, selectedFont?.bytes, { flow, area },
         );
         controller.signal.throwIfAborted();
         if (canvas.current) await renderTextPreview(bytes, pageIndex, run, canvas.current, controller.signal);
-        if (!controller.signal.aborted) setPreview({ text, choice, bytes });
+        if (!controller.signal.aborted) setPreview({ text, choice, flow, bytes });
       } catch (e) {
         if (controller.signal.aborted) return;
         if (choice === 'original' && text.trim() && e instanceof Error && /lettertype/i.test(e.message)) {
@@ -98,10 +100,10 @@ export function PdfTextEditorDialog({ run, source, pageIndex, onClose, onApply }
       finally { if (!controller.signal.aborted) setPreparing(false); }
     })(); }, 350);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [text, choice, selectedFont, pageIndex, run, source, localReady, loadingFont]);
+  }, [text, choice, flow, area, selectedFont, pageIndex, run, source, localReady, loadingFont]);
 
   const apply = async () => {
-    if (loadingFont || fontError || !preview || preview.text !== text || preview.choice !== choice) return;
+    if (loadingFont || fontError || !preview || preview.text !== text || preview.choice !== choice || preview.flow !== flow) return;
     setBusy(true); setError('');
     try { await onApply(preview.bytes); onClose(); }
     catch (e) { setError(e instanceof Error ? e.message : 'Tekst aanpassen is mislukt. Het origineel is behouden.'); }
@@ -133,10 +135,11 @@ export function PdfTextEditorDialog({ run, source, pageIndex, onClose, onApply }
       </div>
       <label htmlFor="pdf-existing-text" className="text-sm font-medium">Tekstregel</label>
       <textarea id="pdf-existing-text" className="pdf-text-input" rows={2} value={text} maxLength={3000} disabled={busy} autoFocus onChange={e => setText(e.target.value)} />
-      <p className="text-xs text-muted-foreground">Langere tekst kan naastliggende inhoud overlappen. Controleer het voorbeeld. Leegmaken verwijdert deze tekstregel.</p>
+      <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={flow} disabled={busy} onChange={e=>setFlow(e.target.checked)} /><span>Volgende tekstvakken meeschuiven<small className="block mt-1 text-xs text-muted-foreground">Maakt ruimte voor langere tekst in aansluitende vakken op dezelfde regel. Controleer het voorbeeld, vooral bij kolommen en afbeeldingen.</small></span></label>
+      <p className="text-xs text-muted-foreground">Vrij verplaatsen of uitlijnen kan via Tekst verplaatsen. Leegmaken verwijdert dit tekstvak.</p>
       {error && <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       <div hidden={!!error}><div className="mb-2 text-xs text-muted-foreground">{preparing ? 'Voorbeeld bijwerken…' : 'Voorbeeld uit de PDF met de werkelijke opmaak'}</div><div className="pdf-live-text-preview" style={{ opacity: preparing ? .35 : 1 }}><canvas ref={canvas} aria-label="Voorbeeld van de gewijzigde tekst" /></div></div>
-      <div className="flex justify-end gap-2"><Button variant="outline" disabled={busy} onClick={onClose}>Annuleren</Button><Button disabled={busy || loadingFont || !!fontError || preparing || !preview || preview.text !== text || preview.choice !== choice || (text === run.text && choice === 'original')} onClick={() => void apply()}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}{busy ? 'Tekst aanpassen…' : 'Wijziging toepassen'}</Button></div>
+      <div className="flex justify-end gap-2"><Button variant="outline" disabled={busy} onClick={onClose}>Annuleren</Button><Button disabled={busy || loadingFont || !!fontError || preparing || !preview || preview.text !== text || preview.choice !== choice || preview.flow !== flow || (text === run.text && choice === 'original')} onClick={() => void apply()}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}{busy ? 'Tekst aanpassen…' : 'Wijziging toepassen'}</Button></div>
     </DialogContent>
   </Dialog>;
 }

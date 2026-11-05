@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "prebuild": "node scripts/prepare-pdf-assets.mjs",
     "predev": "node scripts/prepare-pdf-assets.mjs",
-    "test:pdf": "node tests/pdf-editor.test.mjs && node tests/pdf-text-editor.test.mjs && node tests/pdf-custom-fonts.test.mjs && node tests/pdf-local-fonts.test.mjs && node tests/pdf-ocr.test.mjs"
+    "test:pdf": "node tests/pdf-editor.test.mjs && node tests/pdf-text-editor.test.mjs && node tests/pdf-text-layout.test.mjs && node tests/pdf-custom-fonts.test.mjs && node tests/pdf-local-fonts.test.mjs && node tests/pdf-ocr.test.mjs"
   },
   "dependencies": {
     "@embedpdf/pdfium": "2.15.1",

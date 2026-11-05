@@ -13,3 +13,5 @@
 .pdf-live-text-preview{border:1px solid #cbd5e1;background:white;border-radius:8px;overflow:auto;max-height:150px;min-height:74px}.pdf-live-text-preview canvas{display:block;max-width:none}
 
 .pdf-live-text-preview{min-width:0;max-width:100%;width:100%}
+
+.pdf-move-hit{fill:#3b82f60a;stroke:#3b82f680;cursor:grab;outline:none}.pdf-move-hit:hover,.pdf-move-hit:focus-visible{fill:#3b82f630;stroke:#2563eb}.pdf-move-hit.is-selected{fill:#3b82f630;stroke:#1d4ed8}.pdf-move-layer:active .pdf-move-hit{cursor:grabbing}.pdf-nudge-controls{display:flex;gap:5px}.pdf-nudge-controls button{flex:1;padding:5px;min-width:0;color:#475569;background:#fff}.pdf-snap-setting{display:flex;gap:8px;align-items:center;font-size:11px;color:#475569}

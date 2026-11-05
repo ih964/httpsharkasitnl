@@ -1,4 +1,5 @@
-import type { PdfTextRun, TextInspection } from './text-engine';
+import type { PdfTextRun, TextInspection, TextLayoutOptions } from './text-engine';
+import type { PageArea, TextMove } from './text-layout';
 import type { PdfFontInfo } from './font-session';
 
 let worker: Worker | undefined, nextId = 0;
@@ -26,4 +27,5 @@ function request<T>(data: Record<string, unknown>): Promise<T> {
 }
 export const inspectPdfText = (bytes: Uint8Array, index: number) => request<TextInspection>({ action: 'inspect', bytes, index });
 export const inspectPdfFont = (bytes: Uint8Array) => request<PdfFontInfo>({ action: 'font-info', bytes });
-export const replacePdfText = (bytes: Uint8Array, index: number, run: PdfTextRun, value: string, fallback?: Uint8Array, customFont?: Uint8Array) => request<Uint8Array>({ action: 'replace', bytes, index, run, value, fallback, customFont });
+export const replacePdfText = (bytes: Uint8Array, index: number, run: PdfTextRun, value: string, fallback?: Uint8Array, customFont?: Uint8Array, layout?: TextLayoutOptions) => request<Uint8Array>({ action: 'replace', bytes, index, run, value, fallback, customFont, layout });
+export const movePdfText = (bytes: Uint8Array, index: number, moves: TextMove[], area: PageArea) => request<Uint8Array>({ action: 'move', bytes, index, moves, area });

@@ -1,11 +1,13 @@
 import { init } from '@embedpdf/pdfium';
 import fontkit from '@pdf-lib/fontkit';
+import { fitsPage, flowFollowingText, translated, type PageArea, type TextMove } from './text-layout';
 
 export type PdfTextRun = {
   index: number; text: string; font: string; size: number;
   bounds: [number, number, number, number]; matrix: number[]; color: string;
 };
 export type TextInspection = { runs: PdfTextRun[]; skipped: number };
+export type TextLayoutOptions = { flow: boolean; area: PageArea };
 
 /** Native text-object editing. No white rectangles are used for digital text. */
 export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
@@ -134,9 +136,37 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
       free(data);
     }
   }
-  function replace(bytes: Uint8Array, pageIndex: number, run: PdfTextRun, value: string, fallback?: Uint8Array, fontDocument?: Uint8Array) {
+  function applyMoves(page: number, moves: TextMove[], area?: PageArea) {
+    if (moves.length > 1000 || new Set(moves.map(move=>move.run.index)).size !== moves.length) throw new Error('Ongeldige tekstselectie.');
+    const textPage=api.FPDFText_LoadPage(page), buffer=allocate(24);
+    try {
+      const texts=objectTexts(textPage);
+      const checked=moves.map(move=>{
+        if (![move.dx,move.dy].every(n=>Number.isFinite(n) && Math.abs(n)<100_000)) throw new Error('Ongeldige tekstpositie.');
+        const object=api.FPDFPage_GetObject(page,move.run.index);
+        const current=object && describe(object,texts.get(object)||'',move.run.index);
+        if (!current || current.text!==move.run.text || current.matrix.some((n,i)=>Math.abs(n-move.run.matrix[i])>.01)) throw new Error('Deze tekst is inmiddels gewijzigd. Selecteer de tekstvakken opnieuw.');
+        const target=translated(current,move.dx,move.dy);
+        if (area && !fitsPage(target,area)) throw new Error('De tekst past niet binnen de pagina. Verplaats de tekstvakken of schakel het meeschuiven uit.');
+        return {object,target};
+      });
+      for (const {object,target} of checked) {
+        target.matrix.forEach((n,i)=>mem.setValue(buffer+i*4,n,'float'));
+        if (!api.FPDFPageObj_SetMatrix(object,buffer)) throw new Error('Het tekstvak kon niet worden verplaatst.');
+      }
+    } finally { api.FPDFText_ClosePage(textPage); free(buffer); }
+  }
+  function move(bytes: Uint8Array, pageIndex: number, moves: TextMove[], area?: PageArea) {
+    return withPage(bytes,pageIndex,(doc,page)=>{
+      applyMoves(page,moves,area);
+      if (!api.FPDFPage_GenerateContent(page)) throw new Error('De pagina kon niet worden bijgewerkt.');
+      return save(doc);
+    });
+  }
+  function replace(bytes: Uint8Array, pageIndex: number, run: PdfTextRun, value: string, fallback?: Uint8Array, fontDocument?: Uint8Array, layout?: TextLayoutOptions) {
     if (value.length > 3000 || /[\r\n\t\u0000-\u001f]/.test(value)) throw new Error('Bewerk één tekstregel tegelijk, zonder regeleinden.');
     if (/[\u0590-\u08ff\u0900-\u0dff]/.test(value)) throw new Error('Direct bewerken van dit schrift wordt nog niet ondersteund. Het origineel is behouden.');
+    const originalRuns=layout?.flow ? inspect(bytes,pageIndex).runs : [];
     return withPage(bytes, pageIndex, (doc, page) => {
       let object = api.FPDFPage_GetObject(page, run.index), textPage = api.FPDFText_LoadPage(page), loadedFont = 0;
       const buffer = allocate(Math.max(1024, (value.length + 1) * 2));
@@ -177,11 +207,16 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
           const missing = verifyEmbeddedCharacters(object, value, fallback || fontDocument ? '' : current.text);
           if (missing?.length) throw new Error(`Het lettertype bevat niet alle benodigde tekens: ${missing.slice(0, 12).map(char => `“${char}”`).join(', ')}. Laad het volledige originele TTF/OTF-lettertype of kies een vervangend lettertype.`);
           api.FPDFText_ClosePage(textPage); textPage = 0;
+          if (layout?.flow) {
+            const changed=describe(object,value,run.index);
+            if (!changed || !fitsPage(changed,layout.area)) throw new Error('De tekst past niet binnen de pagina. Verplaats het tekstvak of kort de tekst in.');
+            applyMoves(page,flowFollowingText(current,changed,originalRuns),layout.area);
+          }
         }
         if (!api.FPDFPage_GenerateContent(page)) throw new Error('De pagina kon niet worden bijgewerkt.');
         return save(doc);
       } finally { if (textPage) api.FPDFText_ClosePage(textPage); if (loadedFont) api.FPDFFont_Close(loadedFont); free(buffer); }
     });
   }
-  return { inspect, replace };
+  return { inspect, replace, move };
 }
