@@ -30,6 +30,7 @@ export async function exportPdf(pages: EditorPage[], sources: Map<string, Uint8A
       const ink = color(mark.color);
       const bottom = item.height - mark.y - mark.height;
       if (mark.kind === 'text') {
+        if (mark.cover) page.drawRectangle({ x: mark.cover.x, y: item.height - mark.cover.y - mark.cover.height, width: mark.cover.width, height: mark.cover.height, color: color(mark.cover.color) });
         const value = mark.text || '';
         for (const char of value.replace(/[\r\n\t]/g, '')) {
           if (!supported.has(char.codePointAt(0)!)) throw new Error(`Het teken “${char}” wordt niet ondersteund. Pas deze tekst aan voordat je opslaat.`);

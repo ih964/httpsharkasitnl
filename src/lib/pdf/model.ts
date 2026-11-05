@@ -5,6 +5,8 @@ export type Mark = {
   x: number; y: number; width: number; height: number;
   color: string; size: number;
   text?: string; points?: Point[]; image?: string;
+  ocrLineId?: string; ocrConfidence?: number;
+  cover?: { x: number; y: number; width: number; height: number; color: string };
 };
 export type EditorPage = {
   id: string; sourceId: string; index: number;

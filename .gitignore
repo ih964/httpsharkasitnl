@@ -26,3 +26,5 @@ supabase/.temp/
 
 # Generated PDF.js assets
 /public/pdfjs-assets/
+
+/public/pdf-editor-assets/

@@ -2,11 +2,13 @@ import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import type { RenderTask } from 'pdfjs-dist';
 import { type EditorPage, type Mark, type Point, uid } from '@/lib/pdf/model';
 import type { PdfSource } from '@/lib/pdf/renderer';
+import type { PdfTextRun } from '@/lib/pdf/text-engine';
+import type { OcrLine } from '@/lib/pdf/ocr';
 
-export type PdfTool = 'select' | 'text' | 'highlight' | 'draw' | 'rectangle' | 'image';
+export type PdfTool = 'select' | 'existing' | 'text' | 'highlight' | 'draw' | 'rectangle' | 'image';
 
 export function MarkGraphic({ mark }: { mark: Mark }) {
-  if (mark.kind === 'text') return <text x={mark.x} y={mark.y + mark.size} fill={mark.color} fontSize={mark.size} fontFamily="HarkasPdfSans, sans-serif" xmlSpace="preserve">{(mark.text || '').split('\n').map((line, i) => <tspan key={i} x={mark.x} dy={i ? mark.size * 1.3 : 0}>{line || ' '}</tspan>)}</text>;
+  if (mark.kind === 'text') return <>{mark.cover && <rect x={mark.cover.x} y={mark.cover.y} width={mark.cover.width} height={mark.cover.height} fill={mark.cover.color} />}<text x={mark.x} y={mark.y + mark.size} fill={mark.color} fontSize={mark.size} fontFamily="HarkasPdfSans, sans-serif" xmlSpace="preserve">{(mark.text || '').split('\n').map((line, i) => <tspan key={i} x={mark.x} dy={i ? mark.size * 1.3 : 0}>{line || ' '}</tspan>)}</text></>;
   if (mark.kind === 'image') return <image href={mark.image} x={mark.x} y={mark.y} width={mark.width} height={mark.height} preserveAspectRatio="none" />;
   if (mark.kind === 'draw') return <polyline points={mark.points?.map(p => `${p.x + mark.x},${p.y + mark.y}`).join(' ')} fill="none" stroke={mark.color} strokeWidth={mark.size} strokeLinecap="round" strokeLinejoin="round" />;
   return <rect x={mark.x} y={mark.y} width={mark.width} height={mark.height} fill={mark.kind === 'highlight' ? mark.color : 'none'} fillOpacity={mark.kind === 'highlight' ? 0.3 : 0} stroke={mark.kind === 'rectangle' ? mark.color : 'none'} strokeWidth={mark.size} />;
@@ -62,8 +64,9 @@ type Props = {
   selected: string | null; disabled: boolean;
   onSelect: (id: string | null) => void; onMarks: (marks: Mark[]) => void;
   onText: (point: Point) => void; onImage: (point: Point) => void;
+  textRuns: PdfTextRun[]; ocrLines: OcrLine[]; onExistingText: (run: PdfTextRun) => void; onOcrText: (line: OcrLine) => void;
 };
-export function PdfPageView({ page, source, scale, tool, color, size, selected, disabled, onSelect, onMarks, onText, onImage }: Props) {
+export function PdfPageView({ page, source, scale, tool, color, size, selected, disabled, onSelect, onMarks, onText, onImage, textRuns, ocrLines, onExistingText, onOcrText }: Props) {
   const [draft, setDraft] = useState<Mark | null>(null);
   const gesture = useRef<{ start: Point; mark: Mark; moving: boolean; changed: boolean } | null>(null);
   const draftRef = useRef<Mark | null>(null);
@@ -75,7 +78,7 @@ export function PdfPageView({ page, source, scale, tool, color, size, selected, 
     return { x: Math.max(0, Math.min(page.width, pt.x)), y: Math.max(0, Math.min(page.height, pt.y)) };
   };
   const down = (event: PointerEvent<SVGSVGElement>) => {
-    if (disabled || event.button !== 0) return;
+    if (disabled || event.button !== 0 || tool === 'existing') return;
     const start = point(event);
     if (tool === 'text') { onText(start); return; }
     if (tool === 'image') { onImage(start); return; }
@@ -127,6 +130,16 @@ export function PdfPageView({ page, source, scale, tool, color, size, selected, 
         </g>)}
         {selectedMark && tool === 'select' && <rect x={selectedMark.x - 3} y={selectedMark.y - 3} width={selectedMark.width + 6} height={selectedMark.height + 6} fill="none" stroke="#2563eb" strokeWidth={1.3 / scale} strokeDasharray={`${4 / scale} ${3 / scale}`} pointerEvents="none" />}
       </svg>
+      {tool === 'existing' && <div className="pdf-existing-layer" aria-label="Herkende tekstregels">
+        {textRuns.map(run => {
+          const [left, bottom, right, top] = run.bounds, [a,b,c,d,e,f] = page.transform;
+          const corners = [[left,bottom],[left,top],[right,bottom],[right,top]].map(([x,y]) => [a*x+c*y+e,b*x+d*y+f]);
+          const x = Math.min(...corners.map(p => p[0])), y = Math.min(...corners.map(p => p[1]));
+          const width = Math.max(...corners.map(p => p[0])) - x, height = Math.max(...corners.map(p => p[1])) - y;
+          return <button key={run.index} className="pdf-text-hit" disabled={disabled} aria-label={`Tekst bewerken: ${run.text}`} title={`${run.font} · ${run.size.toFixed(1)} pt — ${run.text}`} style={{ left:(x-2)*scale, top:(y-2)*scale, width:Math.max(8,width+4)*scale, height:Math.max(8,height+4)*scale }} onClick={() => onExistingText(run)} />;
+        })}
+        {ocrLines.filter(line => !page.marks.some(mark => mark.ocrLineId === line.id)).map(line => <button key={line.id} className="pdf-text-hit pdf-ocr-hit" disabled={disabled} aria-label={`Scantekst bewerken: ${line.text}`} title={`Scan · zekerheid ${line.confidence}% — ${line.text}`} style={{left:(line.x-2)*scale,top:(line.y-2)*scale,width:(line.width+4)*scale,height:(line.height+4)*scale}} onClick={() => onOcrText(line)} />)}
+      </div>}
     </div>
   </div>;
 }
