@@ -14,9 +14,13 @@ export function rememberFont(font: SessionFont) {
   sessionFonts.set(font.id, font);
   return getSessionFonts();
 }
-export function fontNameMatches(info: PdfFontInfo, original: string) {
-  const normalize = (name: string) => name.replace(/^[A-Z]{6}\+/, '').replace(/-\d{4,}$/, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
-  const names = [info.postscriptName, info.fullName];
-  if (/^(regular|normal|roman|book)$/i.test(info.style)) names.push(info.family);
-  return names.some(name => normalize(name) === normalize(original));
+type FontNames = Pick<PdfFontInfo, 'postscriptName' | 'fullName' | 'family' | 'style'>;
+export function fontMatchScore(info: FontNames, original: string) {
+  const normalize = (name: string) => name.replace(/^[A-Z]{6}\+/, '').replace(/-\d{4,}$/, '').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase();
+  const target = normalize(original);
+  if (!target) return 0;
+  if (normalize(info.postscriptName) === target) return 3;
+  if (normalize(info.fullName) === target) return 2;
+  return /^(regular|normal|roman|book)$/i.test(info.style) && normalize(info.family) === target ? 1 : 0;
 }
+export const fontNameMatches = (info: FontNames, original: string) => fontMatchScore(info, original) > 0;
