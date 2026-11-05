@@ -56,10 +56,10 @@ async function setup(permissionChoice = 'granted') {
       }
       if (url.pathname.endsWith('/functions/v1/harkas-one-push')) {
         const body = req.postDataJSON();
-        if (body.action === 'status') return json({ publicKey: Buffer.concat([Buffer.from([4]), Buffer.alloc(64, 1)]).toString('base64url'), subscription: pushState, lastSuccessAt: new Date().toISOString() });
-        if (body.action === 'subscribe') { subscribeCalls++; pushState = { calendar: true, tickets: true }; return json({ ok: true }); }
+        if (body.action === 'status') return json({ publicKey: Buffer.concat([Buffer.from([4]), Buffer.alloc(64, 1)]).toString('base64url'), subscription: pushState, lastSuccessAt: new Date().toISOString(), mailReady: true, mailLastSuccessAt: new Date().toISOString() });
+        if (body.action === 'subscribe') { subscribeCalls++; pushState = { calendar: true, tickets: true, mail: false }; return json({ ok: true }); }
         if (body.action === 'unsubscribe') { unsubscribeCalls++; pushState = null; return json({ ok: true }); }
-        if (body.action === 'preferences') { pushState = { calendar: body.calendar, tickets: body.tickets }; return json({ ok: true }); }
+        if (body.action === 'preferences') { pushState = { calendar: body.calendar, tickets: body.tickets, mail: body.mail }; return json({ ok: true }); }
         if (body.action === 'test') { testCalls++; return json({ accepted: true }); }
         throw new Error('Unexpected push action');
       }
@@ -93,6 +93,8 @@ try {
   await page.getByRole('button', { name: 'Afspraak toevoegen', exact: true }).first().click();
   await page.getByLabel('Titel', { exact: true }).fill('Zakelijke testafspraak');
   assert.equal(await page.getByLabel('Begindatum', { exact: true }).inputValue(), day, 'Amsterdam date even on a foreign-timezone handset');
+  await page.getByLabel('15 minuten van tevoren', { exact: true }).uncheck();
+  for (const label of ['5 dagen van tevoren', '24 uur van tevoren', '1 uur van tevoren']) await page.getByLabel(label, { exact: true }).check();
   failSave = true;
   await page.getByRole('button', { name: 'Afspraak opslaan' }).click();
   await page.getByRole('alert').filter({ hasText: 'Opslaan is niet bevestigd' }).waitFor();
@@ -102,6 +104,13 @@ try {
   await page.getByRole('status').filter({ hasText: 'Afspraak opgeslagen.' }).waitFor();
   assert.equal(records[0].starts_at, toInstant(day + 'T09:00'));
   assert.equal(records[0].kind, 'business');
+  assert.deepEqual(records[0].reminder_offsets, [7200, 1440, 60]);
+  await page.locator('article.one-event').first().getByRole('button', { name: 'Wijzigen' }).click();
+  for (const label of ['5 dagen van tevoren', '24 uur van tevoren', '1 uur van tevoren']) assert.equal(await page.getByLabel(label, { exact: true }).isChecked(), true);
+  await page.getByLabel('24 uur van tevoren', { exact: true }).uncheck();
+  await page.getByRole('button', { name: 'Afspraak opslaan' }).click();
+  await page.getByRole('status').filter({ hasText: 'Afspraak opgeslagen.' }).waitFor();
+  assert.deepEqual(records[0].reminder_offsets, [7200, 60]);
   await page.getByRole('button', { name: 'Afspraak toevoegen', exact: true }).first().click();
   await page.getByLabel('Titel', { exact: true }).fill('Privé testafspraak');
   await page.getByLabel('Soort afspraak').selectOption('private');
@@ -150,9 +159,10 @@ try {
   await page.getByRole('status').filter({ hasText: 'pushdienst heeft de test geaccepteerd' }).waitFor();
   assert.equal(testCalls, 1);
   await page.getByLabel('Nieuwe supporttickets', { exact: false }).uncheck();
+  await page.getByLabel('Nieuwe e-mails', { exact: false }).check();
   await page.getByRole('button', { name: 'Voorkeuren opslaan' }).click();
   await page.getByRole('status').filter({ hasText: 'Meldingsvoorkeuren opgeslagen.' }).waitFor();
-  assert.deepEqual(pushState, { calendar: true, tickets: false });
+  assert.deepEqual(pushState, { calendar: true, tickets: false, mail: true });
   await page.screenshot({ path: 'test-results/one-meldingen.png', fullPage: true });
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Uitloggen', exact: true }).click();

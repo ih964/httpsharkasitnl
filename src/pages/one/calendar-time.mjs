@@ -46,6 +46,23 @@ export function shiftMonth(month, amount) {
 export function safeAgendaDay(value, fallback) {
   try { return typeof value === 'string' && value >= '2000-01-01' && value <= '2100-11-30' ? addDays(value, 0) : fallback; } catch { return fallback; }
 }
+export const REMINDER_OPTIONS = [0, 5, 15, 30, 60, 120, 1440, 2880, 7200, 10080];
+export const ALL_DAY_REMINDERS = [0, 60, 1440, 2880, 7200, 10080];
+export function reminderLabel(minutes, allDay = false) {
+  if (allDay) {
+    if (minutes === 0) return 'Op de dag zelf om 09:00';
+    if (minutes === 60) return 'Op de dag zelf om 08:00';
+    return (minutes === 1440 ? '1 dag' : (minutes / 1440) + ' dagen') + ' van tevoren om 09:00';
+  }
+  if (minutes === 0) return 'Bij aanvang';
+  if (minutes < 60) return minutes + ' minuten van tevoren';
+  if (minutes < 1440) return (minutes / 60) + ' uur van tevoren';
+  if (minutes === 1440) return '24 uur van tevoren';
+  return (minutes / 1440) + ' dagen van tevoren';
+}
+export function eventReminders(event) {
+  return Array.isArray(event.reminder_offsets) ? event.reminder_offsets : event.reminder_minutes == null ? [] : [event.reminder_minutes];
+}
 export function eventValues(draft) {
   const title = String(draft.title || '').trim();
   if (!title || title.length > 200) throw new Error('Vul een titel van maximaal 200 tekens in.');
@@ -54,10 +71,14 @@ export function eventValues(draft) {
   const starts_at = toInstant(`${draft.startDate}T${draft.allDay ? '00:00' : draft.startTime}`);
   const ends_at = toInstant(`${draft.allDay ? addDays(draft.endDate, 1) : draft.endDate}T${draft.allDay ? '00:00' : draft.endTime}`);
   if (new Date(ends_at) <= new Date(starts_at)) throw new Error('De eindtijd moet na de begintijd liggen.');
-  const reminder_minutes = draft.reminder === '' ? null : Number(draft.reminder);
-  const choices = draft.allDay ? [0, 1440] : [0, 5, 15, 30, 60, 1440];
-  if (reminder_minutes !== null && !choices.includes(reminder_minutes)) throw new Error('Kies een geldige herinnering.');
+  // A legacy draft is accepted for compatibility; the mobile editor writes the full array.
+  const raw = draft.reminders === undefined ? (draft.reminder === '' ? [] : [Number(draft.reminder)]) : draft.reminders;
+  const choices = draft.allDay ? ALL_DAY_REMINDERS : REMINDER_OPTIONS;
+  if (!Array.isArray(raw) || raw.length > 10 || raw.some(n => !Number.isInteger(n) || !choices.includes(n))) throw new Error('Kies geldige herinneringen.');
+  const reminder_offsets = [...new Set(raw)].sort((a, b) => b - a);
+  const legacyChoices = draft.allDay ? [0, 1440] : [0, 5, 15, 30, 60, 1440];
+  const reminder_minutes = reminder_offsets.find(n => legacyChoices.includes(n)) ?? null;
   const location = String(draft.location || '').trim(), notes = String(draft.notes || '').trim();
   if (location.length > 300 || notes.length > 4000) throw new Error('Locatie of notities zijn te lang.');
-  return { title, kind: draft.kind, starts_at, ends_at, all_day: Boolean(draft.allDay), location, notes, reminder_minutes };
+  return { title, kind: draft.kind, starts_at, ends_at, all_day: Boolean(draft.allDay), location, notes, reminder_minutes, reminder_offsets };
 }

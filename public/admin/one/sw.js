@@ -1,5 +1,5 @@
 /* Only a public offline notice is cached. Never store mail, sessions, APIs, documents or authenticated HTML. */
-const CACHE = 'harkas-one-offline-v2';
+const CACHE = 'harkas-one-offline-v3';
 const OFFLINE = '/admin/one/offline.html';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.add(new Request(OFFLINE, { cache: 'reload' }))));
@@ -30,6 +30,7 @@ self.addEventListener('push', event => {
     body: typeof payload.body === 'string' ? payload.body.slice(0, 250) : 'Er staat een nieuwe melding voor je klaar.',
     tag: typeof payload.tag === 'string' ? payload.tag.slice(0, 240) : 'harkas-one',
     data: { url: safeTarget(payload.url) },
+    icon: '/admin/one/icon-192.png',
     renotify: false,
   }));
 });
