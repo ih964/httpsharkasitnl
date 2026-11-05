@@ -64,7 +64,25 @@ try {
     }
   }
   assert.deepEqual(bytes, snapshot);
+  // PDFium's object text getter can append a separator belonging to the next
+  // fragment after a shorter replacement. That is layout, not a missing glyph.
+  for (const gap of [0, 3, 15]) {
+    const adjacent = await PDFDocument.create(), face = await adjacent.embedFont(StandardFonts.Helvetica);
+    const page = adjacent.addPage([500,700]);
+    page.drawText('Code:', {font:face,size:8.5,x:40,y:600});
+    page.drawText('2026', {font:face,size:8.5,x:80,y:600});
+    page.drawText('Next', {font:face,size:8.5,x:80+face.widthOfTextAtSize('2026',8.5)+gap,y:600});
+    const input = await adjacent.save(), run = engine.inspect(input,0).runs.find(item=>item.text==='2026');
+    assert(run, 'inspection must exclude neighboring generated spaces');
+    for (const value of ['21', ' 2 1 ']) {
+      for (const fontBytes of [null, ttf, cffFont]) {
+        const carrier = fontBytes ? await buildFontDocument(fontBytes,value) : undefined;
+        const result = engine.replace(input,0,run,value,undefined,carrier);
+        assert.deepEqual(engine.inspect(result,0).runs.map(item=>item.text), ['Code:',value,'Next'], 'preserve real spaces and neighboring text while ignoring inferred separators');
+      }
+    }
+  }
   for (let i = 0; i < 10; i++) rememberFont({ id: String(i), filename: `test-${i}.ttf`, bytes: ttf, info });
   assert.equal(getSessionFonts().length, 8); assert.equal(getSessionFonts()[0].id, '2');
-  console.log('PASS: complete TTF and OTF/CFF embedding, saved font-byte equality, reopen/new glyphs, size/color/matrix/crops/rotations, page count/order, invalid/oversized/restricted fonts, missing characters, style matching and bounded session cache.');
+  console.log('PASS: complete TTF and OTF/CFF embedding, saved font-byte equality, reopen/new glyphs, size/color/matrix/crops/rotations, neighboring fragments and real whitespace, page count/order, invalid/oversized/restricted fonts, missing characters, style matching and bounded session cache.');
 } finally { await rm(temp, { recursive: true, force: true }); }
