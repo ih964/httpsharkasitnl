@@ -1,5 +1,7 @@
 # Harkas Admin PDF editor
 
+Embedded-font coverage: before accepting newly introduced characters, the editor checks the actual embedded font's Unicode mapping and visible outline in addition to PDF text extraction. PDFium may substitute a glyph internally even though PDF.js and other readers cannot render it from the saved font. Missing letters now block applying the edit, identify the affected characters and offer the existing explicit replacement-font choice. Unverifiable embedded font formats also require that choice. The error hides the stale preview. A synthetic incomplete-font regression checks uppercase Y and verifies the replacement keeps size and placement; no customer document is included in the tests.
+
 Route: `/admin/pdf-editor`, behind the existing admin-only route and sidebar permissions. PDFs in Documenten have a direct edit link. The editor does not introduce a new database or public storage bucket.
 
 Supported: open local PDFs or the current private document revision, text overlays with an embedded Unicode font, translucent highlights, frames, freehand drawing, PNG/JPEG images, dragging and image sizing, page rotation/reordering/duplication/deletion, multi-file merge, single-page extraction, undo/redo, download, and save as a copy or optimistic-concurrency-protected revision. Original vector pages and selectable text are copied rather than rasterized. Browser rendering resources and the worker are served from the same origin.

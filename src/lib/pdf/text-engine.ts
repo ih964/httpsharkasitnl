@@ -1,4 +1,5 @@
 import { init } from '@embedpdf/pdfium';
+import fontkit from '@pdf-lib/fontkit';
 
 export type PdfTextRun = {
   index: number; text: string; font: string; size: number;
@@ -78,6 +79,36 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
       } finally { free(buffer); }
     } finally { if (writer) api.PDFiumExt_CloseFileWriter(writer); }
   }
+  function verifyEmbeddedCharacters(object: number, value: string, previousText: string) {
+    const font = api.FPDFTextObj_GetFont(object);
+    // PDF mappings may differ from the font's Unicode cmap. Existing characters
+    // retain their original mapping; newly introduced characters need coverage.
+    const introduced = [...new Set([...value].filter(char => !previousText.includes(char) && !/\s/u.test(char)))];
+    if (!introduced.length || api.FPDFFont_GetIsEmbedded(font) !== 1) return;
+    const lengthPointer = allocate(4);
+    let data = 0;
+    try {
+      if (!api.FPDFFont_GetFontData(font, 0, 0, lengthPointer)) throw new Error();
+      const length = mem.getValue(lengthPointer, 'i32');
+      if (length <= 0 || length > 50 * 1024 * 1024) throw new Error();
+      data = allocate(length);
+      if (!api.FPDFFont_GetFontData(font, data, length, lengthPointer)) throw new Error();
+      // PDFium can fall back to another font for GetGlyphPath and text extraction
+      // can round-trip a character even when the embedded font cannot draw it.
+      // Inspect the actual embedded bytes instead of trusting those two signals.
+      const embedded = fontkit.create(mem.HEAPU8.slice(data, data + length));
+      const missing = introduced.filter(char => {
+        const code = char.codePointAt(0)!;
+        if (!embedded.hasGlyphForCodePoint(code)) return true;
+        const glyph = embedded.glyphForCodePoint(code);
+        return !glyph.id || !glyph.path.toSVG();
+      });
+      if (missing.length) return missing;
+      return;
+    } catch {
+      throw new Error('Nieuwe tekens in dit ingesloten lettertype kunnen niet betrouwbaar worden gecontroleerd. Kies het vervangende lettertype of gebruik tekens uit de oorspronkelijke regel.');
+    } finally { if (data) free(data); free(lengthPointer); }
+  }
   function replace(bytes: Uint8Array, pageIndex: number, run: PdfTextRun, value: string, fallback?: Uint8Array) {
     if (value.length > 3000 || /[\r\n\t\u0000-\u001f]/.test(value)) throw new Error('Bewerk één tekstregel tegelijk, zonder regeleinden.');
     if (/[\u0590-\u08ff\u0900-\u0dff]/.test(value)) throw new Error('Direct bewerken van dit schrift wordt nog niet ondersteund. Het origineel is behouden.');
@@ -113,6 +144,8 @@ export async function createTextEngine(wasmBinary: ArrayBuffer | Uint8Array) {
           textPage = api.FPDFText_LoadPage(page);
           // Embedded subsets often lack new letters: reject a lossy encoding instead of silently changing the font.
           if (textOf(object, textPage) !== value) throw new Error('Het oorspronkelijke lettertype bevat niet alle benodigde tekens. Kies bewust het vervangende lettertype of pas de tekst aan.');
+          const missing = verifyEmbeddedCharacters(object, value, fallback ? '' : current.text);
+          if (missing?.length) throw new Error(`Het lettertype bevat niet alle benodigde tekens: ${missing.slice(0, 12).map(char => `“${char}”`).join(', ')}. Kies ‘Vervangend lettertype gebruiken’ om alle letters zichtbaar te maken. De tekstvorm kan daarbij veranderen.`);
           api.FPDFText_ClosePage(textPage); textPage = 0;
         }
         if (!api.FPDFPage_GenerateContent(page)) throw new Error('De pagina kon niet worden bijgewerkt.');

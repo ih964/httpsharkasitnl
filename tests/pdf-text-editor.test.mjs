@@ -38,6 +38,26 @@ try {
   assert.equal(engine.inspect(engine.replace(subset,0,run,'FEDCBA'),0).runs[0].text,'FEDCBA');
   assert.throws(()=>engine.replace(subset,0,run,'New letters xyz'),/niet alle benodigde tekens/);
   const fallback=engine.inspect(engine.replace(subset,0,run,'Nieuw café €',fontBytes),0).runs[0];assert.equal(fallback.text,'Nieuw café €');assert.equal(fallback.size,19);assert.deepEqual(fallback.matrix,run.matrix);
+  // A font may encode/extract Y successfully while its embedded outline is empty.
+  // Reproduce that without using a customer's PDF or font in the regression fixture.
+  const incompleteFont=fontBytes.slice(), view=new DataView(incompleteFont.buffer);
+  const tables=new Map();
+  for(let i=0;i<view.getUint16(4);i++){
+    const offset=12+i*16, tag=String.fromCharCode(...incompleteFont.slice(offset,offset+4));
+    tables.set(tag,view.getUint32(offset+8));
+  }
+  const glyphId=fontkit.create(fontBytes).glyphForCodePoint('Y'.codePointAt(0)).id;
+  const longLoca=view.getInt16(tables.get('head')+50)===1;
+  const glyphOffset=longLoca?view.getUint32(tables.get('loca')+glyphId*4):view.getUint16(tables.get('loca')+glyphId*2)*2;
+  incompleteFont.fill(0,tables.get('glyf')+glyphOffset,tables.get('glyf')+glyphOffset+10);
+  assert.equal(fontkit.create(incompleteFont).glyphForCodePoint(89).path.toSVG(),'');
+  const incompleteDoc=await PDFDocument.create();incompleteDoc.registerFontkit(fontkit);
+  const incompleteEmbedded=await incompleteDoc.embedFont(incompleteFont,{subset:false});
+  incompleteDoc.addPage().drawText('ear 2026',{font:incompleteEmbedded,size:16,x:50,y:700});
+  const incompleteBytes=await incompleteDoc.save(), incompleteRun=engine.inspect(incompleteBytes,0).runs[0];
+  assert.throws(()=>engine.replace(incompleteBytes,0,incompleteRun,'Year 2026'),/niet alle benodigde tekens.*Y/,'encoded letters with no embedded outline must not silently disappear');
+  const repaired=engine.inspect(engine.replace(incompleteBytes,0,incompleteRun,'Year 2026',fontBytes),0).runs[0];
+  assert.equal(repaired.text,'Year 2026');assert.equal(repaired.size,16);assert.deepEqual(repaired.matrix,incompleteRun.matrix);
   // Form-XObject text is explicitly skipped, rather than risking edits to repeated shared content.
   const nested=await PDFDocument.create();const [embedded]=await nested.embedPdf(bytes,[0]);nested.addPage([500,700]).drawPage(embedded);assert.equal(engine.inspect(await nested.save(),0).runs.length,0);
   console.log('PASS: true text replacement/removal, same font/size/color/matrix, four rotations/crop boxes, other content unchanged, font-subset rejection and explicit fallback, stale edits and nested text safeguards.');
