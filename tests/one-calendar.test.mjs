@@ -35,3 +35,11 @@ handlers.notificationclick({ notification: { close() {}, data: { url: '//evil.ex
 await pending;
 assert.deepEqual(opened, ['https://www.harkasit.nl/admin/one/']);
 console.log('PASS Amsterdam wall times, DST, all-day boundaries, input validation, push fallback and safe notification navigation.');
+
+const multiple = eventValues({ ...draft, allDay: false, reminders: [7200, 1440, 60, 7200] });
+assert.deepEqual(multiple.reminder_offsets, [7200, 1440, 60], 'multiple independent offsets are sorted and deduplicated');
+assert.deepEqual(eventValues({ ...draft, reminders: [] }).reminder_offsets, []);
+assert.deepEqual(eventValues({ ...draft, reminders: [7200, 1440, 60] }).reminder_offsets, [7200, 1440, 60]);
+assert.throws(() => eventValues({ ...draft, reminders: [999999] }), /herinneringen/);
+assert.throws(() => eventValues({ ...draft, reminders: ['60'] }), /herinneringen/);
+console.log('PASS 5-day + 24-hour + 1-hour selections, all-day reminders, deduplication and invalid offsets.');
