@@ -45,6 +45,7 @@ type SidebarItem = {
 const items: SidebarItem[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, module: "dashboard" },
   { title: "Documenten", url: "/admin/documenten", icon: FolderOpen, adminOnly: true },
+  { title: "PDF-editor", url: "/admin/pdf-editor", icon: FilePenLine, adminOnly: true },
   { title: "Demo’s", url: "/admin/demos", icon: Presentation, adminOnly: true },
   { title: "Facturen", url: "/admin/invoices", icon: FileText, module: "invoices" },
   { title: "Offertes", url: "/admin/offertes", icon: FilePenLine, module: "quotes" },

@@ -23,3 +23,6 @@ supabase/.temp/
 *.njsproj
 *.sln
 *.sw?
+
+# Generated PDF.js assets
+/public/pdfjs-assets/
