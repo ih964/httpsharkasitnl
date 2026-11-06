@@ -10,6 +10,8 @@ on:
       - 'tests/one-calendar.test.mjs'
       - 'tests/one-mail-push.test.mjs'
       - 'api/one-mail-poll.ts'
+      - 'api/admin-mail.ts'
+      - 'tests/admin-mail.test.mjs'
       - 'supabase/functions/harkas-one-push/**'
       - 'supabase/migrations/*harkas_one*'
       - '.github/workflows/harkas-one-checks.yml'
@@ -31,6 +33,7 @@ jobs:
       - run: npm run test:finance
       - run: node tests/one-calendar.test.mjs
       - run: node tests/one-mail-push.test.mjs
+      - run: node tests/admin-mail.test.mjs
       - run: npm install --no-save --ignore-scripts --no-audit --no-fund @playwright/test@1.64.1
       - run: npx playwright install --with-deps chromium
       - name: Isolated mobile browser checks (synthetic data only)
