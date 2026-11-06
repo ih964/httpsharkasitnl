@@ -33,7 +33,7 @@ jobs:
       - run: npm run test:finance
       - run: node tests/one-calendar.test.mjs
       - run: node tests/one-mail-push.test.mjs
-      - run: node tests/admin-mail.test.mjs
+      - run: node --experimental-vm-modules tests/admin-mail.test.mjs
       - run: npm install --no-save --ignore-scripts --no-audit --no-fund @playwright/test@1.64.1
       - run: npx playwright install --with-deps chromium
       - name: Isolated mobile browser checks (synthetic data only)
