@@ -13,18 +13,28 @@ function db() {
   return pool ??= new Pool({ connectionString: process.env.HARKAS_SUPABASE_DSN, max: 3, connectionTimeoutMillis: 5000, idleTimeoutMillis: 5000 });
 }
 class MailError extends Error { constructor(message: string, public status = 400) { super(message); } }
+function messageIdentifier(value: unknown, label: string) {
+  if ((typeof value !== "string" && typeof value !== "number") || !/^[1-9]\d{0,9}$/.test(String(value))) throw new MailError(label);
+  const id = Number(value);
+  if (!Number.isSafeInteger(id) || id > 4294967295) throw new MailError(label);
+  return id;
+}
+function mailboxClient(address: string, password: string) {
+  return new ImapFlow({ host: HOST, port: 993, secure: true, auth: { user: address, pass: password }, logger: false, connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 12000 });
+}
 export function parseRequest(query: Record<string, unknown>) {
   const account = String(query.account || "");
   if (!Object.prototype.hasOwnProperty.call(ACCOUNTS, account)) throw new MailError("Ongeldige mailbox");
   const folder = String(query.folder || "INBOX");
   if (folder.length > 255 || /[\0\r\n]/.test(folder)) throw new MailError("Ongeldige map");
   const action = String(query.action || "list");
-  if (!["list", "message", "attachment", "send"].includes(action)) throw new MailError("Ongeldige actie");
+  if (!["list", "message", "attachment", "send", "trash"].includes(action)) throw new MailError("Ongeldige actie");
   const page = Number(query.page || 1);
   if (!Number.isSafeInteger(page) || page < 1 || page > 10000) throw new MailError("Ongeldige pagina");
-  const uid = Number(query.uid);
-  if (["message", "attachment"].includes(action) && (!Number.isSafeInteger(uid) || uid < 1)) throw new MailError("Ongeldig bericht");
-  return { account: account as keyof typeof ACCOUNTS, address: ACCOUNTS[account as keyof typeof ACCOUNTS], folder, action, page, uid };
+  const needsMessage = ["message", "attachment", "trash"].includes(action);
+  const uid = needsMessage ? messageIdentifier(query.uid, "Ongeldig bericht") : 0;
+  const uidValidity = needsMessage ? String(messageIdentifier(query.uidValidity, "Ongeldige berichtverwijzing. Open het bericht opnieuw vanuit de mailbox.")) : "";
+  return { account: account as keyof typeof ACCOUNTS, address: ACCOUNTS[account as keyof typeof ACCOUNTS], folder, action, page, uid, uidValidity };
 }
 export async function isAdmin(bearer: string) {
   if (!/^Bearer \S+$/.test(bearer)) return false;
@@ -74,33 +84,62 @@ export default async function handler(req: any, res: any) {
     const bearer = String(req.headers.authorization || "");
     if (!(await isAdmin(bearer))) return res.status(403).json({ error: "Alleen voor beheerders" });
     const input = parseRequest(req.query || {});
-    if ((input.action === "send") !== (req.method === "POST")) throw new MailError("Methode niet toegestaan", 405);
+    if (["send", "trash"].includes(input.action) !== (req.method === "POST")) throw new MailError("Methode niet toegestaan", 405);
     const composed = input.action === "send" ? composeInput(req.body || {}) : undefined;
     stage = "credential";
     const password = await credential(input.account, bearer);
-    imap = new ImapFlow({ host: HOST, port: 993, secure: true, auth: { user: input.address, pass: password }, logger: false, connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 12000 });
-    stage = "connect";
-    await imap.connect();
-    stage = "mailbox";
     if (composed) {
-      // Build one RFC822 message for both SMTP delivery and the Sent copy.
+      stage = "compose";
+      // Build one RFC822 message for SMTP and the optional Sent copy.
       const composer = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "windows" });
       const built = await composer.sendMail({ from: { name: "Harkas IT", address: input.address }, ...composed });
       if (!Buffer.isBuffer(built.message)) throw new MailError("E-mail kon niet worden opgebouwd.", 503);
+      stage = "smtp";
       const transport = nodemailer.createTransport({ host: HOST, port: 465, secure: true, auth: { user: input.address, pass: password }, connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 12000, logger: false });
-      try { await transport.sendMail({ envelope: { from: input.address, to: [composed.to] }, raw: built.message }); }
-      finally { transport.close(); }
+      let delivery;
+      try { delivery = await transport.sendMail({ envelope: { from: input.address, to: [composed.to] }, raw: built.message }); }
+      finally { try { transport.close(); } catch { /* Cleanup cannot turn an accepted send into a failure. */ } }
+      const accepted = Array.isArray(delivery.accepted) && delivery.accepted.some((recipient: string | { address?: string }) =>
+        (typeof recipient === "string" ? recipient : recipient.address || "").toLowerCase() === composed.to.toLowerCase());
+      if (!accepted) {
+        if (delivery.rejected?.length) throw new MailError("De mailserver heeft de ontvanger geweigerd. Controleer het e-mailadres.", 422);
+        throw new MailError("Verzending is niet bevestigd. Controleer eerst Verzonden of webmail voordat je opnieuw verstuurt.", 503);
+      }
+      // An unavailable IMAP archive must never prevent SMTP delivery or trigger a retry.
+      stage = "sent-copy";
       let saved = false;
       try {
-        const folders = await imap.list();
+        imap = mailboxClient(input.address, password);
+        await imap.connect();
+        const folders = (await imap.list()).filter(f => !f.flags.has("\\Noselect"));
         const sent = folders.find(f => f.specialUse === "\\Sent") || folders.find(f => /^(INBOX\.)?(Sent|Sent Messages|Verzonden)$/i.test(f.path));
-        if (sent) { await imap.append(sent.path, built.message, ["\\Seen"]); saved = true; }
-      } catch { /* SMTP acceptance is authoritative: never report failure and encourage duplicate delivery. */ }
+        if (sent) saved = Boolean(await imap.append(sent.path, built.message, ["\\Seen"]));
+      } catch { /* SMTP acceptance is authoritative; report sent:true, saved:false. */ }
       return res.json({ sent: true, saved });
     }
+    imap = mailboxClient(input.address, password);
+    stage = "connect";
+    await imap.connect();
+    stage = input.action === "trash" ? "trash" : "mailbox";
     const folderList = input.action === "list" && input.page === 1 ? await imap.list() : undefined;
-    const box = await imap.mailboxOpen(input.folder, { readOnly: true });
-    if (input.action !== "list" && String(req.query.uidValidity || "") !== String(box.uidValidity)) throw new MailError("Deze map is gewijzigd. Vernieuw de mailbox en open het bericht opnieuw.", 409);
+    const box = await imap.mailboxOpen(input.folder, { readOnly: input.action !== "trash" });
+    if (input.action !== "list" && input.uidValidity !== String(box.uidValidity)) throw new MailError("Deze map is gewijzigd. Vernieuw de mailbox en open het bericht opnieuw.", 409);
+    if (input.action === "trash") {
+      if (box.readOnly) throw new MailError("Deze map kan niet worden aangepast.", 403);
+      const folders = await imap.list();
+      const trash = folders.find(f => f.specialUse === "\\Trash" && !f.flags.has("\\Noselect"));
+      if (!trash) throw new MailError("De prullenbak kon niet worden gevonden. Verwijder het bericht via webmail.", 503);
+      if (trash.path === box.path) throw new MailError("Dit bericht staat al in de prullenbak. Definitief verwijderen kan alleen via webmail.", 409);
+      // ImapFlow otherwise falls back to COPY + DELETE/EXPUNGE. Only native MOVE is allowed.
+      const nativeMove = imap.capabilities.has("MOVE") || imap.enabled.has("IMAP4REV2") ||
+        (imap.capabilities.has("IMAP4rev2") && !imap.capabilities.has("IMAP4rev1"));
+      if (!nativeMove) throw new MailError("Veilig verplaatsen naar de prullenbak is niet beschikbaar. Gebruik webmail.", 503);
+      const existing = await imap.fetchOne(input.uid, { uid: true }, { uid: true });
+      if (!existing || existing.uid !== input.uid) throw new MailError("Bericht niet gevonden. Vernieuw de mailbox.", 404);
+      const moved = await imap.messageMove(input.uid, trash.path, { uid: true });
+      if (!moved || (moved.uidMap && !moved.uidMap.has(input.uid))) throw new MailError("Verplaatsen is niet bevestigd. Vernieuw de mailbox en controleer de prullenbak.", 503);
+      return res.json({ moved: true, folder: trash.path });
+    }
     if (input.action === "list") {
       const end = Math.max(0, box.exists - (input.page - 1) * 30);
       const entries = end ? await imap.fetchAll(`${Math.max(1, end - 29)}:${end}`, { uid: true, envelope: true, flags: true, internalDate: true }) : [];
@@ -128,9 +167,12 @@ export default async function handler(req: any, res: any) {
   } catch (error) {
     if (error instanceof MailError) return res.status(error.status).json({ error: error.message });
     const failure = error as { authenticationFailed?: boolean; code?: string; responseText?: string };
-    const authenticationFailed = Boolean(failure?.authenticationFailed || /AUTHENTICATIONFAILED/i.test(failure?.responseText || ""));
+    const authenticationFailed = Boolean(failure?.authenticationFailed || failure?.code === "EAUTH" || /AUTHENTICATIONFAILED/i.test(failure?.responseText || ""));
     console.warn("Admin mailbox unavailable", { stage, authenticationFailed, code: /^[A-Z_]{1,32}$/.test(failure?.code || "") ? failure.code : "MAIL_FAILURE" });
     if (authenticationFailed) return res.status(503).json({ error: "De mailserver accepteert het opgeslagen mailboxwachtwoord niet. Werk het webmailwachtwoord bij in Wachtwoorden en probeer opnieuw." });
+    if (stage === "smtp") return res.status(503).json({ error: "Verzending is niet bevestigd. Controleer eerst Verzonden of webmail voordat je opnieuw verstuurt." });
+    if (stage === "compose") return res.status(503).json({ error: "E-mail kon niet worden opgebouwd. Je bericht is niet verstuurd." });
+    if (stage === "trash") return res.status(503).json({ error: "Verplaatsen is niet bevestigd. Vernieuw de mailbox en controleer de prullenbak." });
     return res.status(503).json({ error: "Mailbox openen mislukt. Controleer de opgeslagen inloggegevens of probeer opnieuw." });
   } finally { if (imap) await imap.logout().catch(() => {}); }
 }

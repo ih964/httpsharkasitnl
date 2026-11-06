@@ -3,13 +3,15 @@
 // Browser: npx playwright install --with-deps chromium
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
-const origin = 'http://127.0.0.1:4173';
+const origin = process.env.HARKAS_ONE_TEST_ORIGIN || 'http://127.0.0.1:4173';
+assert.equal(new URL(origin).hostname, '127.0.0.1', 'browser tests must stay on isolated loopback');
 const browser = await chromium.launch({ headless: true });
 const user = { id: '11111111-1111-4111-8111-111111111111', aud: 'authenticated', role: 'authenticated', email: 'fixture@example.invalid', app_metadata: { provider: 'email', providers: ['email'] }, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' };
 const jwt = [Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'), Buffer.from(JSON.stringify({ sub: user.id, aud: 'authenticated', exp: Math.floor(Date.now()/1000)+3600, role: 'authenticated' })).toString('base64url'), 'synthetic-test-signature'].join('.');
 const ticket = { id: '22222222-2222-4222-8222-222222222222', subject: 'Test: printerinstellingen', ticket_no: 42, status: 'nieuw', priority: 'normaal', customer_id: user.id, last_activity_at: '2026-11-04T10:00:00Z' };
 const accounts = ['info', 'administratie', 'support'];
-let sent = 0, privateCalls = 0, failingAccount;
+let sent = 0, privateCalls = 0, failingAccount, failSend = false, sendAttempts = 0, trashCalls = 0;
+const trashed = new Set();
 const errors = [];
 async function setup(admin = true) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, deviceScaleFactor: 1 });
@@ -35,9 +37,18 @@ async function setup(admin = true) {
       if (url.pathname === '/api/admin-mail') {
         const account = url.searchParams.get('account'), action = url.searchParams.get('action');
         if (action === 'list' && account === failingAccount) return json({ error: 'Test: mailbox niet bereikbaar' }, 503);
-        if (action === 'list') return json({ account: account+'@harkasit.nl', folder: 'INBOX', page: 1, total: 1, uidValidity: '12345', folders: [{ path: 'INBOX', name: 'Postvak IN' }], messages: [{ uid: 100 + accounts.indexOf(account), subject: 'Bericht voor '+account, from: [{ name: 'Testafzender', address: 'reply@example.invalid' }], date: '2026-11-04T10:30:00Z', unread: true }] });
+        if (action === 'list') return json({ account: account+'@harkasit.nl', folder: 'INBOX', page: 1, total: trashed.has(account) ? 0 : 1, uidValidity: '12345', folders: [{ path: 'INBOX', name: 'Postvak IN' }], messages: [{ uid: 100 + accounts.indexOf(account), subject: 'Bericht voor '+account, from: [{ name: 'Testafzender', address: 'reply@example.invalid' }], date: '2026-11-04T10:30:00Z', unread: true }].filter(() => !trashed.has(account)) });
         if (action === 'message') return json({ uid: Number(url.searchParams.get('uid')), account: account+'@harkasit.nl', subject: 'Bericht voor '+account, from: [{ name: 'Testafzender', address: 'reply@example.invalid' }], to: [{ name: '', address: account+'@harkasit.nl' }], replyTo: [{ name: '', address: 'reply@example.invalid' }], date: '2026-11-04T10:30:00Z', text: '<img src=x onerror="window.XSS=true">\nDit is veilige testtekst.', attachments: [] });
-        if (action === 'send') { assert.equal(req.postDataJSON().to, 'reply@example.invalid'); sent++; return json({ sent: true, saved: true }); }
+        if (action === 'send') {
+          assert.equal(req.method(), 'POST'); assert.equal(req.postDataJSON().to, 'reply@example.invalid'); sendAttempts++;
+          if (failSend) return json({ error: 'Test: de mailserver heeft het bericht geweigerd.' }, 503);
+          sent++; return json({ sent: true, saved: true });
+        }
+        if (action === 'trash') {
+          assert.equal(req.method(), 'POST'); assert.equal(url.searchParams.get('uidValidity'), '12345');
+          assert.equal(Number(url.searchParams.get('uid')), 100 + accounts.indexOf(account));
+          trashCalls++; trashed.add(account); return json({ moved: true, folder: 'Trash' });
+        }
         throw new Error('Unexpected mail action '+action);
       }
       if (url.pathname === '/api/support-mailbox') return json({ awaitingReply: [] });
@@ -83,22 +94,42 @@ try {
   await page.getByRole('button', { name: 'Beantwoorden', exact: true }).click();
   assert.equal(await page.getByLabel('Aan', { exact: true }).inputValue(), 'reply@example.invalid');
   assert.equal(await page.getByLabel('Versturen vanaf').inputValue(), 'info');
-  page.once('dialog', dialog => dialog.dismiss());
   await page.getByRole('button', { name: 'Controleren en versturen' }).click();
-  assert.equal(sent, 0, 'cancel must never send');
-  page.once('dialog', dialog => dialog.accept());
-  await page.getByRole('button', { name: 'Controleren en versturen' }).click();
+  await page.getByRole('heading', { name: 'E-mail versturen?', exact: true }).waitFor();
+  assert.equal(sent, 0, 'review must never send');
+  await page.getByRole('button', { name: 'Terug naar bericht', exact: true }).click();
+  assert.equal(await page.getByLabel('Aan', { exact: true }).inputValue(), 'reply@example.invalid');
+  assert.equal(sent, 0, 'return from review must never send');
+  await page.getByRole('button', { name: 'Versturen', exact: true }).click();
+  await page.getByRole('heading', { name: 'E-mail versturen?', exact: true }).waitFor();
+  failSend = true;
+  await page.getByRole('button', { name: 'Versturen', exact: true }).click();
+  await page.getByRole('alert').filter({ hasText: 'Test: de mailserver heeft het bericht geweigerd.' }).waitFor();
+  assert.equal(sent, 0, 'server failure must not show sent');
+  assert.ok(await page.locator('.one-send-preview').innerText(), 'draft remains after failure');
+  failSend = false;
+  await page.getByRole('button', { name: 'Versturen', exact: true }).click();
   await page.getByRole('status').filter({ hasText: 'E-mail verzonden.' }).waitFor();
   assert.equal(sent, 1, 'explicit confirmation sends exactly once to the test endpoint');
-  console.log('PASS reader safely renders text; reply uses correct mailbox; send requires confirmation');
-  await page.getByRole('button', { name: 'Terug naar alle mail' }).click();
+  assert.equal(sendAttempts, 2, 'only explicit confirmations submit, no automatic retries');
+  console.log('PASS send review, cancellation, server error, draft retention, explicit retry and one accepted send');
+  await page.getByRole('button', { name: 'Verwijderen', exact: true }).click();
+  await page.getByRole('heading', { name: 'Naar de prullenbak?', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Annuleren', exact: true }).click();
+  assert.equal(trashCalls, 0, 'cancel must never move a message');
+  await page.getByRole('button', { name: 'Verwijderen', exact: true }).click();
+  await page.getByRole('button', { name: 'Naar prullenbak', exact: true }).click();
+  await page.getByRole('status').filter({ hasText: 'E-mail verplaatst naar de prullenbak van info@harkasit.nl.' }).waitFor();
+  await page.getByText('Bericht voor info', { exact: true }).waitFor({ state: 'hidden' });
+  assert.equal(trashCalls, 1, 'confirmation moves exactly the selected message');
+  console.log('PASS trash confirmation, cancel, correct account/UID/validity and inbox refresh');
   await page.getByPlaceholder('Zoek afzender of onderwerp…').fill('no-match');
   await page.getByText('Geen resultaten in de ingeladen berichten.').waitFor();
   await page.getByPlaceholder('Zoek afzender of onderwerp…').fill('');
   failingAccount = 'administratie';
   await page.getByRole('button', { name: 'Mailboxen vernieuwen' }).click();
   await page.getByRole('alert').filter({ hasText: 'Test: mailbox niet bereikbaar' }).waitFor();
-  assert.equal(await page.locator('.one-mail-row').count(), 2);
+  assert.equal(await page.locator('.one-mail-row').count(), 1);
   console.log('PASS partial mailbox failure is explicit and leaves other mailboxes usable');
   failingAccount = undefined;
   await page.getByRole('navigation', { name: 'Hoofdnavigatie' }).getByRole('link', { name: 'Meer', exact: true }).click();

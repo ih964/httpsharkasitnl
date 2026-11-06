@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, Download, Inbox, Loader2, Mail, PenLine, RefreshCw, Reply, Search, Send, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Download, Inbox, Loader2, Mail, PenLine, RefreshCw, Reply, Search, Send, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const accounts = { info: 'info@harkasit.nl', administratie: 'administratie@harkasit.nl', support: 'support@harkasit.nl' } as const;
@@ -19,7 +19,7 @@ const addresses = (items: Address[]) => items.map(a => a.name ? `${a.name} <${a.
 const dateText = (value: string) => Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Amsterdam' }) : '';
 
 /** Only this same-origin, admin-authorized API is used. Mail credentials never reach this client. */
-async function mailRequest<T>(token: string, account: Account, action: string, params: Record<string, string> = {}, body?: Draft, signal?: AbortSignal, download = false): Promise<T> {
+async function mailRequest<T>(token: string, account: Account, action: string, params: Record<string, string> = {}, body?: Record<string, unknown>, signal?: AbortSignal, download = false): Promise<T> {
   const controller = new AbortController();
   const cancel = () => controller.abort();
   if (signal?.aborted) throw new DOMException('Geannuleerd', 'AbortError');
@@ -30,7 +30,7 @@ async function mailRequest<T>(token: string, account: Account, action: string, p
     const response = await fetch('/api/admin-mail?' + query, {
       method: body ? 'POST' : 'GET', cache: 'no-store', signal: controller.signal,
       headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
-      ...(body ? { body: JSON.stringify({ to: body.to.trim(), subject: body.subject.trim(), text: body.text }) } : {}),
+      ...(body ? { body: JSON.stringify(body) } : {}),
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -59,6 +59,14 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
   const [readError, setReadError] = useState('');
   const [draft, setDraft] = useState<Draft>();
   const [sending, setSending] = useState(false);
+  const [sendReview, setSendReview] = useState(false);
+  const [trashReview, setTrashReview] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const trashLock = useRef(false);
+  const selectionRef = useRef('');
+  const reviewHeading = useRef<HTMLHeadingElement>(null);
+  const composerTo = useRef<HTMLInputElement>(null);
+  const wasReview = useRef(false);
   const [sendError, setSendError] = useState('');
   const [notice, setNotice] = useState('');
   const [downloading, setDownloading] = useState<number>();
@@ -84,7 +92,9 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setMessage(undefined); setReadError('');
+    const selection = `${selectedAccount || ''}/${uid || ''}/${validity || ''}`;
+    selectionRef.current = selection;
+    setMessage(undefined); setReadError(''); setTrashReview(false);
     if (!token || !selected || !selectedAccount) { setReading(false); return; }
     if (!/^\d+$/.test(uid || '') || !/^\d+$/.test(validity || '')) { setReadError('Ongeldige berichtverwijzing. Open het bericht opnieuw vanuit je inbox.'); setReading(false); return; }
     setReading(true);
@@ -92,8 +102,14 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
       .then(data => { if (!controller.signal.aborted) setMessage(data); })
       .catch(error => { if (!controller.signal.aborted) setReadError(error instanceof Error ? error.message : 'Openen mislukt.'); })
       .finally(() => { if (!controller.signal.aborted) setReading(false); });
-    return () => controller.abort();
+    return () => { controller.abort(); if (selectionRef.current === selection) selectionRef.current = ''; };
   }, [token, selected, selectedAccount, uid, validity, refresh]);
+
+  useEffect(() => {
+    if (sendReview) reviewHeading.current?.focus();
+    else if (wasReview.current) composerTo.current?.focus();
+    wasReview.current = sendReview;
+  }, [sendReview]);
 
   useEffect(() => {
     if (!draft || !(draft.to || draft.subject || draft.text)) return;
@@ -130,7 +146,7 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
     }
   };
   const compose = (account: Account, replying = false, forward = false) => {
-    setSendError(''); setNotice('');
+    setSendError(''); setNotice(''); setSendReview(false);
     setDraft({ account, to: replying ? message?.replyTo[0]?.address || '' : '',
       subject: message && (replying || forward) ? ((replying ? (/^re:/i.test(message.subject) ? '' : 'Re: ') : 'Fwd: ') + message.subject).slice(0, 250) : '',
       text: message && (replying || forward) ? `\n\nOp ${dateText(message.date)} schreef ${addresses(message.from)}:\n${message.text.slice(0, 80000).split('\n').map(line => '> ' + line).join('\n').slice(0, 95000)}` : '',
@@ -140,21 +156,39 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
   const cancelDraft = () => {
     if (sending) return;
     if (draft && (draft.to || draft.subject || draft.text) && !window.confirm('Dit concept verwijderen? Het is nog niet opgeslagen.')) return;
-    setDraft(undefined); setSendError('');
+    setDraft(undefined); setSendError(''); setSendReview(false);
   };
-  const send = async (event: React.FormEvent) => {
+  const reviewSend = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!draft || !token || sendLock.current || !draft.text.trim() || !draft.subject.trim()) return;
-    if (!window.confirm(`Versturen vanaf ${accounts[draft.account]} naar ${draft.to.trim()}?\n\n${draft.subject.trim()}`)) return;
+    if (!draft || sending || !draft.to.trim() || !draft.text.trim() || !draft.subject.trim()) return;
+    setSendReview(true); setSendError('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const send = async () => {
+    if (!draft || !token || !sendReview || sendLock.current || !draft.text.trim() || !draft.subject.trim()) return;
     sendLock.current = true; setSending(true); setSendError('');
     try {
       const result = await mailRequest<{ sent: boolean; saved: boolean }>(token, draft.account, 'send', {}, draft);
       if (!result.sent) throw new Error('Geen verzendbevestiging ontvangen.');
-      setDraft(undefined);
+      setDraft(undefined); setSendReview(false);
       setNotice(result.saved ? 'E-mail verzonden. Een kopie staat in Verzonden.' : 'E-mail verzonden. Opslaan van de kopie in Verzonden is niet gelukt. Verstuur niet opnieuw.');
     } catch (error) {
       setSendError(`${error instanceof Error ? error.message : 'Verzenden niet bevestigd.'} Controleer eerst Verzonden of webmail voordat je opnieuw verstuurt, om dubbele e-mails te voorkomen.`);
     } finally { setSending(false); sendLock.current = false; }
+  };
+  const moveToTrash = async () => {
+    if (!token || !selectedAccount || !uid || !validity || !message || !trashReview || trashLock.current) return;
+    const requestSelection = selectionRef.current;
+    trashLock.current = true; setRemoving(true); setReadError('');
+    try {
+      const result = await mailRequest<{ moved: boolean; folder: string }>(token, selectedAccount, 'trash', { uid, uidValidity: validity }, {});
+      if (!result.moved) throw new Error('Verplaatsen naar de prullenbak is niet bevestigd. Vernieuw eerst je mailbox.');
+      setNotice(`E-mail verplaatst naar de prullenbak van ${accounts[selectedAccount]}.`);
+      if (selectionRef.current === requestSelection) { setTrashReview(false); setMessage(undefined); setParams({}); }
+      setRefresh(value => value + 1);
+    } catch (error) {
+      setReadError(error instanceof Error ? error.message : 'Verplaatsen naar de prullenbak is niet bevestigd. Vernieuw eerst je mailbox.');
+    } finally { setRemoving(false); trashLock.current = false; }
   };
   const download = async (index: number, filename: string) => {
     if (!token || !selectedAccount || !uid || !validity || downloading !== undefined) return;
@@ -168,11 +202,19 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
     finally { setDownloading(undefined); }
   };
 
+  if (draft && sendReview && !compact) return <section className="one-panel one-compose">
+    <div className="one-section-title"><div><p className="one-eyebrow">CONTROLEER JE E-MAIL</p><h1 ref={reviewHeading} tabIndex={-1}>E-mail versturen?</h1></div></div>
+    <dl className="one-send-summary"><dt>Van</dt><dd>{accounts[draft.account]}</dd><dt>Aan</dt><dd>{draft.to.trim()}</dd><dt>Onderwerp</dt><dd>{draft.subject.trim()}</dd></dl>
+    <div className="one-send-preview">{draft.text}</div>
+    {sendError && <p role="alert" className="one-error">{sendError}</p>}
+    <div className="one-actions"><button className="one-button" disabled={sending} onClick={() => setSendReview(false)}><ArrowLeft />Terug naar bericht</button><button className="one-button one-primary" disabled={sending} onClick={() => void send()}>{sending ? <Loader2 className="one-spin" /> : <Send />}{sending ? 'Verzenden…' : 'Versturen'}</button></div>
+  </section>;
+
   if (draft && !compact) return <section className="one-panel one-compose">
-    <div className="one-section-title"><div><p className="one-eyebrow">E-MAIL OPSTELLEN</p><h1>Nieuw bericht</h1></div><button className="one-icon-button" aria-label="Concept sluiten" onClick={cancelDraft} disabled={sending}><X /></button></div>
-    <form onSubmit={send}>
+    <div className="one-section-title"><div><p className="one-eyebrow">E-MAIL OPSTELLEN</p><h1>Nieuw bericht</h1></div><div className="one-actions"><button type="submit" form="one-mail-compose" className="one-button one-primary" disabled={sending}><Send />Versturen</button><button className="one-icon-button" aria-label="Concept sluiten" onClick={cancelDraft} disabled={sending}><X /></button></div></div>
+    <form id="one-mail-compose" onSubmit={reviewSend}>
       <label>Versturen vanaf<select value={draft.account} disabled={sending} onChange={event => setDraft({ ...draft, account: event.target.value as Account })}>{accountKeys.map(account => <option key={account} value={account}>{accounts[account]}</option>)}</select></label>
-      <label>Aan<input type="email" autoComplete="off" required maxLength={254} value={draft.to} disabled={sending} onChange={event => setDraft({ ...draft, to: event.target.value })} /></label>
+      <label>Aan<input ref={composerTo} type="email" autoComplete="off" required maxLength={254} value={draft.to} disabled={sending} onChange={event => setDraft({ ...draft, to: event.target.value })} /></label>
       <label>Onderwerp<input required maxLength={250} value={draft.subject} disabled={sending} onChange={event => setDraft({ ...draft, subject: event.target.value })} /></label>
       <label>Bericht<textarea required rows={12} maxLength={100000} value={draft.text} disabled={sending} onChange={event => setDraft({ ...draft, text: event.target.value })} /></label>
       <p className="one-muted">Concepten blijven alleen op dit scherm. Bijlagen worden bij doorsturen niet automatisch meegestuurd.</p>
@@ -182,15 +224,19 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
   </section>;
 
   if (selected && !compact) return <section className="one-reader">
-    <button className="one-button" onClick={() => setParams({})}><ArrowLeft />Terug naar alle mail</button>
+    <button className="one-button" disabled={removing} onClick={() => setParams({})}><ArrowLeft />Terug naar alle mail</button>
     {notice && <p role="status" className="one-notice">{notice}</p>}
-    {readError && <div role="alert" className="one-error">{readError}<button className="one-button" onClick={() => setRefresh(value => value + 1)}>Opnieuw proberen</button></div>}
+    {readError && <div role="alert" className="one-error">{readError}<button className="one-button" onClick={() => setRefresh(value => value + 1)}>Mailbox vernieuwen</button></div>}
     {reading && <div role="status" className="one-empty"><Loader2 className="one-spin" />Bericht openen…</div>}
     {message && <article className="one-panel">
       <span className={`one-account one-account-${selectedAccount}`}>{accounts[selectedAccount!]}</span>
       <h1 className="one-message-subject">{message.subject}</h1>
       <div className="one-mail-meta"><p><strong>Van</strong> {addresses(message.from)}</p><p><strong>Aan</strong> {addresses(message.to)}</p><time>{dateText(message.date)}</time></div>
-      <div className="one-actions"><button className="one-button one-primary" onClick={() => compose(selectedAccount!, true)}><Reply />Beantwoorden</button><button className="one-button" onClick={() => compose(selectedAccount!, false, true)}><ArrowUpRight />Doorsturen</button></div>
+      <div className="one-actions"><button className="one-button one-primary" disabled={removing} onClick={() => compose(selectedAccount!, true)}><Reply />Beantwoorden</button><button className="one-button" disabled={removing} onClick={() => compose(selectedAccount!, false, true)}><ArrowUpRight />Doorsturen</button><button className="one-button one-danger" disabled={removing} onClick={() => { setTrashReview(true); setReadError(''); }}><Trash2 />Verwijderen</button></div>
+      {trashReview && <section className="one-trash-confirm" aria-labelledby="one-trash-title">
+        <h2 id="one-trash-title">Naar de prullenbak?</h2><p>Dit verplaatst deze e-mail naar de prullenbak van {accounts[selectedAccount!]}. Het bericht wordt niet definitief gewist.</p>
+        <div className="one-actions"><button className="one-button" disabled={removing} onClick={() => setTrashReview(false)}>Annuleren</button><button className="one-button one-danger" disabled={removing} onClick={() => void moveToTrash()}>{removing ? <Loader2 className="one-spin" /> : <Trash2 />}{removing ? 'Verplaatsen…' : 'Naar prullenbak'}</button></div>
+      </section>}
       <div className="one-mail-body">{message.text}</div>
       {message.attachments.length > 0 && <section className="one-attachments"><h2>Bijlagen</h2>{message.attachments.map(attachment => <button className="one-button" key={attachment.index} disabled={downloading !== undefined} onClick={() => void download(attachment.index, attachment.filename)}>{downloading === attachment.index ? <Loader2 className="one-spin" /> : <Download />}<span>{attachment.filename} · {Math.ceil(attachment.size / 1024)} KB</span></button>)}</section>}
       <p className="one-muted">Veilige tekstweergave: externe afbeeldingen en scripts worden niet geladen.</p>
@@ -198,7 +244,7 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
   </section>;
 
   return <section className={compact ? 'one-panel one-inbox-compact' : 'one-inbox'}>
-    <div className="one-section-title"><div><p className="one-eyebrow">{compact ? 'DRIE POSTVAKKEN, ÉÉN PLEK' : 'INFO · ADMINISTRATIE · SUPPORT'}</p><h2>{compact ? 'Laatste e-mails' : 'Alle mail'}</h2></div><div className="one-actions"><button className="one-icon-button" title="Mailboxen vernieuwen" aria-label="Mailboxen vernieuwen" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw className={loading ? 'one-spin' : ''} /></button>{!compact && <button className="one-button one-primary" onClick={() => compose(filter === 'all' ? 'info' : filter)}><PenLine /><span>Nieuw</span></button>}</div></div>
+    <div className="one-section-title"><div><p className="one-eyebrow">{compact ? 'DRIE POSTVAKKEN, ÉÉN PLEK' : 'INFO · ADMINISTRATIE · SUPPORT'}</p><h2>{compact ? 'Laatste e-mails' : 'Alle mail'}</h2></div><div className="one-actions"><button className="one-icon-button" title="Mailboxen vernieuwen" aria-label="Mailboxen vernieuwen" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw className={loading ? 'one-spin' : ''} /></button>{!compact && <button className="one-button one-primary" onClick={() => compose(filter === 'all' ? 'info' : filter)}><PenLine /><span>Nieuwe e-mail</span></button>}</div></div>
     {notice && <p role="status" className="one-notice">{notice}</p>}
     <div className="one-mail-accounts" aria-label="Mailboxfilter">{!compact && <button onClick={() => setFilter('all')} aria-pressed={filter === 'all'}>Alle</button>}{accountKeys.map(account => <button key={account} onClick={() => { if (!compact) setFilter(account); }} disabled={compact} aria-pressed={!compact && filter === account}><span className={`one-dot one-dot-${account}`} />{account === 'administratie' ? 'Admin' : account === 'support' ? 'Support' : 'Info'}<span>{boxes[account].loading && !boxes[account].data ? '…' : boxes[account].data?.total ?? '—'}</span></button>)}</div>
     {failed.map(account => <p role="alert" key={account} className="one-error"><strong>{accounts[account]}:</strong> {boxes[account].error}</p>)}
