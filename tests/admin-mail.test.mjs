@@ -18,7 +18,7 @@ async function fixture(options = {}) {
   const context = vm.createContext({
     Buffer, URL, AbortSignal,
     console: { warn: (...args) => warnings.push(args) },
-    process: { env: { HARKAS_SUPABASE_DSN: 'test', HARKAS_SUPABASE_PUBLISHABLE_KEY: 'public' } },
+    process: { env: { HARKAS_SUPABASE_DSN: 'postgresql://test:private@aws-1-eu-west-3.pooler.supabase.com:5432/postgres?sslmode=require', HARKAS_SUPABASE_PUBLISHABLE_KEY: 'public' } },
     fetch: async (url, fetchOptions) => {
       calls.push(['fetch', url]);
       if (url.endsWith('/auth/v1/user')) return { ok: true, json: async () => ({ id: '11111111-1111-4111-8111-111111111111', user_metadata: { role: 'admin' } }) };
@@ -28,8 +28,11 @@ async function fixture(options = {}) {
     },
   });
   class Pool {
+    constructor(config) { calls.push(['pool', config]); }
+    on() {}
     async query(sql) {
       calls.push(['sql', sql]);
+      if (options.dbError) throw Object.assign(new Error('never-expose-me ' + (options.dbError.message || '')), options.dbError);
       return { rows: sql.includes('user_roles') ? (options.admin ? [{ id: 1 }] : []) : [{ decrypted_secret: '{"password":"support-private"}' }] };
     }
   }
@@ -115,6 +118,10 @@ async function fixture(options = {}) {
     compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
   }).outputText, { context });
   await module.link(async name => {
+    if (name === '../server/mail-database.js') return new vm.SourceTextModule(ts.transpileModule(
+      readFileSync(new URL('../server/mail-database.ts', import.meta.url), 'utf8'),
+      { compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 } }
+    ).outputText, { context });
     const values = mocks[name];
     return new vm.SyntheticModule(Object.keys(values), function () {
       for (const [key, value] of Object.entries(values)) this.setExport(key, value);
@@ -154,6 +161,9 @@ for (const account of Object.keys(accounts)) {
   const f = await fixture({ admin: true, account });
   const r = await f.run({ account });
   assert.equal(r.code, 200); assert.equal(r.data.account, accounts[account]);
+  const poolConfig = f.calls.find(call => call[0] === 'pool')[1];
+  assert.equal(new URL(poolConfig.connectionString).port, '6543');
+  assert.equal(poolConfig.max, 2);
   const config = f.calls.find(call => call[0] === 'imap')[1];
   assert.equal(config.auth.user, accounts[account]);
   assert.equal(config.host, 'shared70.cloud86-host.nl');
@@ -296,4 +306,19 @@ for (const options of [{ moveFalse: true }, { failMove: true }, { emptyMove: tru
   assert.equal(f.calls.filter(call => call[0] === 'move').length, 1);
 }
 console.log('PASS UID-scoped native trash moves, special-use folder selection, stale/missing identifiers, read-only/no-MOVE safeguards and failed-move handling');
+for (const dbError of [
+  { code: 'XX000', message: '(EMAXCONNSESSION) max clients reached in session mode - max clients are limited to pool_size: 15' },
+  { code: '53300', message: 'too many clients' },
+  { code: '42501', message: 'never-expose-me access failure' },
+  { code: 'not-a-safe-code', message: 'never-expose-me' },
+]) {
+  const f = await fixture({ admin: true, dbError });
+  const r = await f.run();
+  assert.equal(r.code, 503);
+  assert.match(r.data.error, /mailboxwachtwoord hoeft niet/);
+  assert(!f.calls.some(call => ['imap','smtp','compose'].includes(call[0])), 'authorization errors must fail closed');
+  assert.equal(f.warnings[0][1].code, /^[A-Z0-9_]{1,32}$/.test(dbError.code) ? dbError.code : 'MAIL_FAILURE');
+  assert.equal(f.warnings[0][1].stage, 'authorization');
+}
+console.log('PASS production session-exhaustion regression, transaction pool selection, fail-closed authorization and safe numeric SQLSTATE diagnostics');
 console.log('ALL ADMIN MAIL TESTS PASSED (' + requests + ' mocked requests; no real e-mail sent or moved).');

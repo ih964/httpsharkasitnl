@@ -15,6 +15,8 @@ on:
       - 'tests/one-mail-credentials.test.mjs'
       - 'api/one-mail-poll.ts'
       - 'api/admin-mail.ts'
+      - 'server/mail-database.ts'
+      - 'tests/mail-database.test.mjs'
       - 'tests/admin-mail.test.mjs'
       - 'supabase/functions/harkas-one-push/**'
       - 'supabase/migrations/*harkas_one*'
@@ -36,6 +38,7 @@ jobs:
       - run: npm run build
       - run: npm run test:finance
       - run: node tests/one-calendar.test.mjs
+      - run: node tests/mail-database.test.mjs
       - run: node tests/one-mail-push.test.mjs
       - run: node tests/one-mail-credentials.test.mjs
       - run: node --experimental-vm-modules tests/admin-mail.test.mjs

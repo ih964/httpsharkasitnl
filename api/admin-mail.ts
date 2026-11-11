@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { mailDatabaseOptions, mailFailureCode, isMailDatabaseBusy } from "../server/mail-database.js";
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
 import nodemailer from "nodemailer";
@@ -9,8 +10,11 @@ const ACCOUNTS = { info: 'info@harkasit.nl', administratie: 'administratie@harka
 const MAIL_VAULT_IDS = { info: '8aec51a9-3504-447e-99cf-2e5cb6cdea5f', administratie: '8aec51a9-3504-447e-99cf-2e5cb6cdea5f', webbuilder_info: '07b1de96-f2ea-406b-abe5-8e6619576abb', webbuilder_admin: 'c4e70f1e-407a-4a41-a42a-ee91e77c14d7' } as const;
 let pool: Pool | undefined;
 function db() {
-  if (!process.env.HARKAS_SUPABASE_DSN) throw new Error("Database niet beschikbaar");
-  return pool ??= new Pool({ connectionString: process.env.HARKAS_SUPABASE_DSN, max: 3, connectionTimeoutMillis: 5000, idleTimeoutMillis: 5000 });
+  if (!pool) {
+    pool = new Pool(mailDatabaseOptions(process.env.HARKAS_SUPABASE_DSN));
+    pool.on('error', error => console.warn('Mail database idle connection failed', { code: mailFailureCode(error) }));
+  }
+  return pool;
 }
 class MailError extends Error { constructor(message: string, public status = 400) { super(message); } }
 function messageIdentifier(value: unknown, label: string) {
@@ -168,7 +172,13 @@ export default async function handler(req: any, res: any) {
     if (error instanceof MailError) return res.status(error.status).json({ error: error.message });
     const failure = error as { authenticationFailed?: boolean; code?: string; responseText?: string };
     const authenticationFailed = Boolean(failure?.authenticationFailed || failure?.code === "EAUTH" || /AUTHENTICATIONFAILED/i.test(failure?.responseText || ""));
-    console.warn("Admin mailbox unavailable", { stage, authenticationFailed, code: /^[A-Z_]{1,32}$/.test(failure?.code || "") ? failure.code : "MAIL_FAILURE" });
+    console.warn("Admin mailbox unavailable", { stage, authenticationFailed, code: mailFailureCode(error) });
+    if (stage === "authorization" || stage === "credential") {
+      const busy = isMailDatabaseBusy(error);
+      return res.status(503).json({ error: busy
+        ? "De verbinding voor de mailcontrole is tijdelijk bezet. Probeer over enkele seconden opnieuw. Je mailboxwachtwoord hoeft niet te worden gewijzigd."
+        : "De toegangscontrole voor de mailbox is tijdelijk niet beschikbaar. Probeer opnieuw. Je mailboxwachtwoord hoeft niet te worden gewijzigd." });
+    }
     if (authenticationFailed) return res.status(503).json({ error: "De mailserver accepteert het opgeslagen mailboxwachtwoord niet. Werk het webmailwachtwoord bij in Wachtwoorden en probeer opnieuw." });
     if (stage === "smtp") return res.status(503).json({ error: "Verzending is niet bevestigd. Controleer eerst Verzonden of webmail voordat je opnieuw verstuurt." });
     if (stage === "compose") return res.status(503).json({ error: "E-mail kon niet worden opgebouwd. Je bericht is niet verstuurd." });
