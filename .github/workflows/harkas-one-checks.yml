@@ -51,6 +51,7 @@ jobs:
           trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 30); do curl --fail --silent http://127.0.0.1:4173/admin/one/ >/dev/null && break; sleep 1; done
           node tests/harkas-one-smoke.mjs
+          node tests/harkas-one-bulk-mail.mjs
           node tests/harkas-one-agenda.mjs
       - uses: actions/upload-artifact@v4
         if: always()

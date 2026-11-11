@@ -61,7 +61,9 @@ async function fixture(options = {}) {
       calls.push(['open', folder, config]);
       return { path: folder, exists: 1, uidValidity: 77n, readOnly: options.forceReadOnly || config.readOnly };
     }
-    async fetchAll() {
+    async fetchAll(range, fields, config) {
+      calls.push(['fetchAll', range, fields, config]);
+      if (Array.isArray(range)) return range.filter(uid => !options.missingBulk || uid !== range[range.length - 1]).map(uid => ({ uid }));
       return [{ uid: 71, envelope: { subject: 'Test' }, flags: new Set(), internalDate: '2026-10-23' }];
     }
     async fetchOne(uid, fields, config) {
@@ -77,7 +79,8 @@ async function fixture(options = {}) {
       calls.push(['move', uid, destination, config]);
       if (options.failMove) throw new Error('never-expose-me');
       if (options.moveFalse) return false;
-      return { path: 'INBOX', destination, uidMap: new Map(options.emptyMove ? [] : [[uid, 91]]) };
+      const ids = Array.isArray(uid) ? uid : [uid];
+      return { path: 'INBOX', destination, ...(options.noMap ? {} : { uidMap: new Map(options.emptyMove ? [] : ids.filter((_, index) => !options.partialMove || index === 0).map(id => [id, id + 1000])) }) };
     }
     async messageDelete() { calls.push(['permanent-delete']); throw new Error('Permanent deletion is forbidden'); }
     async messageFlagsAdd() { calls.push(['flag-delete']); throw new Error('Flag-based deletion is forbidden'); }
@@ -321,4 +324,62 @@ for (const dbError of [
   assert.equal(f.warnings[0][1].stage, 'authorization');
 }
 console.log('PASS production session-exhaustion regression, transaction pool selection, fail-closed authorization and safe numeric SQLSTATE diagnostics');
+
+
+const bulkQuery = { account: 'info', action: 'trash-many', uidValidity: '77' };
+for (const admin of [false, true]) {
+  const f = await fixture({ admin });
+  const r = await f.run(bulkQuery, admin ? '' : undefined, 'POST', { uids: [71, 72] });
+  assert.equal(r.code, 403);
+  assert(!f.calls.some(c => ['imap', 'move'].includes(c[0])));
+}
+for (const account of Object.keys(accounts)) {
+  const f = await fixture({ admin: true, account });
+  const r = await f.run({ ...bulkQuery, account }, undefined, 'POST', { uids: [71, 73], account: 'ignored', folder: 'ignored' });
+  assert.equal(r.code, 200);
+  assert.deepEqual(plain(r.data), { moved: true, movedUids: [71, 73], folder: 'INBOX.Verwijderd' });
+  assert.deepEqual(plain(f.calls.find(c => c[0] === 'fetchAll')), ['fetchAll', [71, 73], { uid: true }, { uid: true }]);
+  assert.deepEqual(plain(f.calls.find(c => c[0] === 'move')), ['move', [71, 73], 'INBOX.Verwijderd', { uid: true }]);
+  assert.equal(f.calls.filter(c => c[0] === 'connect').length, 1);
+  assert.equal(f.calls.filter(c => c[0] === 'move').length, 1);
+}
+for (const uids of [undefined, null, [], '71,72', ['*'], ['1:900'], [0], [-1], [1.5], [4294967296], [true], [[71]], [{ uid: 71 }], [71, 71], [71, '71'], Array.from({ length: 101 }, (_, i) => i + 1)]) {
+  const f = await fixture({ admin: true });
+  assert.equal((await f.run(bulkQuery, undefined, 'POST', { uids })).code, 400);
+  assert(!f.calls.some(c => ['imap', 'move'].includes(c[0])), 'bad batch must fail before connecting');
+}
+for (const uids of [[71], Array.from({ length: 100 }, (_, i) => i + 1)]) {
+  const f = await fixture({ admin: true });
+  const r = await f.run(bulkQuery, undefined, 'POST', { uids });
+  assert.equal(r.code, 200); assert.equal(r.data.movedUids.length, uids.length);
+}
+for (const [options, query, status] of [
+  [{}, { ...bulkQuery, uidValidity: '78' }, 409],
+  [{}, { ...bulkQuery, uidValidity: '*' }, 400],
+  [{}, { ...bulkQuery, account: 'constructor' }, 400],
+  [{ missingBulk: true }, bulkQuery, 409],
+  [{ noTrash: true }, bulkQuery, 503],
+  [{ trashNoSelect: true }, bulkQuery, 503],
+  [{ forceReadOnly: true }, bulkQuery, 403],
+  [{ capabilities: [['UIDPLUS', true]] }, bulkQuery, 503],
+  [{}, { ...bulkQuery, folder: 'INBOX.Verwijderd' }, 409],
+  [{ dbError: { code: '53300' } }, bulkQuery, 503],
+]) {
+  const f = await fixture({ admin: true, ...options });
+  assert.equal((await f.run(query, undefined, 'POST', { uids: [71, 72] })).code, status);
+  assert(!f.calls.some(c => c[0] === 'move'), 'unsafe or stale batch must not move anything');
+}
+for (const options of [{ failMove: true }, { moveFalse: true }, { emptyMove: true }, { partialMove: true }, { noMap: true }]) {
+  const f = await fixture({ admin: true, ...options });
+  const r = await f.run(bulkQuery, undefined, 'POST', { uids: [71, 72] });
+  assert.equal(r.code, 503); assert.notEqual(r.data.moved, true);
+  assert.equal(f.calls.filter(c => c[0] === 'move').length, 1, 'ambiguous batch must not be retried');
+}
+{
+  const f = await fixture({ admin: true });
+  assert.equal((await f.run(bulkQuery, undefined, 'GET', { uids: [71] })).code, 405);
+  assert.equal((await f.run(bulkQuery, undefined, 'DELETE', { uids: [71] })).code, 405);
+  assert(!f.calls.some(c => c[0] === 'imap'));
+}
+console.log('PASS bulk trash for five accounts: bounded explicit UID arrays, one native MOVE per batch, fail-closed authorization, stale/missing/read-only/no-MOVE guards, incomplete results and no retries');
 console.log('ALL ADMIN MAIL TESTS PASSED (' + requests + ' mocked requests; no real e-mail sent or moved).');
