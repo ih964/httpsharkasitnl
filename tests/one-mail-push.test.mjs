@@ -11,7 +11,8 @@ const outputs = {}, calls = [], connections = [];
 const now = new Date('2026-11-05T14:00:00Z');
 const token = 'a'.repeat(64);
 const config = { cron_secret: token, mail_poll_enabled: true };
-let cursor = null, messages = [], connectionCount = 0;
+let cursor = null, messages = [], connectionCount = 0, failNextCheckout = false, releases = 0;
+const poolConfigs = [], order = [];
 const database = { query: async (sql, args) => {
   calls.push({ sql, args });
   if (sql.includes('cron_secret')) return { rows: [config] };
@@ -19,16 +20,27 @@ const database = { query: async (sql, args) => {
   if (sql.includes('decrypted_secret')) return { rows: [{ decrypted_secret: JSON.stringify({ password: 'synthetic-only' }) }] };
   if (sql.includes('select uid_validity')) return { rows: cursor ? [cursor] : [] };
   return { rows: [] };
-}, release() {} };
-class FakePool { async connect() { connectionCount++; return database; } async query(...args) { return database.query(...args); } }
+}, release() { releases++; } };
+class FakePool {
+  constructor(options) { poolConfigs.push(options); }
+  on() {}
+  async connect() {
+    order.push('database-checkout');
+    if (failNextCheckout) { failNextCheckout = false; throw Object.assign(new Error('private-failure'), { code: '53300' }); }
+    connectionCount++; return database;
+  }
+  async query(...args) { return database.query(...args); }
+}
 class FakeImap {
   constructor(options) { connections.push(options); }
-  on() {} async connect() {} close() {}
+  on() {} async connect() { order.push('imap-connect'); } close() {}
   async mailboxOpen(folder, options) { assert.equal(folder, 'INBOX'); assert.equal(options.readOnly, true); return { uidValidity: 123n, uidNext: 20 }; }
   async fetchAll(range, fields, options) { assert.equal(options.uid, true); assert.deepEqual(Object.keys(fields).sort(), ['internalDate', 'uid']); return messages; }
 }
-const env = { HARKAS_SUPABASE_DSN: 'synthetic-only', VERCEL_ENV: 'production' };
-vm.runInNewContext(code, { exports: outputs, require: name => name === 'pg' ? { Pool: FakePool } : name === 'imapflow' ? { ImapFlow: FakeImap } : require(name), process: { env }, Buffer, console, Date, AbortSignal });
+const env = { HARKAS_SUPABASE_DSN: 'postgresql://test:private@aws-1-eu-west-3.pooler.supabase.com:5432/postgres?sslmode=require', VERCEL_ENV: 'production' };
+const helper = {};
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../server/mail-database.ts', import.meta.url),'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText, { exports: helper, URL });
+vm.runInNewContext(code, { exports: outputs, require: name => name === 'pg' ? { Pool: FakePool } : name === 'imapflow' ? { ImapFlow: FakeImap } : name === '../server/mail-database.js' ? helper : require(name), process: { env }, Buffer, console, Date, AbortSignal });
 const { newArrivals, default: handler } = outputs;
 const arrivals = newArrivals([
  { uid: 9, internalDate: '2026-11-05T13:59:00Z' },
@@ -98,3 +110,18 @@ for (const [account,address] of Object.entries(expected)) {
 for (const account of ['constructor','__proto__','unknown']) assert.equal(mailPayload({account,uid:41,uid_validity:'99'}, 'test'),null);
 assert.equal(mailPayload({account:'webbuilder_info',uid:'1&evil=1',uid_validity:'99'}, 'test'),null);
 console.log('PASS five mailbox credential isolation, partial failures, domain-correct push payloads and fixed-account validation.');
+
+// A failed checkout stays isolated to one account, and IMAP connects before DB locks.
+order.length = 0;
+failNextCheckout = true;
+res = response();
+await handler({ method: 'POST', headers: { 'x-one-cron': token }, body: { sharedPassword: 'synthetic-only', mailboxPasswords: { webbuilder_info: 'builder-info-only', webbuilder_admin: 'builder-admin-only' } } }, res);
+assert.equal(res.code, 503);
+assert.equal(res.data.results.filter(r => r.failed).length, 1);
+assert.equal(res.data.results.filter(r => !r.failed).length, 4);
+assert.equal(releases, connectionCount, 'every acquired database client is released');
+assert.equal(new URL(poolConfigs[0].connectionString).port,'6543');
+assert.equal(poolConfigs[0].max,2);
+assert(order.indexOf('imap-connect') < order.indexOf('database-checkout'), 'network connection must not pin a DB transaction');
+assert.equal(JSON.stringify(res.data).includes('private-failure'), false);
+console.log('PASS transaction pooling, small per-instance pool, late DB checkout, released clients and per-account checkout failure isolation.');

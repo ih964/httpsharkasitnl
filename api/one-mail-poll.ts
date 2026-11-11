@@ -1,4 +1,5 @@
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
+import { mailDatabaseOptions, mailFailureCode } from '../server/mail-database.js';
 import { ImapFlow } from 'imapflow';
 import { timingSafeEqual } from 'node:crypto';
 
@@ -6,8 +7,11 @@ import { timingSafeEqual } from 'node:crypto';
 const ACCOUNTS = { info: 'info@harkasit.nl', administratie: 'administratie@harkasit.nl', support: 'support@harkasit.nl', webbuilder_info: 'info@harkaswebbuilder.nl', webbuilder_admin: 'admin@harkaswebbuilder.nl' } as const;
 let pool: Pool | undefined;
 function database() {
-  if (!process.env.HARKAS_SUPABASE_DSN) throw new Error('database_unavailable');
-  return pool ??= new Pool({ connectionString: process.env.HARKAS_SUPABASE_DSN, max: 5, connectionTimeoutMillis: 5000, idleTimeoutMillis: 5000 });
+  if (!pool) {
+    pool = new Pool(mailDatabaseOptions(process.env.HARKAS_SUPABASE_DSN));
+    pool.on('error', error => console.warn('Mail database idle connection failed', { code: mailFailureCode(error) }));
+  }
+  return pool;
 }
 export function newArrivals(messages: { uid: number; internalDate?: Date | string }[], last: number, upper: number, since: Date, now: Date) {
   const floor = Math.max(since.getTime(), now.getTime() - 15 * 60000);
@@ -15,21 +19,27 @@ export function newArrivals(messages: { uid: number; internalDate?: Date | strin
     .map(m => ({ uid: m.uid, received_at: new Date(m.internalDate!).toISOString() }));
 }
 async function pollAccount(account: keyof typeof ACCOUNTS, sharedPassword: string, mailboxPasswords: Record<string, unknown>) {
-  const sql = await database().connect();
+  let sql: PoolClient | undefined;
   let imap: ImapFlow | undefined;
   try {
-    await sql.query('begin');
-    const lock = await sql.query("select pg_try_advisory_xact_lock(hashtext('harkas-one-mail'),hashtext($1)) as locked", [account]);
-    if (!lock.rows[0].locked) { await sql.query('rollback'); return { account, skipped: true }; }
     let password = account === 'info' || account === 'administratie' ? sharedPassword : mailboxPasswords[account];
     if (account === 'support') {
-      const row = (await sql.query('select v.decrypted_secret from harkas_support_private.mailbox m join vault.decrypted_secrets v on v.id=m.secret_id where m.singleton')).rows[0];
+      const row = (await database().query('select v.decrypted_secret from harkas_support_private.mailbox m join vault.decrypted_secrets v on v.id=m.secret_id where m.singleton')).rows[0];
       password = row && JSON.parse(row.decrypted_secret).password;
     }
     if (typeof password !== 'string' || !password || password.length > 4096) throw new Error('mailbox_not_configured');
     imap = new ImapFlow({ host: 'shared70.cloud86-host.nl', port: 993, secure: true, auth: { user: ACCOUNTS[account], pass: password }, logger: false, disableAutoIdle: true, connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 12000 });
     imap.on('error', () => { /* Errors are surfaced by awaited commands; never log credentials or server text. */ });
     await imap.connect();
+    // Connect to IMAP before reserving a database transaction. Slow mail servers
+    // must not pin scarce database backends. The cursor and deduplication writes
+    // remain protected together by the same transaction-local advisory lock.
+    sql = await database().connect();
+    await sql.query('begin');
+    const lock = await sql.query("select pg_try_advisory_xact_lock(hashtext('harkas-one-mail'),hashtext($1)) as locked", [account]);
+    if (!lock.rows[0].locked) { await sql.query('rollback'); return { account, skipped: true }; }
+    // Read the high-water mark only after the lock; an overlapping run must not
+    // mistake an older snapshot for a rebuilt mailbox and reset its cursor.
     const box = await imap.mailboxOpen('INBOX', { readOnly: true });
     const validity = String(box.uidValidity), high = Number(box.uidNext) - 1;
     if (!/^[0-9]+$/.test(validity) || !Number.isSafeInteger(high) || high < 0) throw new Error('invalid_mailbox_state');
@@ -47,10 +57,11 @@ async function pollAccount(account: keyof typeof ACCOUNTS, sharedPassword: strin
     await sql.query('update public.one_mail_cursors set last_uid=$2,last_checked_at=now() where account=$1', [account, upper]);
     await sql.query('commit');
     return { account, queued: arrivals.length };
-  } catch {
-    await sql.query('rollback').catch(() => {});
+  } catch (error) {
+    if (sql) await sql.query('rollback').catch(() => {});
+    console.warn('harkas_one_mail_account_failed', { account, code: mailFailureCode(error) });
     return { account, failed: true };
-  } finally { imap?.close(); sql.release(); }
+  } finally { imap?.close(); sql?.release(); }
 }
 export default async function handler(req: any, res: any) {
   res.setHeader('Cache-Control', 'no-store');
@@ -70,8 +81,8 @@ export default async function handler(req: any, res: any) {
     const results = await Promise.all((Object.keys(ACCOUNTS) as (keyof typeof ACCOUNTS)[]).map(account => pollAccount(account, sharedPassword, mailboxPasswords)));
     const ok = results.every(result => !('failed' in result) && !('skipped' in result));
     return res.status(ok ? 200 : 503).json({ ok, results });
-  } catch {
-    console.warn('harkas_one_mail_poll_failed');
+  } catch (error) {
+    console.warn('harkas_one_mail_poll_failed', { code: mailFailureCode(error) });
     return res.status(503).json({ error: 'Mailcontrole tijdelijk niet beschikbaar.' });
   }
 }
