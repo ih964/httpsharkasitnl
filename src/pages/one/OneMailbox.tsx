@@ -3,17 +3,15 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, Download, Inbox, Loader2, Mail, PenLine, RefreshCw, Reply, Search, Send, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const accounts = { info: 'info@harkasit.nl', administratie: 'administratie@harkasit.nl', support: 'support@harkasit.nl' } as const;
-type Account = keyof typeof accounts;
+import { accounts, accountKeys, accountLabels, isAccount, type Account } from '@/lib/mail-accounts';
+export { accounts, isAccount } from '@/lib/mail-accounts';
 type Address = { name: string; address: string };
 type Entry = { uid: number; subject: string; from: Address[]; date: string; unread: boolean };
 type Listing = { messages: Entry[]; total: number; uidValidity: string };
 type MailMessage = { uid: number; subject: string; from: Address[]; to: Address[]; replyTo: Address[]; date: string; text: string; attachments: { index: number; filename: string; size: number }[] };
 type Box = { loading: boolean; data?: Listing; error?: string; page: number; updated?: number };
 type Draft = { account: Account; to: string; subject: string; text: string };
-const accountKeys = Object.keys(accounts) as Account[];
-const initialBoxes = (): Record<Account, Box> => ({ info: { loading: true, page: 1 }, administratie: { loading: true, page: 1 }, support: { loading: true, page: 1 } });
-export const isAccount = (value: string | null): value is Account => value !== null && Object.prototype.hasOwnProperty.call(accounts, value);
+const initialBoxes = (): Record<Account, Box> => Object.fromEntries(accountKeys.map(account => [account, { loading: true, page: 1 }])) as Record<Account, Box>;
 const sender = (from: Address[]) => from.map(a => a.name || a.address).join(', ') || 'Onbekende afzender';
 const addresses = (items: Address[]) => items.map(a => a.name ? `${a.name} <${a.address}>` : a.address).join(', ');
 const dateText = (value: string) => Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Amsterdam' }) : '';
@@ -244,9 +242,9 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
   </section>;
 
   return <section className={compact ? 'one-panel one-inbox-compact' : 'one-inbox'}>
-    <div className="one-section-title"><div><p className="one-eyebrow">{compact ? 'DRIE POSTVAKKEN, ÉÉN PLEK' : 'INFO · ADMINISTRATIE · SUPPORT'}</p><h2>{compact ? 'Laatste e-mails' : 'Alle mail'}</h2></div><div className="one-actions"><button className="one-icon-button" title="Mailboxen vernieuwen" aria-label="Mailboxen vernieuwen" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw className={loading ? 'one-spin' : ''} /></button>{!compact && <button className="one-button one-primary" onClick={() => compose(filter === 'all' ? 'info' : filter)}><PenLine /><span>Nieuwe e-mail</span></button>}</div></div>
+    <div className="one-section-title"><div><p className="one-eyebrow">{compact ? 'VIJF POSTVAKKEN, ÉÉN PLEK' : 'HARKAS IT · HARKAS WEBBUILDER'}</p><h2>{compact ? 'Laatste e-mails' : 'Alle mail'}</h2></div><div className="one-actions"><button className="one-icon-button" title="Mailboxen vernieuwen" aria-label="Mailboxen vernieuwen" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw className={loading ? 'one-spin' : ''} /></button>{!compact && <button className="one-button one-primary" onClick={() => compose(filter === 'all' ? 'info' : filter)}><PenLine /><span>Nieuwe e-mail</span></button>}</div></div>
     {notice && <p role="status" className="one-notice">{notice}</p>}
-    <div className="one-mail-accounts" aria-label="Mailboxfilter">{!compact && <button onClick={() => setFilter('all')} aria-pressed={filter === 'all'}>Alle</button>}{accountKeys.map(account => <button key={account} onClick={() => { if (!compact) setFilter(account); }} disabled={compact} aria-pressed={!compact && filter === account}><span className={`one-dot one-dot-${account}`} />{account === 'administratie' ? 'Admin' : account === 'support' ? 'Support' : 'Info'}<span>{boxes[account].loading && !boxes[account].data ? '…' : boxes[account].data?.total ?? '—'}</span></button>)}</div>
+    <div className="one-mail-accounts" aria-label="Mailboxfilter">{!compact && <button onClick={() => setFilter('all')} aria-pressed={filter === 'all'}>Alle</button>}{accountKeys.map(account => <button key={account} title={accounts[account]} aria-label={`Mailbox ${accounts[account]}`} onClick={() => { if (!compact) setFilter(account); }} disabled={compact} aria-pressed={!compact && filter === account}><span className={`one-dot one-dot-${account}`} />{accountLabels[account]}<span>{boxes[account].loading && !boxes[account].data ? '…' : boxes[account].data?.total ?? '—'}</span></button>)}</div>
     {failed.map(account => <p role="alert" key={account} className="one-error"><strong>{accounts[account]}:</strong> {boxes[account].error}</p>)}
     {!compact && <><label className="one-search"><Search /><span className="one-sr-only">Zoeken in ingeladen e-mails</span><input type="search" placeholder="Zoek afzender of onderwerp…" value={query} onChange={event => setQuery(event.target.value)} /></label><p className="one-muted">Zoekt in ingeladen berichten. Per mailbox worden eerst de laatste 30 opgehaald. De aantallen hierboven zijn alle berichten in Postvak IN.</p></>}
     <div className="one-mail-list">
@@ -258,6 +256,6 @@ export default function OneMailbox({ compact = false }: { compact?: boolean }) {
     </div>
     {loading && <p role="status" className="one-empty"><Loader2 className="one-spin" />{rows.length ? 'Mailboxen bijwerken…' : 'Mailboxen verbinden…'}</p>}
     {!loading && rows.length === 0 && <div className="one-empty"><Inbox /><p>{query ? 'Geen resultaten in de ingeladen berichten.' : failed.length ? 'Niet alle mailboxen konden worden geladen.' : 'Geen berichten in deze inbox.'}</p></div>}
-    {compact ? <Link className="one-text-link" to="/admin/one/mail">Alle mail bekijken <ArrowUpRight /></Link> : <><div className="one-more-mail">{accountKeys.filter(account => filter === 'all' || filter === account).map(account => boxes[account].data && boxes[account].page * 30 < boxes[account].data!.total && <button key={account} className="one-button" disabled={boxes[account].loading} onClick={() => void loadMore(account)}>Meer uit {account}{boxes[account].loading && <Loader2 className="one-spin" />}</button>)}</div><div className="one-panel one-folder-links"><h2>Alle mappen</h2><p className="one-muted">Ook Verzonden, archief en je eigen mappen zijn beschikbaar in Harkas Admin.</p>{accountKeys.map(account => <Link className="one-button" key={account} to={`/admin/snelle-toegang?mailbox=${account}`}><Mail />{account}<ArrowUpRight /></Link>)}</div></>}
+    {compact ? <Link className="one-text-link" to="/admin/one/mail">Alle mail bekijken <ArrowUpRight /></Link> : <><div className="one-more-mail">{accountKeys.filter(account => filter === 'all' || filter === account).map(account => boxes[account].data && boxes[account].page * 30 < boxes[account].data!.total && <button key={account} className="one-button" disabled={boxes[account].loading} onClick={() => void loadMore(account)}>Meer uit {accountLabels[account]}{boxes[account].loading && <Loader2 className="one-spin" />}</button>)}</div><div className="one-panel one-folder-links"><h2>Alle mappen</h2><p className="one-muted">Ook Verzonden, archief en je eigen mappen zijn beschikbaar in Harkas Admin.</p>{accountKeys.map(account => <Link className="one-button" key={account} to={`/admin/snelle-toegang?mailbox=${account}`}><Mail />{accountLabels[account]}<ArrowUpRight /></Link>)}</div></>}
   </section>;
 }

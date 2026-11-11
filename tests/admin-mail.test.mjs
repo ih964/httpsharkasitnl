@@ -10,6 +10,8 @@ const draft = { to: recipient, subject: 'Test onderwerp', text: 'Testbericht' };
 const trashQuery = { account: 'info', action: 'trash', uid: '71', uidValidity: '77' };
 const plain = value => JSON.parse(JSON.stringify(value));
 let requests = 0;
+const accounts = { info: 'info@harkasit.nl', administratie: 'administratie@harkasit.nl', support: 'support@harkasit.nl', webbuilder_info: 'info@harkaswebbuilder.nl', webbuilder_admin: 'admin@harkaswebbuilder.nl' };
+const vaultIds = { info: '8aec51a9-3504-447e-99cf-2e5cb6cdea5f', administratie: '8aec51a9-3504-447e-99cf-2e5cb6cdea5f', webbuilder_info: '07b1de96-f2ea-406b-abe5-8e6619576abb', webbuilder_admin: 'c4e70f1e-407a-4a41-a42a-ee91e77c14d7' };
 
 async function fixture(options = {}) {
   const calls = [], warnings = [];
@@ -21,7 +23,7 @@ async function fixture(options = {}) {
       calls.push(['fetch', url]);
       if (url.endsWith('/auth/v1/user')) return { ok: true, json: async () => ({ id: '11111111-1111-4111-8111-111111111111', user_metadata: { role: 'admin' } }) };
       assert(url.endsWith('/functions/v1/decrypt-password'));
-      assert.equal(JSON.parse(fetchOptions.body).id, '8aec51a9-3504-447e-99cf-2e5cb6cdea5f');
+      assert.equal(JSON.parse(fetchOptions.body).id, vaultIds[options.account || 'info'], 'each mailbox must resolve its own configured vault credential');
       return { ok: !options.failCredential, json: async () => ({ password: 'never-expose-me' }) };
     },
   });
@@ -148,12 +150,12 @@ for (const action of ['list', 'send', 'trash']) {
   assert.equal((await nonAdmin.run(query, undefined, method, draft)).code, 403);
   assert(!nonAdmin.calls.some(call => ['imap', 'smtp', 'compose'].includes(call[0])));
 }
-for (const account of ['info', 'administratie', 'support']) {
-  const f = await fixture({ admin: true });
+for (const account of Object.keys(accounts)) {
+  const f = await fixture({ admin: true, account });
   const r = await f.run({ account });
-  assert.equal(r.code, 200); assert.equal(r.data.account, account + '@harkasit.nl');
+  assert.equal(r.code, 200); assert.equal(r.data.account, accounts[account]);
   const config = f.calls.find(call => call[0] === 'imap')[1];
-  assert.equal(config.auth.user, account + '@harkasit.nl');
+  assert.equal(config.auth.user, accounts[account]);
   assert.equal(config.host, 'shared70.cloud86-host.nl');
   assert.equal(config.secure, true); assert.equal(config.logger, false);
   assert.equal(f.calls.find(call => call[0] === 'open')[2].readOnly, true);
@@ -184,17 +186,18 @@ for (const account of ['info', 'administratie', 'support']) {
 }
 console.log('PASS admin authorization, method boundaries, read-only access, stale UID rejection and credential redaction');
 
-for (const account of ['info', 'administratie', 'support']) {
-  const f = await fixture({ admin: true });
+for (const account of Object.keys(accounts)) {
+  const f = await fixture({ admin: true, account });
   const r = await f.run({ account, action: 'send' }, undefined, 'POST', { ...draft, from: 'wrong@example.invalid' });
   assert.equal(r.code, 200); assert.equal(r.data.sent, true); assert.equal(r.data.saved, true);
   const composed = f.calls.find(call => call[0] === 'compose')[1];
-  assert.equal(composed.from.address, account + '@harkasit.nl');
+  assert.equal(composed.from.address, accounts[account]);
+  assert.equal(composed.from.name, account.startsWith("webbuilder_") ? "Harkas Webbuilder" : "Harkas IT");
   const config = f.calls.find(call => call[0] === 'smtp')[1];
   assert.equal(config.host, 'shared70.cloud86-host.nl'); assert.equal(config.port, 465); assert.equal(config.secure, true);
-  assert.equal(config.auth.user, account + '@harkasit.nl');
+  assert.equal(config.auth.user, accounts[account]);
   const delivered = f.calls.find(call => call[0] === 'smtpSend')[1];
-  assert.deepEqual(plain(delivered.envelope), { from: account + '@harkasit.nl', to: [recipient] });
+  assert.deepEqual(plain(delivered.envelope), { from: accounts[account], to: [recipient] });
   assert(Buffer.isBuffer(delivered.raw));
   assert.equal(f.calls.filter(call => call[0] === 'smtpSend').length, 1);
   assert(f.calls.findIndex(call => call[0] === 'smtpSend') < f.calls.findIndex(call => call[0] === 'connect'));
@@ -241,10 +244,10 @@ for (const options of [{ failCompose: true }, { invalidComposition: true }, { fa
   assert.equal((await f.run({ account: 'info', action: 'send' }, undefined, 'POST', draft)).code, 503);
   assert(!f.calls.some(call => ['smtp', 'imap'].includes(call[0])));
 }
-console.log('PASS all three SMTP senders, same-message Sent copy, rejection handling, SMTP-first delivery and accepted-but-unsaved outcomes');
+console.log('PASS all five SMTP senders, same-message Sent copy, rejection handling, SMTP-first delivery and accepted-but-unsaved outcomes');
 
-for (const account of ['info', 'administratie', 'support']) {
-  const f = await fixture({ admin: true });
+for (const account of Object.keys(accounts)) {
+  const f = await fixture({ admin: true, account });
   const r = await f.run({ ...trashQuery, account }, undefined, 'POST', {});
   assert.equal(r.code, 200);
   assert.deepEqual(plain(r.data), { moved: true, folder: 'INBOX.Verwijderd' });

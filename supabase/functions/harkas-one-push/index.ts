@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { pollMail } from './poll-mail.ts';
+import { mailPayload } from './mail-payload.ts';
 
 // Never log or expose signing secrets, subscription keys, endpoints or appointment content.
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -82,7 +83,7 @@ async function dispatch(cfg: any) {
       }
       if (current && item.type === 'mail' && current.mail_enabled && current.mail_enabled_at) {
         const message = check(await db.from('one_mail_events').select('account,uid,uid_validity,received_at').eq('id', item.id).gte('received_at', current.mail_enabled_at).maybeSingle());
-        if (message && ['info', 'administratie', 'support'].includes(message.account)) payload = { title: 'Harkas One · E-mail', body: `Nieuwe e-mail in ${message.account}@harkasit.nl. Open de app om het bericht te lezen.`, url: `/admin/one/mail?account=${message.account}&uid=${encodeURIComponent(message.uid)}&validity=${encodeURIComponent(message.uid_validity)}`, tag: item.key };
+        if (message) payload = mailPayload(message, item.key);
       }
       if (!payload) { check(await db.from('one_push_deliveries').update({ state: 'obsolete' }).eq('delivery_key', item.key)); continue; }
       const ttl = Math.ceil((new Date(item.at).getTime() + 15 * 60000 - Date.now()) / 1000);
