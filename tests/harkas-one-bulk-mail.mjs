@@ -130,7 +130,8 @@ try {
   await page.getByPlaceholder('Zoek afzender of onderwerp…').fill('');
   await page.getByRole('button', { name: 'Alle', exact: true }).click();
   await selectAll(page).check();
-  await confirmSelection(page, 10);
+  await reviewSelection(page, 10);
+  await page.getByRole('button', { name: 'Naar prullenbak (10)', exact: true }).evaluate(button => { button.click(); button.click(); });
   await expect(page.getByRole('button', { name: 'Mailboxen vernieuwen', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Nieuwe e-mail', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Alle', exact: true })).toBeDisabled();
@@ -194,12 +195,12 @@ try {
   await selectAll(large.page).check();
   await expect(selectedCount(large.page)).toHaveText('30 geselecteerd');
   await reviewSelection(large.page, 30);
-  await large.page.getByRole('button', { name: 'Meer uit Info', exact: true }).click();
+  await large.page.getByRole('button', { name: 'Meer uit IT · Info', exact: true }).click();
   await expect(large.page.locator('.one-mail-row')).toHaveCount(60);
   await expect(large.page.getByRole('heading', { name: 'Geselecteerde e-mails verwijderen?', exact: true })).toHaveCount(0);
   await expect(selectedCount(large.page)).toHaveText('30 geselecteerd');
   for (const count of [90,120,125]) {
-    await large.page.getByRole('button', { name: 'Meer uit Info', exact: true }).click();
+    await large.page.getByRole('button', { name: 'Meer uit IT · Info', exact: true }).click();
     await expect(large.page.locator('.one-mail-row')).toHaveCount(count);
   }
   await selectAll(large.page).check();
