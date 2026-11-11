@@ -5,8 +5,8 @@ import nodemailer from "nodemailer";
 
 const HOST = "shared70.cloud86-host.nl";
 const AUTH_URL = process.env.HARKAS_SUPABASE_URL || "https://uqkrxzlkvjdmebsbdrmb.supabase.co";
-const ACCOUNTS = { info: "info@harkasit.nl", administratie: "administratie@harkasit.nl", support: "support@harkasit.nl" } as const;
-const MAIL_VAULT_ID = "8aec51a9-3504-447e-99cf-2e5cb6cdea5f";
+const ACCOUNTS = { info: 'info@harkasit.nl', administratie: 'administratie@harkasit.nl', support: 'support@harkasit.nl', webbuilder_info: 'info@harkaswebbuilder.nl', webbuilder_admin: 'admin@harkaswebbuilder.nl' } as const;
+const MAIL_VAULT_IDS = { info: '8aec51a9-3504-447e-99cf-2e5cb6cdea5f', administratie: '8aec51a9-3504-447e-99cf-2e5cb6cdea5f', webbuilder_info: '07b1de96-f2ea-406b-abe5-8e6619576abb', webbuilder_admin: 'c4e70f1e-407a-4a41-a42a-ee91e77c14d7' } as const;
 let pool: Pool | undefined;
 function db() {
   if (!process.env.HARKAS_SUPABASE_DSN) throw new Error("Database niet beschikbaar");
@@ -53,11 +53,11 @@ async function credential(account: keyof typeof ACCOUNTS, bearer: string): Promi
     if (typeof password !== "string" || !password) throw new MailError("Supportmailbox is nog niet gekoppeld.", 503);
     return password;
   }
-  // This saved webmail credential is shared by info and administratie, as configured by the owner.
+  // Each Webbuilder mailbox has its own saved webmail credential. Only IT info/administratie share a credential.
   // Decryption runs on the server with the requesting admin's identity. Never return it to the browser.
   const response = await fetch(AUTH_URL + "/functions/v1/decrypt-password", {
     method: "POST", headers: { Authorization: bearer, apikey: process.env.HARKAS_SUPABASE_PUBLISHABLE_KEY || "", "Content-Type": "application/json" },
-    body: JSON.stringify({ id: MAIL_VAULT_ID }), signal: AbortSignal.timeout(10000),
+    body: JSON.stringify({ id: MAIL_VAULT_IDS[account] }), signal: AbortSignal.timeout(10000),
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok || typeof body.password !== "string" || !body.password) throw new MailError("Het opgeslagen webmailwachtwoord kon niet worden opgehaald.", 503);
@@ -92,7 +92,7 @@ export default async function handler(req: any, res: any) {
       stage = "compose";
       // Build one RFC822 message for SMTP and the optional Sent copy.
       const composer = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "windows" });
-      const built = await composer.sendMail({ from: { name: "Harkas IT", address: input.address }, ...composed });
+      const built = await composer.sendMail({ from: { name: input.address.endsWith("@harkaswebbuilder.nl") ? "Harkas Webbuilder" : "Harkas IT", address: input.address }, ...composed });
       if (!Buffer.isBuffer(built.message)) throw new MailError("E-mail kon niet worden opgebouwd.", 503);
       stage = "smtp";
       const transport = nodemailer.createTransport({ host: HOST, port: 465, secure: true, auth: { user: input.address, pass: password }, connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 12000, logger: false });

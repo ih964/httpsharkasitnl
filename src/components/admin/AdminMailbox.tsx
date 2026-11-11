@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Download, Loader2, Mail, PenLine, RefreshCw, Reply, Send, X } from "lucide-react";
 import { toast } from "sonner";
 
-const accounts = { info: "info@harkasit.nl", administratie: "administratie@harkasit.nl", support: "support@harkasit.nl" } as const;
+import { accounts } from "@/lib/mail-accounts";
 type Address = { name: string; address: string };
 type Entry = { uid: number; subject: string; from: Address[]; date: string; unread: boolean };
 type Folder = { path: string; name: string; specialUse?: string };

@@ -3,25 +3,25 @@ import { ImapFlow } from 'imapflow';
 import { timingSafeEqual } from 'node:crypto';
 
 // Internal scheduler only. Never accept user-supplied hosts, mailbox addresses or commands.
-const ACCOUNTS = { info: 'info@harkasit.nl', administratie: 'administratie@harkasit.nl', support: 'support@harkasit.nl' } as const;
+const ACCOUNTS = { info: 'info@harkasit.nl', administratie: 'administratie@harkasit.nl', support: 'support@harkasit.nl', webbuilder_info: 'info@harkaswebbuilder.nl', webbuilder_admin: 'admin@harkaswebbuilder.nl' } as const;
 let pool: Pool | undefined;
 function database() {
   if (!process.env.HARKAS_SUPABASE_DSN) throw new Error('database_unavailable');
-  return pool ??= new Pool({ connectionString: process.env.HARKAS_SUPABASE_DSN, max: 4, connectionTimeoutMillis: 5000, idleTimeoutMillis: 5000 });
+  return pool ??= new Pool({ connectionString: process.env.HARKAS_SUPABASE_DSN, max: 5, connectionTimeoutMillis: 5000, idleTimeoutMillis: 5000 });
 }
 export function newArrivals(messages: { uid: number; internalDate?: Date | string }[], last: number, upper: number, since: Date, now: Date) {
   const floor = Math.max(since.getTime(), now.getTime() - 15 * 60000);
   return messages.filter(m => Number.isSafeInteger(m.uid) && m.uid > last && m.uid <= upper && m.internalDate && new Date(m.internalDate).getTime() >= floor && new Date(m.internalDate).getTime() <= now.getTime())
     .map(m => ({ uid: m.uid, received_at: new Date(m.internalDate!).toISOString() }));
 }
-async function pollAccount(account: keyof typeof ACCOUNTS, sharedPassword: string) {
+async function pollAccount(account: keyof typeof ACCOUNTS, sharedPassword: string, mailboxPasswords: Record<string, unknown>) {
   const sql = await database().connect();
   let imap: ImapFlow | undefined;
   try {
     await sql.query('begin');
     const lock = await sql.query("select pg_try_advisory_xact_lock(hashtext('harkas-one-mail'),hashtext($1)) as locked", [account]);
     if (!lock.rows[0].locked) { await sql.query('rollback'); return { account, skipped: true }; }
-    let password = sharedPassword;
+    let password = account === 'info' || account === 'administratie' ? sharedPassword : mailboxPasswords[account];
     if (account === 'support') {
       const row = (await sql.query('select v.decrypted_secret from harkas_support_private.mailbox m join vault.decrypted_secrets v on v.id=m.secret_id where m.singleton')).rows[0];
       password = row && JSON.parse(row.decrypted_secret).password;
@@ -58,7 +58,7 @@ export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Methode niet toegestaan.' });
   const token = req.headers['x-one-cron'];
   if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) return res.status(401).json({ error: 'Niet geautoriseerd.' });
-  if (Number(req.headers['content-length'] || 0) > 8192) return res.status(413).json({ error: 'Verzoek te groot.' });
+  if (Number(req.headers['content-length'] || 0) > 24576) return res.status(413).json({ error: 'Verzoek te groot.' });
   try {
     const config = (await database().query('select cron_secret,mail_poll_enabled from public.one_push_config where singleton')).rows[0];
     if (!config || token.length !== config.cron_secret.length || !timingSafeEqual(Buffer.from(token), Buffer.from(config.cron_secret))) return res.status(401).json({ error: 'Niet geautoriseerd.' });
@@ -66,7 +66,8 @@ export default async function handler(req: any, res: any) {
     if (process.env.VERCEL_ENV !== 'production' || !config.mail_poll_enabled) return res.status(409).json({ error: 'Mailcontrole niet actief.' });
     const sharedPassword = req.body?.sharedPassword;
     if (typeof sharedPassword !== 'string' || !sharedPassword || sharedPassword.length > 4096) return res.status(400).json({ error: 'Ongeldig intern verzoek.' });
-    const results = await Promise.all((Object.keys(ACCOUNTS) as (keyof typeof ACCOUNTS)[]).map(account => pollAccount(account, sharedPassword)));
+    const mailboxPasswords = req.body?.mailboxPasswords && typeof req.body.mailboxPasswords === 'object' && !Array.isArray(req.body.mailboxPasswords) ? req.body.mailboxPasswords : {};
+    const results = await Promise.all((Object.keys(ACCOUNTS) as (keyof typeof ACCOUNTS)[]).map(account => pollAccount(account, sharedPassword, mailboxPasswords)));
     const ok = results.every(result => !('failed' in result) && !('skipped' in result));
     return res.status(ok ? 200 : 503).json({ ok, results });
   } catch {

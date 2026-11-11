@@ -3,13 +3,16 @@
 // Browser: npx playwright install --with-deps chromium
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
+import { mkdirSync } from 'node:fs';
 const origin = process.env.HARKAS_ONE_TEST_ORIGIN || 'http://127.0.0.1:4173';
 assert.equal(new URL(origin).hostname, '127.0.0.1', 'browser tests must stay on isolated loopback');
 const browser = await chromium.launch({ headless: true });
 const user = { id: '11111111-1111-4111-8111-111111111111', aud: 'authenticated', role: 'authenticated', email: 'fixture@example.invalid', app_metadata: { provider: 'email', providers: ['email'] }, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' };
 const jwt = [Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'), Buffer.from(JSON.stringify({ sub: user.id, aud: 'authenticated', exp: Math.floor(Date.now()/1000)+3600, role: 'authenticated' })).toString('base64url'), 'synthetic-test-signature'].join('.');
 const ticket = { id: '22222222-2222-4222-8222-222222222222', subject: 'Test: printerinstellingen', ticket_no: 42, status: 'nieuw', priority: 'normaal', customer_id: user.id, last_activity_at: '2026-11-04T10:00:00Z' };
-const accounts = ['info', 'administratie', 'support'];
+const addresses = { info: 'info@harkasit.nl', administratie: 'administratie@harkasit.nl', support: 'support@harkasit.nl', webbuilder_info: 'info@harkaswebbuilder.nl', webbuilder_admin: 'admin@harkaswebbuilder.nl' };
+const accounts = Object.keys(addresses);
+const sentFrom = [];
 let sent = 0, privateCalls = 0, failingAccount, failSend = false, sendAttempts = 0, trashCalls = 0;
 const trashed = new Set();
 const errors = [];
@@ -37,12 +40,12 @@ async function setup(admin = true) {
       if (url.pathname === '/api/admin-mail') {
         const account = url.searchParams.get('account'), action = url.searchParams.get('action');
         if (action === 'list' && account === failingAccount) return json({ error: 'Test: mailbox niet bereikbaar' }, 503);
-        if (action === 'list') return json({ account: account+'@harkasit.nl', folder: 'INBOX', page: 1, total: trashed.has(account) ? 0 : 1, uidValidity: '12345', folders: [{ path: 'INBOX', name: 'Postvak IN' }], messages: [{ uid: 100 + accounts.indexOf(account), subject: 'Bericht voor '+account, from: [{ name: 'Testafzender', address: 'reply@example.invalid' }], date: '2026-11-04T10:30:00Z', unread: true }].filter(() => !trashed.has(account)) });
-        if (action === 'message') return json({ uid: Number(url.searchParams.get('uid')), account: account+'@harkasit.nl', subject: 'Bericht voor '+account, from: [{ name: 'Testafzender', address: 'reply@example.invalid' }], to: [{ name: '', address: account+'@harkasit.nl' }], replyTo: [{ name: '', address: 'reply@example.invalid' }], date: '2026-11-04T10:30:00Z', text: '<img src=x onerror="window.XSS=true">\nDit is veilige testtekst.', attachments: [] });
+        if (action === 'list') return json({ account: addresses[account], folder: 'INBOX', page: 1, total: trashed.has(account) ? 0 : 1, uidValidity: '12345', folders: [{ path: 'INBOX', name: 'Postvak IN' }], messages: [{ uid: 100 + accounts.indexOf(account), subject: 'Bericht voor '+account, from: [{ name: 'Testafzender', address: 'reply@example.invalid' }], date: '2026-11-04T10:30:00Z', unread: true }].filter(() => !trashed.has(account)) });
+        if (action === 'message') return json({ uid: Number(url.searchParams.get('uid')), account: addresses[account], subject: 'Bericht voor '+account, from: [{ name: 'Testafzender', address: 'reply@example.invalid' }], to: [{ name: '', address: addresses[account] }], replyTo: [{ name: '', address: 'reply@example.invalid' }], date: '2026-11-04T10:30:00Z', text: '<img src=x onerror="window.XSS=true">\nDit is veilige testtekst.', attachments: [] });
         if (action === 'send') {
           assert.equal(req.method(), 'POST'); assert.equal(req.postDataJSON().to, 'reply@example.invalid'); sendAttempts++;
           if (failSend) return json({ error: 'Test: de mailserver heeft het bericht geweigerd.' }, 503);
-          sent++; return json({ sent: true, saved: true });
+          sent++; sentFrom.push(account); return json({ sent: true, saved: true });
         }
         if (action === 'trash') {
           assert.equal(req.method(), 'POST'); assert.equal(url.searchParams.get('uidValidity'), '12345');
@@ -77,16 +80,24 @@ try {
   await page.getByRole('heading', { name: /Grip op je werkdag/ }).waitFor({ timeout: 15000 });
   await page.getByText('Bericht voor support', { exact: true }).waitFor();
   assert.equal(await page.locator('.one-metric').count(), 3);
-  assert.equal(await page.locator('.one-mail-row').count(), 3);
+  assert.equal(await page.locator('.one-mail-row').count(), 4); // Dashboard previews the latest four of five mailboxes.
   assert.equal(await page.locator('.one-metric').first().locator('strong').innerText(), '3');
   for (const width of [360, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `dashboard overflow at ${width}`);
   }
   await page.setViewportSize({ width: 390, height: 844 });
-  console.log('PASS authenticated dashboard, three mailbox sources, 360/390/768/1280px widths');
+  console.log('PASS authenticated dashboard, five mailbox sources, 360/390/768/1280px widths');
   await page.getByRole('navigation', { name: 'Hoofdnavigatie' }).getByRole('link', { name: 'Mail', exact: true }).click();
   await page.getByText('Bericht voor info', { exact: true }).waitFor();
+  assert.equal(await page.locator('.one-mail-row').count(), 5);
+  for (const width of [360,390,768,1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'five-mailbox inbox overflow at '+width);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  mkdirSync('test-results', { recursive: true });
+  await page.screenshot({ path: 'test-results/one-five-mailboxes.png', fullPage: true });
   await page.getByText('Bericht voor info', { exact: true }).click();
   await page.getByRole('heading', { name: 'Bericht voor info', exact: true }).waitFor();
   assert.equal(await page.evaluate(() => window.XSS), undefined);
@@ -123,6 +134,31 @@ try {
   await page.getByText('Bericht voor info', { exact: true }).waitFor({ state: 'hidden' });
   assert.equal(trashCalls, 1, 'confirmation moves exactly the selected message');
   console.log('PASS trash confirmation, cancel, correct account/UID/validity and inbox refresh');
+  for (const account of ['webbuilder_info','webbuilder_admin']) {
+    const address = addresses[account];
+    const filter = page.getByRole('button', { name: 'Mailbox '+address, exact: true });
+    await filter.click();
+    assert.equal(await page.locator('.one-mail-row').count(), 1);
+    assert.equal(await page.locator('.one-folder-links a[href$="mailbox='+account+'"]').count(), 1);
+    await page.getByText('Bericht voor '+account, { exact: true }).click();
+    await page.getByRole('heading', { name: 'Bericht voor '+account, exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Beantwoorden', exact: true }).click();
+    assert.equal(await page.getByLabel('Versturen vanaf').inputValue(), account);
+    await page.getByRole('button', { name: 'Versturen', exact: true }).click();
+    await page.getByRole('heading', { name: 'E-mail versturen?', exact: true }).waitFor();
+    assert.equal(await page.locator('.one-send-summary dd').first().innerText(), address);
+    await page.getByRole('button', { name: 'Versturen', exact: true }).click();
+    await page.getByRole('status').filter({ hasText: 'E-mail verzonden.' }).waitFor();
+    assert.equal(sentFrom.at(-1), account);
+    await page.getByRole('button', { name: 'Verwijderen', exact: true }).click();
+    await page.getByRole('button', { name: 'Naar prullenbak', exact: true }).click();
+    await page.getByRole('status').filter({ hasText: 'E-mail verplaatst naar de prullenbak van '+address+'.' }).waitFor();
+    await page.getByText('Bericht voor '+account, { exact: true }).waitFor({ state: 'hidden' });
+    await page.getByRole('button', { name: 'Alle', exact: true }).click();
+  }
+  assert.deepEqual(sentFrom, ['info','webbuilder_info','webbuilder_admin']);
+  assert.equal(trashCalls, 3);
+  console.log('PASS both Webbuilder filters, correct reply senders, in-app send review, safe trash and unique folder routes');
   await page.getByPlaceholder('Zoek afzender of onderwerp…').fill('no-match');
   await page.getByText('Geen resultaten in de ingeladen berichten.').waitFor();
   await page.getByPlaceholder('Zoek afzender of onderwerp…').fill('');

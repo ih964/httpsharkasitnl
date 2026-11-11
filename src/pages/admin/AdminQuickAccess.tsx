@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminMailbox from "@/components/admin/AdminMailbox";
+import { isAccount } from "@/lib/mail-accounts";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const PLESK_HOME = cloud86Sso("/smb/web/view");
 
 const mailboxes = [
   {
+    id: "info",
     label: "Algemene mailbox",
     email: "info@harkasit.nl",
     description: "Klantvragen, aanvragen en algemene correspondentie.",
@@ -33,6 +35,7 @@ const mailboxes = [
     icon: Inbox,
   },
   {
+    id: "administratie",
     label: "Administratie",
     email: "administratie@harkasit.nl",
     description: "Facturen, betalingen, leveranciers en boekhouding.",
@@ -40,11 +43,28 @@ const mailboxes = [
     icon: FileText,
   },
   {
+    id: "support",
     label: "Servicedesk",
     email: "support@harkasit.nl",
     description: "Binnenkomende meldingen en reacties op supporttickets.",
     url: "https://webmail.harkasit.nl/roundcube/index.php?_user=support%40harkasit.nl",
     icon: Headphones,
+  },
+  {
+    id: "webbuilder_info",
+    label: "Harkas Webbuilder · Info",
+    email: "info@harkaswebbuilder.nl",
+    description: "Aanvragen en algemene correspondentie voor Harkas Webbuilder.",
+    url: "https://webmail.harkaswebbuilder.nl/roundcube/index.php?_user=info%40harkaswebbuilder.nl",
+    icon: Inbox,
+  },
+  {
+    id: "webbuilder_admin",
+    label: "Harkas Webbuilder · Admin",
+    email: "admin@harkaswebbuilder.nl",
+    description: "Beheer en zakelijke correspondentie voor Harkas Webbuilder.",
+    url: "https://webmail.harkaswebbuilder.nl/roundcube/index.php?_user=admin%40harkaswebbuilder.nl",
+    icon: Mail,
   },
 ] as const;
 
@@ -159,7 +179,7 @@ const AdminQuickAccess = () => {
     }
   };
 
-  if (selectedMailbox === "info" || selectedMailbox === "administratie" || selectedMailbox === "support") {
+  if (isAccount(selectedMailbox)) {
     return <AdminMailbox key={selectedMailbox} account={selectedMailbox} />;
   }
 
@@ -168,7 +188,7 @@ const AdminQuickAccess = () => {
       <div>
         <h1 className="text-3xl font-heading font-bold">Mail & Hosting</h1>
         <p className="mt-2 text-muted-foreground">
-          Direct naar de Harkas IT-mailboxen en Cloud86/Plesk, vanuit één beveiligde plek.
+          Direct naar de Harkas IT- en Webbuilder-mailboxen en Cloud86/Plesk, vanuit één beveiligde plek.
         </p>
       </div>
 
@@ -193,7 +213,7 @@ const AdminQuickAccess = () => {
               <CardContent className="mt-auto space-y-4">
                 <p className="min-h-10 text-sm text-muted-foreground">{mailbox.description}</p>
                 <Button asChild className="w-full">
-                  <Link to={`/admin/snelle-toegang?mailbox=${mailbox.email.split("@")[0]}`}>
+                  <Link to={`/admin/snelle-toegang?mailbox=${mailbox.id}`}>
                     <Inbox className="mr-2 h-4 w-4" aria-hidden="true" />
                     Mailbox openen
                   </Link>
