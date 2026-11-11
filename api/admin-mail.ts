@@ -32,13 +32,19 @@ export function parseRequest(query: Record<string, unknown>) {
   const folder = String(query.folder || "INBOX");
   if (folder.length > 255 || /[\0\r\n]/.test(folder)) throw new MailError("Ongeldige map");
   const action = String(query.action || "list");
-  if (!["list", "message", "attachment", "send", "trash"].includes(action)) throw new MailError("Ongeldige actie");
+  if (!["list", "message", "attachment", "send", "trash", "trash-many"].includes(action)) throw new MailError("Ongeldige actie");
   const page = Number(query.page || 1);
   if (!Number.isSafeInteger(page) || page < 1 || page > 10000) throw new MailError("Ongeldige pagina");
   const needsMessage = ["message", "attachment", "trash"].includes(action);
   const uid = needsMessage ? messageIdentifier(query.uid, "Ongeldig bericht") : 0;
-  const uidValidity = needsMessage ? String(messageIdentifier(query.uidValidity, "Ongeldige berichtverwijzing. Open het bericht opnieuw vanuit de mailbox.")) : "";
+  const uidValidity = (needsMessage || action === "trash-many") ? String(messageIdentifier(query.uidValidity, "Ongeldige berichtverwijzing. Open het bericht opnieuw vanuit de mailbox.")) : "";
   return { account: account as keyof typeof ACCOUNTS, address: ACCOUNTS[account as keyof typeof ACCOUNTS], folder, action, page, uid, uidValidity };
+}
+export function bulkTrashInput(body: Record<string, unknown>): number[] {
+  if (!Array.isArray(body.uids) || body.uids.length < 1 || body.uids.length > 100) throw new MailError("Selecteer 1 tot 100 berichten per mailboxaanvraag.");
+  const uids = body.uids.map(value => messageIdentifier(value, "Ongeldige berichtselectie."));
+  if (new Set(uids).size !== uids.length) throw new MailError("De selectie bevat dubbele berichten.");
+  return uids;
 }
 export async function isAdmin(bearer: string) {
   if (!/^Bearer \S+$/.test(bearer)) return false;
@@ -88,8 +94,10 @@ export default async function handler(req: any, res: any) {
     const bearer = String(req.headers.authorization || "");
     if (!(await isAdmin(bearer))) return res.status(403).json({ error: "Alleen voor beheerders" });
     const input = parseRequest(req.query || {});
-    if (["send", "trash"].includes(input.action) !== (req.method === "POST")) throw new MailError("Methode niet toegestaan", 405);
+    if (["send", "trash", "trash-many"].includes(input.action) !== (req.method === "POST")) throw new MailError("Methode niet toegestaan", 405);
     const composed = input.action === "send" ? composeInput(req.body || {}) : undefined;
+    const bulkUids = input.action === "trash-many" ? bulkTrashInput(req.body || {}) : undefined;
+    const isTrash = input.action === "trash" || input.action === "trash-many";
     stage = "credential";
     const password = await credential(input.account, bearer);
     if (composed) {
@@ -124,11 +132,11 @@ export default async function handler(req: any, res: any) {
     imap = mailboxClient(input.address, password);
     stage = "connect";
     await imap.connect();
-    stage = input.action === "trash" ? "trash" : "mailbox";
+    stage = isTrash ? "trash" : "mailbox";
     const folderList = input.action === "list" && input.page === 1 ? await imap.list() : undefined;
-    const box = await imap.mailboxOpen(input.folder, { readOnly: input.action !== "trash" });
+    const box = await imap.mailboxOpen(input.folder, { readOnly: !isTrash });
     if (input.action !== "list" && input.uidValidity !== String(box.uidValidity)) throw new MailError("Deze map is gewijzigd. Vernieuw de mailbox en open het bericht opnieuw.", 409);
-    if (input.action === "trash") {
+    if (isTrash) {
       if (box.readOnly) throw new MailError("Deze map kan niet worden aangepast.", 403);
       const folders = await imap.list();
       const trash = folders.find(f => f.specialUse === "\\Trash" && !f.flags.has("\\Noselect"));
@@ -138,6 +146,16 @@ export default async function handler(req: any, res: any) {
       const nativeMove = imap.capabilities.has("MOVE") || imap.enabled.has("IMAP4REV2") ||
         (imap.capabilities.has("IMAP4rev2") && !imap.capabilities.has("IMAP4rev1"));
       if (!nativeMove) throw new MailError("Veilig verplaatsen naar de prullenbak is niet beschikbaar. Gebruik webmail.", 503);
+      if (bulkUids) {
+        // Explicit UIDs only; never a sequence range, wildcard, or other mailbox.
+        const existing = await imap.fetchAll(bulkUids, { uid: true }, { uid: true });
+        const found = new Set(existing.map(message => message.uid));
+        if (bulkUids.some(uid => !found.has(uid))) throw new MailError("Een geselecteerd bericht staat niet meer in deze map. Vernieuw en selecteer opnieuw.", 409);
+        const moved = await imap.messageMove(bulkUids, trash.path, { uid: true });
+        // A response loss or incomplete UID mapping must never be reported as full success.
+        if (!moved || !moved.uidMap || bulkUids.some(uid => !moved.uidMap!.has(uid))) throw new MailError("Verplaatsen is niet volledig bevestigd. Vernieuw de mailbox en controleer de prullenbak.", 503);
+        return res.json({ moved: true, movedUids: bulkUids, folder: trash.path });
+      }
       const existing = await imap.fetchOne(input.uid, { uid: true }, { uid: true });
       if (!existing || existing.uid !== input.uid) throw new MailError("Bericht niet gevonden. Vernieuw de mailbox.", 404);
       const moved = await imap.messageMove(input.uid, trash.path, { uid: true });
