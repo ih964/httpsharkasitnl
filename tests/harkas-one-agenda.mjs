@@ -12,7 +12,7 @@ const day = wallTime(Date.now()).slice(0, 10);
 const errors = [], records = [];
 let writes = 0, failSave = false, failRead = false, pushState = null, subscribeCalls = 0, testCalls = 0, unsubscribeCalls = 0;
 async function setup(permissionChoice = 'granted') {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, timezoneId: 'America/Los_Angeles' });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, timezoneId: 'America/Los_Angeles' });
   await context.addInitScript(({ permissionChoice }) => {
     window.__permissionRequests = 0;
     let permission = 'default', current = null;
@@ -93,6 +93,8 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Afspraak toevoegen', exact: true }).first().click();
   await page.getByLabel('Titel', { exact: true }).fill('Zakelijke testafspraak');
+  const address = 'Plein 1 & 2, ’s-Hertogenbosch #A';
+  await page.getByLabel('Locatie', { exact: true }).fill(address);
   assert.equal(await page.getByLabel('Begindatum', { exact: true }).inputValue(), day, 'Amsterdam date even on a foreign-timezone handset');
   await page.getByLabel('15 minuten van tevoren', { exact: true }).uncheck();
   for (const label of ['5 dagen van tevoren', '24 uur van tevoren', '1 uur van tevoren']) await page.getByLabel(label, { exact: true }).check();
@@ -106,12 +108,34 @@ try {
   assert.equal(records[0].starts_at, toInstant(day + 'T09:00'));
   assert.equal(records[0].kind, 'business');
   assert.deepEqual(records[0].reminder_offsets, [7200, 1440, 60]);
+  const eventCard = page.getByRole('article').filter({ hasText: 'Zakelijke testafspraak' });
+  const mapsLink = eventCard.getByRole('link', { name: `Open ${address} in Google Maps`, exact: true });
+  await mapsLink.waitFor();
+  assert.equal(await mapsLink.innerText(), address);
+  await context.route('https://www.google.com/maps/search/**', route => route.fulfill({
+    contentType: 'text/html', body: '<title>Kaarttest</title>'
+  }));
+  const [map] = await Promise.all([page.waitForEvent('popup'), mapsLink.tap()]);
+  await map.waitForLoadState();
+  const destination = new URL(map.url());
+  assert.equal(destination.origin, 'https://www.google.com');
+  assert.equal(destination.pathname, '/maps/search/');
+  assert.equal(destination.searchParams.get('api'), '1');
+  assert.equal(destination.searchParams.get('query'), address);
+  await map.close();
+  await page.getByRole('button', { name: 'Lijst', exact: true }).click();
+  assert.equal(await mapsLink.getAttribute('href'), destination.href);
   await page.locator('article.one-event').first().getByRole('button', { name: 'Wijzigen' }).click();
   for (const label of ['5 dagen van tevoren', '24 uur van tevoren', '1 uur van tevoren']) assert.equal(await page.getByLabel(label, { exact: true }).isChecked(), true);
+  const sharedMap = 'https://maps.app.goo.gl/example';
+  await page.getByLabel('Locatie', { exact: true }).fill(sharedMap);
   await page.getByLabel('24 uur van tevoren', { exact: true }).uncheck();
   await page.getByRole('button', { name: 'Afspraak opslaan' }).click();
   await page.getByRole('status').filter({ hasText: 'Afspraak opgeslagen.' }).waitFor();
   assert.deepEqual(records[0].reminder_offsets, [7200, 60]);
+  const sharedLink = eventCard.getByRole('link', { name: 'Open in Google Maps', exact: true });
+  assert.equal(await sharedLink.getAttribute('href'), sharedMap);
+  await page.getByRole('button', { name: 'Maand', exact: true }).click();
   await page.getByRole('button', { name: 'Afspraak toevoegen', exact: true }).first().click();
   await page.getByLabel('Titel', { exact: true }).fill('Privé testafspraak');
   await page.getByLabel('Soort afspraak').selectOption('private');
@@ -124,6 +148,8 @@ try {
   await page.getByLabel('Eindtijd', { exact: true }).fill('12:00');
   await page.getByRole('button', { name: 'Afspraak opslaan' }).click();
   await page.getByRole('heading', { name: 'Privé testafspraak', exact: true }).waitFor();
+  const privateCard = page.getByRole('article').filter({ hasText: 'Privé testafspraak' });
+  assert.equal(await privateCard.getByRole('link').count(), 0);
   mkdirSync('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/one-agenda.png', fullPage: true });
   await page.locator('[aria-label="Agenda filter"]').getByRole('button', { name: 'Privé', exact: true }).click();
