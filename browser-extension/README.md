@@ -18,3 +18,6 @@ Internal Chromium MV3 extension. **Do not install for real credentials until the
 - No live vault rows queried or altered. Real authenticated preview integration and production security review remain required.
 - Run server and extension tests: node --test tests/password-extension.test.mjs tests/password-extension-server.test.mjs
 - Browser test script tests all installed browsers and reports failures; Chrome failure is not counted as a pass.
+### Full application fixture test
+On Dell Latitude 7200, local Vite build with synthetic VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY succeeded; the real React AuthContext, password-extension page and browser extension passed unauthenticated denial, synthetic login, domain synchronization and selected-account fill in an isolated Edge browser profile. All HTTPS is intercepted; no production vault data is used.
+To repeat on Windows: build with VITE_SUPABASE_URL=https://harkas-fixture.supabase.example.test and VITE_SUPABASE_PUBLISHABLE_KEY=test-publishable-not-real, install playwright@1.60.0 in a separate test directory, set HARKAS_PLAYWRIGHT_PACKAGE to that directory's package.json path, then node tests/password-extension-app.mjs.
