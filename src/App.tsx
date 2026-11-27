@@ -35,6 +35,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminDomains from "./pages/admin/AdminDomains";
 import AdminTimeEntriesWithPeriod from "./pages/admin/AdminTimeEntriesWithPeriod";
 import AdminPasswords from "./pages/admin/AdminPasswords";
+import AdminPasswordExtension from "./pages/admin/AdminPasswordExtension";
 import AdminFuelPrices from "./pages/admin/AdminFuelPrices";
 import AdminParking from "./pages/admin/AdminParking";
 import AdminTickets from "./pages/admin/AdminTickets";
@@ -93,6 +94,7 @@ const App = () => (
             <Route path="/factuurgegevens" element={<Factuurgegevens />} />
             <Route path="/support" element={<SupportPortal />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/password-extension" element={<AdminPasswordExtension />} />
             <Route path="/admin/one/*" element={<Suspense fallback={<div role="status" className="p-6">Harkas One laden…</div>}><HarkasOne /></Suspense>} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminHome />} />
