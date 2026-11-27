@@ -89,9 +89,9 @@ with sync_playwright() as p:
     for name,location in [("Chrome",Path(os.environ["ProgramFiles"])/"Google/Chrome/Application/chrome.exe"),("Edge",Path(os.environ["ProgramFiles(x86)"])/"Microsoft/Edge/Application/msedge.exe"),("Opera",Path(os.environ["LOCALAPPDATA"])/"Programs/Opera/opera.exe")]:
         if location.exists(): paths.append((name,str(location)))
     results=[]
-    for label,path in paths[:1]:
+    for label,path in paths:
         try:test_browser(p,label,path);results.append((label,True))
         except Exception as exc:
             import traceback;traceback.print_exc();print(label+": NOT VERIFIED: "+str(exc).splitlines()[0],flush=True);results.append((label,False))
     print("RESULTS",json.dumps(results),flush=True)
-    sys.exit(0 if any(x[1] for x in results) else 1)
+    sys.exit(0 if all(x[1] for x in results) else 1)
