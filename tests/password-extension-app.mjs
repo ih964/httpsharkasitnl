@@ -25,11 +25,19 @@ const manifest=JSON.parse(await fs.readFile(path.join(extension,"manifest.json")
 manifest.host_permissions=[target+"/*"];
 await fs.writeFile(path.join(extension,"manifest.json"),JSON.stringify(manifest));
 const ctx = await chromium.launchPersistentContext(path.join(dir,"profile"),{
-  executablePath:path.join(process.env["ProgramFiles(x86)"],"Microsoft","Edge","Application","msedge.exe"),
+  executablePath:process.env.HARKAS_TEST_BROWSER || path.join(process.env["ProgramFiles(x86)"],"Microsoft","Edge","Application","msedge.exe"),
   headless:true,args:["--disable-extensions-except="+extension,"--load-extension="+extension,"--no-first-run","--disable-background-networking"]
 });
 let decryptCalls=0;
 let metadataCalls=0;
+let writeCalls=0;
+let encryptCalls=0;
+const stamp=new Date().toISOString();
+const rows=[
+  {id,title:"Fictief demo-account",website_url:target+"/login",username,updated_at:stamp,encrypted_password:"fixture-original-cipher"},
+  {id:"other",title:"Niet passend account",website_url:"https://other.example.test",username:"other@example.test",updated_at:stamp,encrypted_password:"fixture-other-cipher"}
+];
+const encryptedByPlain=new Map();
 const contentType=f=>({".js":"text/javascript",".mjs":"text/javascript",".css":"text/css",".svg":"image/svg+xml",".png":"image/png",".html":"text/html",".json":"application/json",".wasm":"application/wasm"}[path.extname(f)]||"application/octet-stream");
 const json=(route,body,status=200)=>route.fulfill({status,headers:{"access-control-allow-origin":"*","access-control-allow-methods":"GET, POST, OPTIONS","access-control-allow-headers":"*","content-type":"application/json"},body:JSON.stringify(body)});
 try {
@@ -42,6 +50,14 @@ try {
      if(u.pathname==="/auth/v1/user")return json(route,user);
      if(u.pathname==="/rest/v1/user_roles")return json(route,[{role:"admin"}]);
      if(u.pathname==="/rest/v1/user_module_access")return json(route,[]);
+     if(u.pathname==="/functions/v1/encrypt-password"){
+       const body=route.request().postDataJSON();
+       assert.ok(typeof body.password==="string"&&body.password.length>0);
+       encryptCalls++;
+       const encrypted="fixture-cipher-"+encryptCalls;
+       encryptedByPlain.set(body.password,encrypted);
+       return json(route,{encrypted});
+     }
      if(u.pathname==="/functions/v1/decrypt-password"){
        const p=route.request().postDataJSON();
        if(p.id!==id||p.expected_origin!==target)return json(route,{error:"Origin mismatch"},403);
@@ -54,9 +70,31 @@ try {
      if(u.pathname==="/api/ha-db"){
        const b=route.request().postDataJSON();
        if(b.table==="password_vault"){
-         metadataCalls++;
-         assert.equal(b.columns,"id,title,website_url,username");
-         return json(route,{data:[{id,title:"Fictief demo-account",website_url:target+"/login",username},{id:"other",title:"Niet passend account",website_url:"https://other.example.test",username:"other@example.test"}],error:null,count:2});
+         const filtered=rows.filter(row=>(b.filters||[]).every(f=>f.op==="eq"||f.op==="is"?row[f.column]===f.value:false));
+         const project=row=>b.columns==="*"?row:Object.fromEntries(b.columns.split(",").map(k=>[k,row[k]]));
+         if(b.action==="select"){
+           metadataCalls++;
+           const items=filtered.slice(b.offset||0,(b.offset||0)+(b.limit||filtered.length)).map(project);
+           return json(route,{data:b.singleMode?items[0]||null:items,error:null,count:items.length});
+         }
+         if(b.action==="insert"){
+           assert.equal(b.values.website_url,target);
+           assert.equal(b.values.encrypted_password,encryptedByPlain.get("fictional-new-password"));
+           assert.ok(!JSON.stringify(b.values).includes("fictional-new-password"));
+           const row={...b.values,updated_at:new Date().toISOString()};
+           rows.push(row);writeCalls++;
+           return json(route,{data:{id:row.id},error:null});
+         }
+         if(b.action==="update"){
+           assert.equal(b.values.encrypted_password,encryptedByPlain.get("fictional-updated-password"));
+           assert.ok(!JSON.stringify(b.values).includes("fictional-updated-password"));
+           assert.equal(filtered.length,1);
+           assert.equal(filtered[0].id,id);
+           assert.ok(b.filters.some(f=>f.column==="encrypted_password"&&f.value==="fixture-original-cipher"));
+           Object.assign(filtered[0],b.values,{updated_at:new Date(Date.now()+1000).toISOString()});writeCalls++;
+           return json(route,{data:{id},error:null});
+         }
+         throw new Error("Unexpected mutation");
        }
        return json(route,{data:[],error:null,count:0});
      }
@@ -115,6 +153,52 @@ try {
  assert.equal(p.url(),target+"/login");
  assert.equal(decryptCalls,1);
  console.log("PASS actual built Harkas Admin bridge + Edge + synthetic vault full fill; no submit");
+ // The popup generator uses only cryptographically secure randomness and no vault calls.
+ await popup.bringToFront();
+ await popup.locator("summary").click();
+ await popup.locator("#generate").click();
+ const generated=await popup.locator("#generated").inputValue();
+ assert.equal(generated.length,24);
+ assert.match(generated,/[A-Z]/);assert.match(generated,/[a-z]/);assert.match(generated,/[0-9]/);
+ assert.equal(encryptCalls,0);assert.equal(writeCalls,0);
+ console.log("PASS generator");
+ await fill.close();
+ await p.bringToFront();
+ const save=await openBridge("save");
+ await save.getByLabel("Accountnaam",{exact:true}).fill("Nieuw fictief account");
+ await save.getByLabel("Gebruikersnaam",{exact:true}).fill("new@example.test");
+ await save.getByLabel("Nieuw wachtwoord",{exact:true}).fill("fictional-new-password");
+ assert.equal(writeCalls,0);
+ await save.getByRole("button",{name:"Nieuw account opslaan",exact:true}).click();
+ await save.getByText(/Account veilig opgeslagen/).waitFor({timeout:10000});
+ assert.equal(writeCalls,1);assert.equal(rows.filter(r=>r.username==="new@example.test").length,1);
+ await save.close();
+ await p.bringToFront();
+ const update=await openBridge("save");
+ await update.getByLabel("Account",{exact:true}).selectOption(id);
+ await update.getByLabel("Nieuw wachtwoord",{exact:true}).fill("fictional-updated-password");
+ await update.getByRole("button",{name:"Bevestig wachtwoordwijziging",exact:true}).click();
+ await update.getByText(/Account veilig opgeslagen/).waitFor({timeout:10000});
+ assert.equal(writeCalls,2);assert.equal(rows.find(r=>r.id===id).encrypted_password,encryptedByPlain.get("fictional-updated-password"));
+ await update.close();
+ console.log("PASS explicit create and selected-account update, encrypted writes only");
+ // Forged sync from a different first-party path is rejected.
+ const denied=await login.evaluate(eid=>new Promise(resolve=>chrome.runtime.sendMessage(eid,{type:"adminSync",origins:["https://bad.example.test"]},resolve)),eid);
+ assert.equal(denied.ok,false);
+ const newOrigin="https://new.example.test";
+ rows.push({id:"third",title:"Nieuw domein",website_url:newOrigin,username:"third@example.test",updated_at:stamp,encrypted_password:"fixture-third"});
+ const vault=await ctx.newPage();
+ await vault.goto(admin+"/admin/wachtwoorden");
+ await vault.getByText("Nieuw domein",{exact:true}).waitFor({timeout:12000});
+ let status;
+ for(let i=0;i<25;i++){
+   status=await popup.evaluate(()=>chrome.runtime.sendMessage({type:"status"}));
+   if(status.origins.includes(newOrigin))break;
+   await new Promise(r=>setTimeout(r,200));
+ }
+ assert.ok(status.origins.includes(newOrigin));assert.equal(status.activeCount,1);
+ assert.ok(status.missingPatterns.includes(newOrigin+"/*"));
+ console.log("PASS vault changes sync origins; no new automatic permissions");
  console.log("PASS all app integration cases");
 } finally {
  await ctx.close();

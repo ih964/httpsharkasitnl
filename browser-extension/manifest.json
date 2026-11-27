@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Harkas Password Manager",
-  "version": "0.1.0",
-  "description": "Vul een gekozen account uit Harkas Admin in op de exact gekoppelde website.",
+  "version": "1.1.0",
+  "description": "Veilig inloggen, wachtwoorden genereren en accounts beheren in Harkas Admin.",
   "minimum_chrome_version": "106",
   "permissions": [
     "activeTab",

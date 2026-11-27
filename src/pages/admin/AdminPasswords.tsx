@@ -13,6 +13,20 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "@/hooks/use-toast";
 import { Search, Plus, Eye, EyeOff, Copy, Pencil, Trash2, ShieldAlert, Wand2, ExternalLink } from "lucide-react";
 
+
+import { originOf } from "../../../browser-extension/security.js";
+
+// This page is already protected by the passwords module. Share origins only;
+// the extension refuses unsolicited sync until the user has explicitly linked it.
+function syncExtensionDomains(items: {website_url: string | null}[]) {
+  if(location.origin !== "https://www.harkasit.nl" || location.pathname !== "/admin/wachtwoorden" || window.top !== window) return;
+  const runtime=(window as any).chrome?.runtime;
+  if(!runtime?.sendMessage) return;
+  const origins=[...new Set(items.map(item=>originOf(item.website_url)).filter(Boolean))];
+  if(origins.length>1000) return;
+  try { runtime.sendMessage("gfklpaehpogdijpdbgfpbgeoaghkbdki",{type:"adminSync",origins},()=>{void runtime.lastError;}); } catch {}
+}
+
 interface VaultItem {
   id: string;
   title: string;
@@ -69,6 +83,7 @@ const AdminPasswords = () => {
       toast({ title: "Fout bij laden", description: error.message, variant: "destructive" });
     } else {
       setItems((data ?? []) as VaultItem[]);
+      syncExtensionDomains((data ?? []) as VaultItem[]);
     }
     setLoading(false);
   };
@@ -204,7 +219,7 @@ const AdminPasswords = () => {
       toast({ title: "Verwijderen mislukt", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Verwijderd" });
-      setItems((prev) => prev.filter((i) => i.id !== deleteId));
+      await load();
     }
     setDeleteId(null);
   };

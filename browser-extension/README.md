@@ -21,3 +21,10 @@ Internal Chromium MV3 extension. **Do not install for real credentials until the
 ### Full application fixture test
 On Dell Latitude 7200, local Vite build with synthetic VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY succeeded; the real React AuthContext, password-extension page and browser extension passed unauthenticated denial, synthetic login, domain synchronization and selected-account fill in an isolated Edge browser profile. All HTTPS is intercepted; no production vault data is used.
 To repeat on Windows: build with VITE_SUPABASE_URL=https://harkas-fixture.supabase.example.test and VITE_SUPABASE_PUBLISHABLE_KEY=test-publishable-not-real, install playwright@1.60.0 in a separate test directory, set HARKAS_PLAYWRIGHT_PACKAGE to that directory's package.json path, then node tests/password-extension-app.mjs.
+## Version 1.1.0
+- Secure generator; password input remains in the trusted Admin window or local generator, never captured by a page listener.
+- Explicit create/update of vault records using existing encrypted storage and role checks. Account changes are checked before writing; a concurrent encrypted-password change prevents overwrite.
+- Compact trusted browser window for account selection; falls back to a tab if necessary.
+- Domain-only synchronization when a linked user opens or changes the Admin vault. Existing browser permissions are preserved, new site permissions require user consent.
+- Existing 0.1.0 clients remain compatible. After upgrading the existing unpacked extension folder, reload each browser extension.
+- 15 unit tests and isolated full application fixtures passed on Dell 7200, including Edge and Opera. All test accounts are fictitious; no production vault records were changed during testing.
