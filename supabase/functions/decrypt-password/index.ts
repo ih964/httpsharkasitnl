@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Cache-Control": "no-store",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -46,16 +47,29 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { id } = await req.json();
+    const { id, expected_origin } = await req.json();
     if (typeof id !== "string") {
       return new Response(JSON.stringify({ error: "Invalid id" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { data: row, error } = await admin.from("password_vault").select("encrypted_password").eq("id", id).maybeSingle();
+    const { data: row, error } = await admin.from("password_vault").select("encrypted_password,website_url,username").eq("id", id).maybeSingle();
     if (error || !row) {
       return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // An extension request must match the origin of the very same row being decrypted.
+    // Old Harkas Admin calls omit expected_origin and retain their existing response.
+    if (expected_origin !== undefined) {
+      let origin: string | null = null;
+      try {
+        const input = String(row.website_url || "").trim();
+        const u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(input) ? input : "https://" + input);
+        if (u.protocol === "https:" && !u.username && !u.password && u.hostname.includes(".")) origin = u.origin;
+      } catch { /* reject malformed or missing URLs */ }
+      if (typeof expected_origin !== "string" || !origin || origin !== expected_origin) {
+        return new Response(JSON.stringify({ error: "Origin mismatch" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
     const parts = (row.encrypted_password as string).split(":");
     if (parts.length !== 3 || parts[0] !== "v1") {
       return new Response(JSON.stringify({ error: "Invalid ciphertext" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -66,7 +80,7 @@ Deno.serve(async (req) => {
     const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
     const password = new TextDecoder().decode(plain);
 
-    return new Response(JSON.stringify({ password }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify(expected_origin === undefined ? { password } : { password, origin: expected_origin, username: row.username || "" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("decrypt error", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });

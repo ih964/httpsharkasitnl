@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Harkas Password Manager",
+  "version": "0.1.0",
+  "description": "Vul een gekozen account uit Harkas Admin in op de exact gekoppelde website.",
+  "minimum_chrome_version": "106",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://www.harkasit.nl/*"
+    ]
+  },
+  "background": {
+    "service_worker": "worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Harkas Password Manager",
+    "default_popup": "popup.html"
+  },
+  "incognito": "not_allowed",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA66Bma2jEMYMuwuSNfIn11GUb1mOFV6w9nq7Tj9BRqWCc0hcCMT4a9hgLZeRl3oy4VPtaJXY2ZGiGkZKsqw4kE0FXbztxwjA0y21BhThCu3xcvqsn7jRZfVKO8H/YEO72b0JfBf9OWVXC6DHWr6KmkC+QNv9zhV0Ng0vMVsMqagy+yzRQ2b57MNLC6poE0igJq59GU7IUEB41l5TWGD9PkhbAxnkrPJ2dy8qhQbO9QkjlRxjSo7vQ6lVJy0oeBeN9R4WWeAmbslI9PnR+oBj7FN6OMJJLKwfANpwTfkV6kGQDDjPfuqAlwrG93HCaPOwV4nrAMfA/9Ucc6MEzheesewIDAQAB"
+}
